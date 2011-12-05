@@ -2,10 +2,10 @@
 #this repository contains the full copyright notices and license terms.
 
 __version__ = '0.1'
-__all__ = ['Table', 'Column', 'Join', 'Asc', 'Desc']
+__all__ = ['Flavor', 'Table', 'Column', 'Join', 'Asc', 'Desc']
 
 import string
-from threading import local
+from threading import local, currentThread
 
 
 def alias(i, letters=string.ascii_lowercase):
@@ -28,6 +28,40 @@ def alias(i, letters=string.ascii_lowercase):
         if i == 0:
             break
     return s
+
+
+class Flavor(object):
+    '''
+    Contains the flavor of SQL
+
+    Contains:
+        max_limit - limit to use if there is no limit but an offset
+    '''
+
+    max_limit = None
+
+    def __init__(self, max_limit=None):
+        self.max_limit = max_limit
+
+    @staticmethod
+    def set(flavor):
+        '''Set this thread's flavor to flavor.'''
+        currentThread().__sql_flavor__ = flavor
+
+    @staticmethod
+    def get():
+        '''
+        Return this thread's flavor.
+
+        If this thread does not yet have a flavor, returns a new flavor and
+        sets this thread's flavor.
+        '''
+        try:
+            return currentThread().__sql_flavor__
+        except AttributeError:
+            flavor = Flavor()
+            currentThread().__sql_flavor__ = flavor
+            return flavor
 
 
 class AliasManager(object):
@@ -220,6 +254,10 @@ class Select(Query, FromItem):
             limit = ''
             if self.limit is not None:
                 limit = ' LIMIT %s' % self.limit
+            elif self.offset is not None:
+                max_limit = Flavor.get().max_limit
+                if max_limit:
+                    limit = ' LIMIT %s' % max_limit
             offset = ''
             if self.offset is not None:
                 offset = ' OFFSET %s' % self.offset

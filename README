@@ -115,3 +115,17 @@ Delete query with sub-query::
     >>> tuple(user.delete(where=(
     ...             user.id.in_(user_group.select(user_group.user)))))
     ('DELETE FROM "user" WHERE ("id" IN (SELECT "a"."user" FROM "user_group" AS "a"))', ())
+
+Flavors::
+
+    >>> select = user.select()
+    >>> select.offset = 10
+    >>> Flavor.set(Flavor())
+    >>> tuple(select)
+    ('SELECT "a".* FROM "user" AS "a" OFFSET 10', ())
+    >>> Flavor.set(Flavor(max_limit=18446744073709551615))
+    >>> tuple(select)
+    ('SELECT "a".* FROM "user" AS "a" LIMIT 18446744073709551615 OFFSET 10', ())
+    >>> Flavor.set(Flavor(max_limit=-1))
+    >>> tuple(select)
+    ('SELECT "a".* FROM "user" AS "a" LIMIT -1 OFFSET 10', ())
