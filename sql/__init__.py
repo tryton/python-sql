@@ -72,14 +72,19 @@ class AliasManager(object):
 
     local = local()
     local.alias = None
+    local.nested = 0
 
     @classmethod
     def __enter__(cls):
-        cls.local.alias = {}
+        if cls.local.alias is None:
+            cls.local.alias = {}
+        cls.local.nested += 1
 
     @classmethod
     def __exit__(cls, type, value, traceback):
-        cls.local.alias = None
+        cls.local.nested -= 1
+        if not cls.local.nested:
+            cls.local.alias = None
 
     @classmethod
     def get(cls, from_):
@@ -269,7 +274,14 @@ class Select(Query, FromItem):
 
     @property
     def params(self):
-        return self.where.params if self.where else ()
+        p = ()
+        for column in self.columns:
+            if hasattr(column, 'params'):
+                p += column.params
+        p += self.from_.params
+        if self.where:
+            p += self.where.params
+        return p
 
 
 class Insert(Query):
@@ -427,6 +439,10 @@ class Table(FromItem):
         else:
             return '"%s"' % self.__name
 
+    @property
+    def params(self):
+        return ()
+
     def insert(self, columns=None, values=None, returning=None):
         return Insert(self, columns=columns, values=values,
             returning=returning)
@@ -502,6 +518,16 @@ class Join(FromItem):
             condition = ''
         return join + condition
 
+    @property
+    def params(self):
+        p = ()
+        for item in (self.left, self.right):
+            if hasattr(item, 'params'):
+                p += item.params
+        if hasattr(self.condition, 'params'):
+            p += self.condition.params
+        return p
+
     def __getattr__(self, name):
         raise AttributeError
 
@@ -517,7 +543,15 @@ class From(list):
         return Select(args, from_=self, **kwargs)
 
     def __str__(self):
-        return ', '.join(map(str, self))
+        def format(from_):
+            if isinstance(from_, Select):
+                return '(%s) AS "%s"' % (from_, from_.alias)
+            return str(from_)
+        return ', '.join(map(format, self))
+
+    @property
+    def params(self):
+        return sum((from_.params for from_ in self), ())
 
     def __add__(self, other):
         assert isinstance(other, (Join, Select))

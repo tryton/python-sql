@@ -10,6 +10,7 @@ Import::
 
     >>> from sql import *
     >>> from sql.aggregate import *
+    >>> from sql.conditionals import *
 
 Simple selects::
 
@@ -77,7 +78,24 @@ Select with sub-select::
     ...     where=(user_group.active == True))
     >>> user = Table('user')
     >>> tuple(user.select(user.id, where=(user.id.in_(subselect))))
-    ('SELECT "a"."id" FROM "user" AS "a" WHERE ("a"."id" IN (SELECT "a"."user" FROM "user_group" AS "a" WHERE ("a"."active" = %s)))', (True,))
+    ('SELECT "a"."id" FROM "user" AS "a" WHERE ("a"."id" IN (SELECT "b"."user" FROM "user_group" AS "b" WHERE ("b"."active" = %s)))', (True,))
+    >>> tuple(subselect.select(subselect.user))
+    ('SELECT "a"."user" FROM (SELECT "b"."user" FROM "user_group" AS "b" WHERE ("b"."active" = %s)) AS "a"', (True,))
+
+Aggregate::
+
+    >>> user = Table('user')
+    >>> tuple(user.select(Count(user.id)))
+    ('SELECT COUNT("a"."id") FROM "user" AS "a"', ())
+
+Case::
+
+    >>> user = Table('user')
+    >>> tuple(user.select(Case(
+    ...             (user.logged, 'login'),
+    ...             (user.logged == False, 'logout'),
+    ...             else_=user.logged)))
+    ('SELECT CASE WHEN "a"."logged" THEN %s WHEN ("a"."logged" = %s) THEN %s ELSE "a"."logged" END FROM "user" AS "a"', ('login', False, 'logout'))
 
 Insert query with default values::
 
