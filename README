@@ -73,7 +73,6 @@ Select with order_by::
     >>> tuple(user.select(order_by=(Asc(user.date), Desc(user.id))))
     ('SELECT "a".* FROM "user" AS "a" ORDER BY "a"."date" ASC, "a"."id" DESC', ())
 
-
 Select with sub-select::
 
     >>> user_group = Table('user_group')
