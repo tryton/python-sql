@@ -620,6 +620,14 @@ class Column(object):
         from sql.operators import Pow
         return Pow(self, other)
 
+    def __neg__(self):
+        from sql.operators import Neg
+        return Neg(self)
+
+    def __pos__(self):
+        from sql.operators import Pos
+        return Pos(self)
+
     def __abs__(self):
         from sql.operators import Abs
         return Abs(self)

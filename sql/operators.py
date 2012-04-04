@@ -139,6 +139,16 @@ class Not(UnaryOperator):
         return 'NOT %s' % super(Not, self).__str__()
 
 
+class Neg(UnaryOperator):
+    __slots__ = ()
+    _operator = '-'
+
+
+class Pos(UnaryOperator):
+    __slots__ = ()
+    _operator = '+'
+
+
 class Less(BinaryOperator):
     __slots__ = ()
     _operator = '<'
