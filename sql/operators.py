@@ -131,12 +131,7 @@ class Or(NaryOperator):
 
 class Not(UnaryOperator):
     __slots__ = ()
-
-    def __init__(self, column):
-        super(Not, self).__init__(column.table, column.name)
-
-    def __str__(self):
-        return 'NOT %s' % super(Not, self).__str__()
+    _operator = 'NOT'
 
 
 class Neg(UnaryOperator):
