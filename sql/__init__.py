@@ -276,8 +276,7 @@ class Select(Query, FromItem):
     def params(self):
         p = ()
         for column in self.columns:
-            if hasattr(column, 'params'):
-                p += column.params
+            p += column.params
         p += self.from_.params
         if self.where:
             p += self.where.params
@@ -367,6 +366,75 @@ class Insert(Query):
             return ()
 
 
+class Update(Insert):
+
+    def __init__(self, table, columns, values, from_=None, where=None):
+        super(Update, self).__init__(table, columns=columns, values=values)
+        self.__where = None
+        self.from_ = From(from_) if from_ else None
+        self.where = where
+
+    @property
+    def values(self):
+        return self.__values
+
+    @values.setter
+    def values(self, value):
+        if isinstance(value, Select):
+            value = [value]
+        assert isinstance(value, list)
+        self.__values = value
+
+    @property
+    def where(self):
+        return self.__where
+
+    @where.setter
+    def where(self, value):
+        from sql.operators import And, Or
+        if value is not None:
+            assert isinstance(value, (Column, And, Or))
+        self.__where = value
+
+    @staticmethod
+    def _format(value):
+        if isinstance(value, Column):
+            return str(value)
+        elif isinstance(value, Select):
+            return '(%s)' % value
+        else:
+            return '%s'
+
+    def __str__(self):
+        with AliasManager():
+            columns = ' (' + ', '.join(map(str, self.columns)) + ')'
+            from_ = ''
+            if self.from_:
+                from_ = ' FROM %s' % str(self.from_)
+            values = ' = (' + ', '.join(map(self._format, self.values)) + ')'
+            where = ''
+            if self.where:
+                where = ' WHERE ' + str(self.where)
+            return ('UPDATE %s SET' % self.table + columns + values + from_
+                + where)
+
+    @property
+    def params(self):
+        p = ()
+        for value in self.values:
+            if isinstance(value, Column):
+                p += value.params
+            elif isinstance(value, Select):
+                p += list(value)[1]
+            else:
+                p += (value,)
+        if self.from_:
+            p += self.from_.params
+        if self.where:
+            p += self.where.params
+        return p
+
+
 class Delete(Query):
     __slots__ = ('__table', '__where', '__returning', 'only')
 
@@ -446,6 +514,10 @@ class Table(FromItem):
     def insert(self, columns=None, values=None, returning=None):
         return Insert(self, columns=columns, values=values,
             returning=returning)
+
+    def update(self, columns, values, from_=None, where=None):
+        return Update(self, columns=columns, values=values, from_=from_,
+            where=where)
 
     def delete(self, only=False, using=None, where=None, returning=None):
         return Delete(self, only=only, using=using, where=where,
@@ -583,6 +655,10 @@ class Column(object):
             return t % (self.__from.alias, self.__name)
         else:
             return t % self.__name
+
+    @property
+    def params(self):
+        return ()
 
     def __and__(self, other):
         from sql.operators import And
