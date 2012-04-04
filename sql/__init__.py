@@ -663,11 +663,11 @@ class Column(object):
 
     def __and__(self, other):
         from sql.operators import And
-        return And(self, other)
+        return And((self, other))
 
     def __or__(self, other):
         from sql.operators import Or
-        return Or(self, other)
+        return Or((self, other))
 
     def __invert__(self):
         from sql.operators import Not
