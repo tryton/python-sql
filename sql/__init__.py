@@ -367,6 +367,7 @@ class Insert(Query):
 
 
 class Update(Insert):
+    __slots__ = ('__where', '__values', 'from_')
 
     def __init__(self, table, columns, values, from_=None, where=None):
         super(Update, self).__init__(table, columns=columns, values=values)
