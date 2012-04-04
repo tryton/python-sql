@@ -29,4 +29,5 @@ setup(name='python-sql',
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],
     license='LGPL-3',
+    test_suite='sql.tests',
     )

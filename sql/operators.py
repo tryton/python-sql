@@ -327,7 +327,3 @@ _INVERT = {
     In: NotIn,
     NotIn: In,
     }
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()

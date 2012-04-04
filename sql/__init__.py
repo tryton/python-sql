@@ -815,7 +815,3 @@ class For(object):
         if self.nowait:
             nowait = ' NOWAIT'
         return ('FOR %s' % self.type_) + tables + nowait
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
