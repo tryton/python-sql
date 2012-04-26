@@ -3,7 +3,7 @@
 import unittest
 
 from sql import Table
-from sql.conditionals import Case, Coalesce
+from sql.conditionals import Case, Coalesce, NullIf, Greatest, Least
 
 
 class TestConditionals(unittest.TestCase):
@@ -21,6 +21,20 @@ class TestConditionals(unittest.TestCase):
 
     def test_coalesce(self):
         coalesce = Coalesce(self.table.c1, self.table.c2, 'foo')
-        self.assertEqual(str(coalesce),
-            'COALESCE("c1", "c2", %s)')
+        self.assertEqual(str(coalesce), 'COALESCE("c1", "c2", %s)')
         self.assertEqual(coalesce.params, ('foo',))
+
+    def test_nullif(self):
+        nullif = NullIf(self.table.c1, 'foo')
+        self.assertEqual(str(nullif), 'NULLIF("c1", %s)')
+        self.assertEqual(nullif.params, ('foo',))
+
+    def test_greatest(self):
+        greatest = Greatest(self.table.c1, self.table.c2, 'foo')
+        self.assertEqual(str(greatest), 'GREATEST("c1", "c2", %s)')
+        self.assertEqual(greatest.params, ('foo',))
+
+    def test_least(self):
+        least = Least(self.table.c1, self.table.c2, 'foo')
+        self.assertEqual(str(least), 'LEAST("c1", "c2", %s)')
+        self.assertEqual(least.params, ('foo',))

@@ -1,18 +1,19 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 
-# TODO NULLIF, GREATEST, LEAST
-
 from sql import Column
 
-__all__ = ['Case', 'Coalesce']
+__all__ = ['Case', 'Coalesce', 'NullIf', 'Greatest', 'Least']
 
 
-class Case(Column):
-    __slots__ = ('whens', 'else_')
+class Conditional(Column):
     _sql = ''
     table = ''
     name = ''
+
+
+class Case(Conditional):
+    __slots__ = ('whens', 'else_')
 
     def __init__(self, *args, **kwargs):
         self.whens = args
@@ -53,11 +54,9 @@ class Case(Column):
         return p
 
 
-class Coalesce(Column):
+class Coalesce(Conditional):
     __slots__ = ('values')
-    _sql = ''
-    table = ''
-    name = ''
+    _conditional = 'COALESCE'
 
     def __init__(self, *args):
         self.values = args
@@ -68,7 +67,8 @@ class Coalesce(Column):
                 return '%s'
             else:
                 return str(value)
-        return 'COALESCE(' + ', '.join(map(format, self.values)) + ')'
+        return (self._conditional
+            + '(' + ', '.join(map(format, self.values)) + ')')
 
     @property
     def params(self):
@@ -79,3 +79,15 @@ class Coalesce(Column):
             elif hasattr(value, 'params'):
                 p += value.params
         return p
+
+
+class NullIf(Coalesce):
+    _conditional = 'NULLIF'
+
+
+class Greatest(Coalesce):
+    _conditional = 'GREATEST'
+
+
+class Least(Coalesce):
+    _conditional = 'LEAST'
