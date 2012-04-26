@@ -273,7 +273,7 @@ class Select(Query, FromItem):
                 if max_limit:
                     limit = ' LIMIT %s' % max_limit
             offset = ''
-            if self.offset is not None:
+            if self.offset:
                 offset = ' OFFSET %s' % self.offset
             for_ = ''
             if self.for_ is not None:
