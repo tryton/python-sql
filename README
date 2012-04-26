@@ -154,3 +154,8 @@ Flavors::
     >>> Flavor.set(Flavor(max_limit=-1))
     >>> tuple(select)
     ('SELECT "a".* FROM "user" AS "a" LIMIT -1 OFFSET 10', ())
+    >>> Flavor.set(Flavor(paramstyle='qmark'))
+    >>> select = user.select()
+    >>> select.where = (user.name == 'foo')
+    >>> tuple(select)
+    ('SELECT "a".* FROM "user" AS "a" WHERE ("a"."name" = ?)', ('foo',))

@@ -36,12 +36,21 @@ class Flavor(object):
 
     Contains:
         max_limit - limit to use if there is no limit but an offset
+        paramstyle - state the type of parameter marker formatting
     '''
 
     max_limit = None
 
-    def __init__(self, max_limit=None):
+    def __init__(self, max_limit=None, paramstyle='format'):
         self.max_limit = max_limit
+        self.paramstyle = paramstyle
+
+    @property
+    def param(self):
+        if self.paramstyle == 'format':
+            return '%s'
+        elif self.paramstyle == 'qmark':
+            return '?'
 
     @staticmethod
     def set(flavor):
@@ -342,9 +351,10 @@ class Insert(Query):
         columns = ''
         if self.columns:
             columns = ' (' + ', '.join(map(str, self.columns)) + ')'
+        param = Flavor.get().param
         if isinstance(self.values, list):
             values = ' VALUES ' + ', '.join(
-                '(' + ', '.join(('%s',) * len(value)) + ')'
+                '(' + ', '.join((param,) * len(value)) + ')'
                 for value in self.values)
             # TODO manage DEFAULT
         elif isinstance(self.values, Select):
@@ -404,7 +414,7 @@ class Update(Insert):
         elif isinstance(value, Select):
             return '(%s)' % value
         else:
-            return '%s'
+            return Flavor.get().param
 
     def __str__(self):
         with AliasManager():

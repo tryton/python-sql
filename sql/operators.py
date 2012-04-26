@@ -1,7 +1,7 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 
-from sql import Column, Select
+from sql import Column, Select, Flavor
 
 __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
     'Equal', 'NotEqual', 'Add', 'Sub', 'Mul', 'FloorDiv', 'Mod', 'Pow',
@@ -45,16 +45,17 @@ class Operator(object):
 
     @staticmethod
     def _format(operand):
+        param = Flavor.get().param
         if isinstance(operand, Column):
             return str(operand)
         elif isinstance(operand, Select):
             return '(%s)' % operand
         elif isinstance(operand, (list, tuple)):
-            return '(' + ', '.join(('%s',) * len(operand)) + ')'
+            return '(' + ', '.join((param,) * len(operand)) + ')'
         elif operand is None:
             return ''
         else:
-            return '%s'
+            return param
 
     def __str__(self):
         raise NotImplemented
