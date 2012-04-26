@@ -3,7 +3,7 @@
 import unittest
 
 from sql import Table
-from sql.conditionals import Case
+from sql.conditionals import Case, Coalesce
 
 
 class TestConditionals(unittest.TestCase):
@@ -18,3 +18,9 @@ class TestConditionals(unittest.TestCase):
             'WHEN "c2" THEN %s '
             'ELSE "c3" END')
         self.assertEqual(case.params, ('foo', 'bar'))
+
+    def test_coalesce(self):
+        coalesce = Coalesce(self.table.c1, self.table.c2, 'foo')
+        self.assertEqual(str(coalesce),
+            'COALESCE("c1", "c2", %s)')
+        self.assertEqual(coalesce.params, ('foo',))

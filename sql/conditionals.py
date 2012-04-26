@@ -1,11 +1,11 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 
-# TODO COALESCE, NULLIF, GREATEST, LEAST
+# TODO NULLIF, GREATEST, LEAST
 
 from sql import Column
 
-__all__ = ['Case']
+__all__ = ['Case', 'Coalesce']
 
 
 class Case(Column):
@@ -50,4 +50,32 @@ class Case(Column):
                 p += self.__else.params
             elif isinstance(self.__else, basestring):
                 p += (self.__else,)
+        return p
+
+
+class Coalesce(Column):
+    __slots__ = ('__values')
+    _sql = ''
+    table = ''
+    name = ''
+
+    def __init__(self, *args):
+        self.__values = args
+
+    def __str__(self):
+        def format(value):
+            if isinstance(value, basestring):
+                return '%s'
+            else:
+                return str(value)
+        return 'COALESCE(' + ', '.join(map(format, self.__values)) + ')'
+
+    @property
+    def params(self):
+        p = ()
+        for value in self.__values:
+            if isinstance(value, basestring):
+                p += (value,)
+            elif hasattr(value, 'params'):
+                p += value.params
         return p
