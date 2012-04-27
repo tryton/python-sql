@@ -294,12 +294,24 @@ class NotLike(BinaryOperator):
 
 class ILike(BinaryOperator):
     __slots__ = ()
-    _operator = 'ILIKE'
+
+    @property
+    def _operator(self):
+        if Flavor.get().ilike:
+            return 'ILIKE'
+        else:
+            return 'LIKE'
 
 
 class NotILike(BinaryOperator):
     __slots__ = ()
-    _operator = 'NOT ILIKE'
+
+    @property
+    def _operator(self):
+        if Flavor.get().ilike:
+            return 'NOT ILIKE'
+        else:
+            return 'NOT LIKE'
 
 # TODO SIMILAR
 

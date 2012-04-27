@@ -37,13 +37,13 @@ class Flavor(object):
     Contains:
         max_limit - limit to use if there is no limit but an offset
         paramstyle - state the type of parameter marker formatting
+        ilike - support ilike extension
     '''
 
-    max_limit = None
-
-    def __init__(self, max_limit=None, paramstyle='format'):
+    def __init__(self, max_limit=None, paramstyle='format', ilike=False):
         self.max_limit = max_limit
         self.paramstyle = paramstyle
+        self.ilike = ilike
 
     @property
     def param(self):
