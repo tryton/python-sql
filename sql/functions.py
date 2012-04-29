@@ -18,8 +18,6 @@ __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'StatementTimestamp', 'Timeofday', 'TransactionTimestamp',
     'AtTimeZone']
 
-# TODO EXISTS, ANY/SOME, ALL
-
 # Mathematical
 
 

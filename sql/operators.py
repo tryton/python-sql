@@ -7,7 +7,7 @@ __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
     'Equal', 'NotEqual', 'Add', 'Sub', 'Mul', 'FloorDiv', 'Mod', 'Pow',
     'SquareRoot', 'CubeRoot', 'Factorial', 'Abs', 'BAnd', 'BOr', 'BXor',
     'BNot', 'LShift', 'RShift', 'Concat', 'Like', 'NotLike', 'ILike',
-    'NotILike', 'In', 'NotIn']
+    'NotILike', 'In', 'NotIn', 'Exists', 'Any', 'Some', 'All']
 
 
 class Operator(object):
@@ -324,6 +324,23 @@ class In(BinaryOperator):
 class NotIn(BinaryOperator):
     __slots__ = ()
     _operator = 'NOT IN'
+
+
+class Exists(UnaryOperator):
+    __slots__ = ()
+    _operator = 'EXISTS'
+
+
+class Any(UnaryOperator):
+    __slots__ = ()
+    _operator = 'ANY'
+
+Some = Any
+
+
+class All(UnaryOperator):
+    __slots__ = ()
+    _operator = 'ALL'
 
 
 _INVERT = {
