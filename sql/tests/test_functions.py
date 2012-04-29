@@ -3,7 +3,7 @@
 import unittest
 
 from sql import Table, Flavor
-from sql.functions import Function, Abs
+from sql.functions import Function, Abs, Overlay, Position, Trim
 
 
 class TestFunctions(unittest.TestCase):
@@ -33,3 +33,16 @@ class TestFunctions(unittest.TestCase):
             self.assertEqual(abs_.params, ('test',))
         finally:
             Flavor.set(Flavor())
+
+    def test_overlay(self):
+        overlay = Overlay(self.table.c1, 'test', 3)
+        self.assertEqual(str(overlay), 'OVERLAY("c1" PLACING %s FROM 3)')
+        self.assertEqual(overlay.params, ('test',))
+        overlay = Overlay(self.table.c1, 'test', 3, 7)
+        self.assertEqual(str(overlay), 'OVERLAY("c1" PLACING %s FROM 3 TO 7)')
+        self.assertEqual(overlay.params, ('test',))
+
+    def test_trim(self):
+        trim = Trim(' test ')
+        self.assertEqual(str(trim), 'TRIM(BOTH %s FROM %s)')
+        self.assertEqual(trim.params, (' ', ' test ',))

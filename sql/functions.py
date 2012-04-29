@@ -1,13 +1,16 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 
+from itertools import chain
+
 from sql import Column, Flavor
 
 __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'Log', 'Mod', 'Pi', 'Power', 'Radians', 'Random', 'Round', 'SetSeed',
     'Sign', 'Sqrt', 'Trunc', 'WidthBucket',
     'Acos', 'Asin', 'Atan', 'Atan2', 'Cos', 'Cot', 'Sin', 'Tan',
-    'BitLength', 'CharLength', 'Upper']
+    'BitLength', 'CharLength', 'Overlay', 'Position', 'Substring', 'Trim',
+    'Upper']
 
 # TODO Data formating
 # TODO Date/Time
@@ -215,11 +218,86 @@ class OctetLength(Function):
     __slots__ = ()
     _function = 'OCTET_LENGTH'
 
-# TODO overlay, position, substring, trim
+
+class FunctionKeyword(Function):
+    __slots__ = ()
+    _function = ''
+    _keywords = ()
+
+    def __str__(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return str(Mapping(*self.args))
+        param = Flavor.get().param
+
+        def format(arg):
+            if isinstance(arg, basestring):
+                return param
+            else:
+                return str(arg)
+        return (self._function + '('
+            + ' '.join(chain(*zip(
+                        self._keywords,
+                        map(format, self.args))))[1:]
+            + ')')
+
+
+class Overlay(FunctionKeyword):
+    __slots__ = ()
+    _function = 'OVERLAY'
+    _keywords = ('', 'PLACING', 'FROM', 'TO')
+
+
+class Position(FunctionKeyword):
+    __slots__ = ()
+    _function = 'POSITION'
+    _keywords = ('', 'IN')
+
+
+class Substring(FunctionKeyword):
+    __slots__ = ()
+    _function = 'SUBSTRING'
+    _keywords = ('', 'FROM', 'FOR')
+
+
+class Trim(Function):
+    __slots__ = ('position', 'characters', 'string')
+    _function = 'TRIM'
+
+    def __init__(self, string, position='both', characters=' '):
+        assert position.upper() in ('LEADING', 'TRAILING', 'BOTH')
+        self.position = position.upper()
+        self.characters = characters
+        self.string = string
+
+    def __str__(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return str(Mapping(*self.args))
+        param = Flavor.get().param
+
+        def format(arg):
+            if isinstance(arg, basestring):
+                return param
+            else:
+                return str(arg)
+        return self._function + '(%s %s FROM %s)' % (
+            self.position, format(self.characters), format(self.string))
+
+    @property
+    def params(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return Mapping(*self.args).params
+        p = ()
+        for arg in (self.characters, self.string):
+            if isinstance(arg, basestring):
+                p += (arg,)
+            elif hasattr(arg, 'params'):
+                p += arg.params
+        return p
 
 
 class Upper(Function):
     __slots__ = ()
     _function = 'UPPER'
-
-# TODO other string
