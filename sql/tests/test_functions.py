@@ -3,7 +3,7 @@
 import unittest
 
 from sql import Table, Flavor
-from sql.functions import Function, Abs, Overlay, Position, Trim
+from sql.functions import Function, Abs, Overlay, Trim, AtTimeZone
 
 
 class TestFunctions(unittest.TestCase):
@@ -46,3 +46,8 @@ class TestFunctions(unittest.TestCase):
         trim = Trim(' test ')
         self.assertEqual(str(trim), 'TRIM(BOTH %s FROM %s)')
         self.assertEqual(trim.params, (' ', ' test ',))
+
+    def test_at_time_zone(self):
+        time_zone = AtTimeZone(self.table.c1, 'UTC')
+        self.assertEqual(str(time_zone), '"c1" AT TIME ZONE %s')
+        self.assertEqual(time_zone.params, ('UTC',))

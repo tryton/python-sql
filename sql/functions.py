@@ -11,9 +11,13 @@ __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'Acos', 'Asin', 'Atan', 'Atan2', 'Cos', 'Cot', 'Sin', 'Tan',
     'BitLength', 'CharLength', 'Overlay', 'Position', 'Substring', 'Trim',
     'Upper',
-    'ToChar', 'ToDate', 'ToNumber', 'ToTimestamp']
+    'ToChar', 'ToDate', 'ToNumber', 'ToTimestamp',
+    'Age', 'ClockTimestamp', 'CurrentTime', 'CurrentTimestamp', 'DatePart',
+    'DateTrunc', 'Extract', 'Isfinite', 'JustifyDays', 'JustifyHours',
+    'JustifyInterval', 'Localtime', 'Localtimestamp', 'Now',
+    'StatementTimestamp', 'Timeofday', 'TransactionTimestamp',
+    'AtTimeZone']
 
-# TODO Date/Time
 # TODO EXISTS, ANY/SOME, ALL
 
 # Mathematical
@@ -53,6 +57,40 @@ class Function(Column):
             elif hasattr(arg, 'params'):
                 p += arg.params
         return p
+
+
+class FunctionKeyword(Function):
+    __slots__ = ()
+    _function = ''
+    _keywords = ()
+
+    def __str__(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return str(Mapping(*self.args))
+        param = Flavor.get().param
+
+        def format(arg):
+            if isinstance(arg, basestring):
+                return param
+            else:
+                return str(arg)
+        return (self._function + '('
+            + ' '.join(chain(*zip(
+                        self._keywords,
+                        map(format, self.args))))[1:]
+            + ')')
+
+
+class FunctionNotCallable(Function):
+    __slots__ = ()
+    _function = ''
+
+    def __str__(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return str(Mapping(*self.args))
+        return self._function
 
 
 class Abs(Function):
@@ -219,29 +257,6 @@ class OctetLength(Function):
     _function = 'OCTET_LENGTH'
 
 
-class FunctionKeyword(Function):
-    __slots__ = ()
-    _function = ''
-    _keywords = ()
-
-    def __str__(self):
-        Mapping = Flavor.get().function_mapping.get(self.__class__)
-        if Mapping:
-            return str(Mapping(*self.args))
-        param = Flavor.get().param
-
-        def format(arg):
-            if isinstance(arg, basestring):
-                return param
-            else:
-                return str(arg)
-        return (self._function + '('
-            + ' '.join(chain(*zip(
-                        self._keywords,
-                        map(format, self.args))))[1:]
-            + ')')
-
-
 class Overlay(FunctionKeyword):
     __slots__ = ()
     _function = 'OVERLAY'
@@ -321,3 +336,111 @@ class ToNumber(Function):
 class ToTimestamp(Function):
     __slots__ = ()
     _function = 'TO_TIMESTAMP'
+
+
+class Age(Function):
+    __slots__ = ()
+    _function = 'AGE'
+
+
+class ClockTimestamp(Function):
+    __slots__ = ()
+    _function = 'CLOCK_TIMESTAMP'
+
+
+class CurrentTime(FunctionNotCallable):
+    __slots__ = ()
+    _function = 'CURRENT_TIME'
+
+
+class CurrentTimestamp(FunctionNotCallable):
+    __slots__ = ()
+    _function = 'CURRENT_TIMESTAMP'
+
+
+class DatePart(Function):
+    __slots__ = ()
+    _function = 'DATE_PART'
+
+
+class DateTrunc(Function):
+    __slots__ = ()
+    _function = 'DateTrunc'
+
+
+class Extract(FunctionKeyword):
+    __slots__ = ('field', 'source')
+    _function = 'EXTRACT'
+    _keywords = ('', 'FROM')
+
+
+class Isfinite(Function):
+    __slots__ = ()
+    _function = 'ISFINITE'
+
+
+class JustifyDays(Function):
+    __slots__ = ()
+    _function = 'JUSTIFY_DAYS'
+
+
+class JustifyHours(Function):
+    __slots__ = ()
+    _function = 'JUSTIFY_HOURS'
+
+
+class JustifyInterval(Function):
+    __slots__ = ()
+    _function = 'JUSTIFY_INTERVAL'
+
+
+class Localtime(FunctionNotCallable):
+    __slots__ = ()
+    _function = 'LOCALTIME'
+
+
+class Localtimestamp(FunctionNotCallable):
+    __slots__ = ()
+    _function = 'LOCALTIMESTAMP'
+
+
+class Now(Function):
+    __slots__ = ()
+    _function = 'NOW'
+
+
+class StatementTimestamp(Function):
+    __slots__ = ()
+    _function = 'STATEMENT_TIMESTAMP'
+
+
+class Timeofday(Function):
+    __slots__ = ()
+    _function = 'TIMEOFDAY'
+
+
+class TransactionTimestamp(Function):
+    __slots__ = ()
+    _function = 'TRANSACTION_TIMESTAMP'
+
+
+class AtTimeZone(Function):
+    __slots__ = ('field', 'zone')
+
+    def __init__(self, field, zone):
+        self.field = field
+        self.zone = zone
+
+    def __str__(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return str(Mapping(*self.args))
+        param = Flavor.get().param
+        return '%s AT TIME ZONE %s' % (str(self.field), param)
+
+    @property
+    def params(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return Mapping(self.field, self.zone).params
+        return self.field.params + (self.zone,)
