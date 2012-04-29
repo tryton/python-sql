@@ -26,6 +26,9 @@ class Function(Column):
         self.args = args
 
     def __str__(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return str(Mapping(*self.args))
         param = Flavor.get().param
 
         def format(arg):
@@ -37,6 +40,9 @@ class Function(Column):
 
     @property
     def params(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return Mapping(*self.args).params
         p = ()
         for arg in self.args:
             if isinstance(arg, basestring):
