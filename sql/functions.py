@@ -273,7 +273,7 @@ class Trim(Function):
     def __str__(self):
         Mapping = Flavor.get().function_mapping.get(self.__class__)
         if Mapping:
-            return str(Mapping(*self.args))
+            return str(Mapping(self.string, self.position, self.characters))
         param = Flavor.get().param
 
         def format(arg):
