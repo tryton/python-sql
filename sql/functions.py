@@ -10,9 +10,9 @@ __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'Sign', 'Sqrt', 'Trunc', 'WidthBucket',
     'Acos', 'Asin', 'Atan', 'Atan2', 'Cos', 'Cot', 'Sin', 'Tan',
     'BitLength', 'CharLength', 'Overlay', 'Position', 'Substring', 'Trim',
-    'Upper']
+    'Upper',
+    'ToChar', 'ToDate', 'ToNumber', 'ToTimestamp']
 
-# TODO Data formating
 # TODO Date/Time
 # TODO EXISTS, ANY/SOME, ALL
 
@@ -301,3 +301,23 @@ class Trim(Function):
 class Upper(Function):
     __slots__ = ()
     _function = 'UPPER'
+
+
+class ToChar(Function):
+    __slots__ = ()
+    _function = 'TO_CHAR'
+
+
+class ToDate(Function):
+    __slots__ = ()
+    _function = 'TO_DATE'
+
+
+class ToNumber(Function):
+    __slots__ = ()
+    _function = 'TO_NUMBER'
+
+
+class ToTimestamp(Function):
+    __slots__ = ()
+    _function = 'TO_TIMESTAMP'
