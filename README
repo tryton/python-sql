@@ -108,22 +108,22 @@ Insert query with query::
 Update query with values::
 
     >>> tuple(user.update(columns=[user.active], values=[True]))
-    ('UPDATE "user" AS "a" SET ("a"."active") = (%s)', (True,))
+    ('UPDATE "user" AS "a" SET ("active") = (%s)', (True,))
     >>> tuple(invoice.update(columns=[invoice.total], values=[invoice.amount + invoice.tax]))
-    ('UPDATE "invoice" AS "a" SET ("a"."total") = (("a"."amount" + "a"."tax"))', ())
+    ('UPDATE "invoice" AS "a" SET ("total") = (("a"."amount" + "a"."tax"))', ())
 
 Update query with where condition::
 
     >>> tuple(user.update(columns=[user.active], values=[True], where=(
     ...         user.active == False)))
-    ('UPDATE "user" AS "a" SET ("a"."active") = (%s) WHERE ("a"."active" = %s)', (True, False))
+    ('UPDATE "user" AS "a" SET ("active") = (%s) WHERE ("a"."active" = %s)', (True, False))
 
 Update query with from list::
 
     >>> group = Table('user_group')
     >>> tuple(user.update(columns=[user.active], values=[group.active],
     ...         from_=[group], where=(user.id == group.user)))
-    ('UPDATE "user" AS "a" SET ("a"."active") = ("b"."active") FROM "user_group" AS "b" WHERE ("a"."id" = "b"."user")', ())
+    ('UPDATE "user" AS "b" SET ("active") = ("a"."active") FROM "user_group" AS "a" WHERE ("b"."id" = "a"."user")', ())
 
 Delete query::
 

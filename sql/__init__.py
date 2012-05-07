@@ -420,8 +420,10 @@ class Update(Insert):
             return Flavor.get().param
 
     def __str__(self):
+        assert all(col.table == self.table for col in self.columns)
+        # Get columns without alias
+        columns = ' (' + ', '.join(map(str, self.columns)) + ')'
         with AliasManager():
-            columns = ' (' + ', '.join(map(str, self.columns)) + ')'
             from_ = ''
             if self.from_:
                 from_ = ' FROM %s' % str(self.from_)
