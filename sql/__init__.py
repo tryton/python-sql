@@ -325,6 +325,7 @@ class Insert(Query):
     def columns(self, value):
         if value is not None:
             assert all(isinstance(col, Column) for col in value)
+            assert all(col.table == self.table for col in value)
         self.__columns = value
 
     @property
@@ -353,6 +354,7 @@ class Insert(Query):
     def __str__(self):
         columns = ''
         if self.columns:
+            assert all(col.table == self.table for col in self.columns)
             columns = ' (' + ', '.join(map(str, self.columns)) + ')'
         param = Flavor.get().param
         if isinstance(self.values, list):
