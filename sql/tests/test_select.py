@@ -27,3 +27,23 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT "a".* FROM "t" AS "a" WHERE ("a"."c" = %s)')
         self.assertEqual(query.params, ('foo',))
+
+    def test_select_union(self):
+        query1 = self.table.select()
+        query2 = Table('t2').select()
+        union = query1 | query2
+        self.assertEqual(str(union),
+            'SELECT "a".* FROM "t" AS "a" UNION SELECT "b".* FROM "t2" AS "b"')
+        union.all_ = True
+        self.assertEqual(str(union),
+            'SELECT "a".* FROM "t" AS "a" UNION ALL '
+            'SELECT "b".* FROM "t2" AS "b"')
+        self.assertEqual(str(union.select()),
+            'SELECT "a".* FROM ('
+            'SELECT "b".* FROM "t" AS "b" UNION ALL '
+            'SELECT "c".* FROM "t2" AS "c") AS "a"')
+        query1.where = self.table.c == 'foo'
+        self.assertEqual(str(union),
+            'SELECT "a".* FROM "t" AS "a" WHERE ("a"."c" = %s) UNION ALL '
+            'SELECT "b".* FROM "t2" AS "b"')
+        self.assertEqual(union.params, ('foo',))

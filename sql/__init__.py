@@ -159,7 +159,6 @@ class Select(Query, FromItem):
         self.where = where
         self.group_by = group_by
         self.having = having
-        # TODO UNION|INTERSECT|EXCEPT
         self.order_by = order_by
         self.limit = limit
         self.offset = offset
@@ -293,6 +292,15 @@ class Select(Query, FromItem):
         if self.where:
             p += self.where.params
         return p
+
+    def __or__(self, other):
+        return Union(self, other)
+
+    def __and__(self, other):
+        return Interesect(self, other)
+
+    def __sub__(self, other):
+        return Except(self, other)
 
 
 class Insert(Query):
@@ -512,6 +520,42 @@ class Delete(Query):
         return self.where.params if self.where else ()
 
 
+class CombiningQuery(Query, FromItem):
+    __slots__ = ('query1', 'query2', 'all_')
+    _operator = ''
+
+    def __init__(self, query1, query2, all_=False):
+        super(CombiningQuery, self).__init__()
+        assert isinstance(query1, Select) and isinstance(query2, Select)
+        self.query1 = query1
+        self.query2 = query2
+        self.all_ = all_
+
+    def __str__(self):
+        with AliasManager():
+            return '%s %s %s%s' % (self.query1, self._operator,
+                'ALL ' if self.all_ else '', self.query2)
+
+    @property
+    def params(self):
+        return self.query1.params + self.query2.params
+
+
+class Union(CombiningQuery):
+    __slots__ = ()
+    _operator = 'UNION'
+
+
+class Interesect(CombiningQuery):
+    __slots__ = ()
+    _operator = 'INTERSECT'
+
+
+class Except(CombiningQuery):
+    __slots__ = ()
+    _operator = 'EXCEPT'
+
+
 class Table(FromItem):
     __slots__ = '__name'
 
@@ -634,7 +678,7 @@ class From(list):
 
     def __str__(self):
         def format(from_):
-            if isinstance(from_, Select):
+            if isinstance(from_, Query):
                 return '(%s) AS "%s"' % (from_, from_.alias)
             return str(from_)
         return ', '.join(map(format, self))
