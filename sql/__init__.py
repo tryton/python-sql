@@ -88,8 +88,9 @@ class AliasManager(object):
 
     @classmethod
     def __enter__(cls):
-        if cls.local.alias is None:
+        if getattr(cls.local, 'alias', None) is None:
             cls.local.alias = {}
+            cls.local.nested = 0
         cls.local.nested += 1
 
     @classmethod
@@ -100,7 +101,7 @@ class AliasManager(object):
 
     @classmethod
     def get(cls, from_):
-        if cls.local.alias is None:
+        if getattr(cls.local, 'alias', None) is None:
             return ''
         i = len(cls.local.alias)
         cls.local.alias.setdefault(from_, alias(i))
