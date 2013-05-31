@@ -1,5 +1,6 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
+from __future__ import division
 
 __version__ = '0.1'
 __all__ = ['Flavor', 'Table', 'Column', 'Join', 'Asc', 'Desc']
@@ -24,7 +25,7 @@ def alias(i, letters=string.ascii_lowercase):
     while True:
         r = i % length
         s = letters[r] + s
-        i /= length
+        i //= length
         if i == 0:
             break
     return s
