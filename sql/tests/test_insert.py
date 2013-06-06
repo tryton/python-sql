@@ -33,6 +33,6 @@ class TestInsert(unittest.TestCase):
         subquery = t2.select(t2.c1, t2.c2)
         query = t1.insert([t1.c1, t1.c2], subquery)
         self.assertEqual(str(query),
-            'INSERT INTO "t1" ("c1", "c2") VALUES '
-            '(SELECT "a"."c1", "a"."c2" FROM "t2" AS "a")')
+            'INSERT INTO "t1" ("c1", "c2") '
+            'SELECT "a"."c1", "a"."c2" FROM "t2" AS "a"')
         self.assertEqual(query.params, ())

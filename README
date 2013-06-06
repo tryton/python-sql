@@ -103,7 +103,7 @@ Insert query with query::
     >>> passwd = Table('passwd')
     >>> select = passwd.select(passwd.login, passwd.passwd)
     >>> tuple(user.insert(values=select))
-    ('INSERT INTO "user" VALUES (SELECT "a"."login", "a"."passwd" FROM "passwd" AS "a")', ())
+    ('INSERT INTO "user" SELECT "a"."login", "a"."passwd" FROM "passwd" AS "a"', ())
 
 Update query with values::
 

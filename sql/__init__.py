@@ -373,7 +373,7 @@ class Insert(Query):
                 for value in self.values)
             # TODO manage DEFAULT
         elif isinstance(self.values, Select):
-            values = ' VALUES (%s)' % str(self.values)
+            values = ' %s' % str(self.values)
         elif self.values is None:
             values = ' DEFAULT VALUES'
         returning = ''
