@@ -181,7 +181,7 @@ class Equal(BinaryOperator):
         if self.left is None:
             return '(%s IS NULL)' % self.right
         elif self.right is None:
-            return '(%s IS NULL)' % self.right
+            return '(%s IS NULL)' % self.left
         return super(Equal, self).__str__()
 
 
@@ -193,7 +193,7 @@ class NotEqual(Equal):
         if self.left is None:
             return '(%s IS NOT NULL)' % self.right
         elif self.right is None:
-            return '(%s IS NOT NULL)' % self.right
+            return '(%s IS NOT NULL)' % self.left
         return super(Equal, self).__str__()
 
 

@@ -3,7 +3,7 @@
 import unittest
 
 from sql import Table
-from sql.operators import And, Not, Less
+from sql.operators import And, Not, Less, Equal, NotEqual
 
 
 class TestOperators(unittest.TestCase):
@@ -20,3 +20,23 @@ class TestOperators(unittest.TestCase):
     def test_less(self):
         less = Less(self.table.c1, self.table.c2)
         self.assertEqual(str(less), '("c1" < "c2")')
+
+    def test_equal(self):
+        equal = Equal(self.table.c1, self.table.c2)
+        self.assertEqual(str(equal), '("c1" = "c2")')
+
+        equal = Equal(self.table.c1, None)
+        self.assertEqual(str(equal), '("c1" IS NULL)')
+
+        equal = Equal(None, self.table.c1)
+        self.assertEqual(str(equal), '("c1" IS NULL)')
+
+    def test_not_equal(self):
+        equal = NotEqual(self.table.c1, self.table.c2)
+        self.assertEqual(str(equal), '("c1" != "c2")')
+
+        equal = NotEqual(self.table.c1, None)
+        self.assertEqual(str(equal), '("c1" IS NOT NULL)')
+
+        equal = NotEqual(None, self.table.c1)
+        self.assertEqual(str(equal), '("c1" IS NOT NULL)')
