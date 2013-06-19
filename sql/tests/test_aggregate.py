@@ -12,3 +12,6 @@ class TestAggregate(unittest.TestCase):
     def test_avg(self):
         avg = Avg(self.table.c)
         self.assertEqual(str(avg), 'AVG("c")')
+
+        avg = Avg(self.table.a + self.table.b)
+        self.assertEqual(str(avg), 'AVG(("a" + "b"))')

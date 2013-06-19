@@ -1,21 +1,26 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 
-from sql import Column
+from sql import Expression
 
 __all__ = ['Avg', 'BitAnd', 'BitOr', 'BoolAnd', 'BoolOr', 'Count', 'Every',
     'Max', 'Min', 'Stddev', 'Sum', 'Variance']
 
 
-class Aggregate(Column):
-    __slots__ = ()
+class Aggregate(Expression):
+    __slots__ = ('expression')
     _sql = ''
 
-    def __init__(self, column):
-        super(Aggregate, self).__init__(column.table, column.name)
+    def __init__(self, expression):
+        super(Aggregate, self).__init__()
+        self.expression = expression
 
     def __str__(self):
-        return '%s(%s)' % (self._sql, super(Aggregate, self).__str__())
+        return '%s(%s)' % (self._sql, self.expression)
+
+    @property
+    def params(self):
+        return self.expression.params
 
 
 class Avg(Aggregate):

@@ -172,7 +172,7 @@ class Select(Query, FromItem):
 
     @columns.setter
     def columns(self, value):
-        assert all(isinstance(col, Column) for col in value)
+        assert all(isinstance(col, Expression) for col in value)
         self.__columns = tuple(value)
 
     @property
@@ -183,7 +183,7 @@ class Select(Query, FromItem):
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Column, And, Or))
+            assert isinstance(value, (Expression, And, Or))
         self.__where = value
 
     @property
@@ -193,9 +193,9 @@ class Select(Query, FromItem):
     @group_by.setter
     def group_by(self, value):
         if value is not None:
-            if isinstance(value, Column):
+            if isinstance(value, Expression):
                 value = [value]
-            assert all(isinstance(col, Column) for col in value)
+            assert all(isinstance(col, Expression) for col in value)
         self.__group_by = value
 
     @property
@@ -206,7 +206,7 @@ class Select(Query, FromItem):
     def having(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Column, And, Or))
+            assert isinstance(value, (Expression, And, Or))
         self.__having = value
 
     @property
@@ -216,9 +216,9 @@ class Select(Query, FromItem):
     @order_by.setter
     def order_by(self, value):
         if value is not None:
-            if isinstance(value, Column):
+            if isinstance(value, Expression):
                 value = [value]
-            assert all(isinstance(col, Column) for col in value)
+            assert all(isinstance(col, Expression) for col in value)
         self.__order_by = value
 
     @property
@@ -422,12 +422,12 @@ class Update(Insert):
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Column, And, Or))
+            assert isinstance(value, (Expression, And, Or))
         self.__where = value
 
     @staticmethod
     def _format(value):
-        if isinstance(value, Column):
+        if isinstance(value, Expression):
             return str(value)
         elif isinstance(value, Select):
             return '(%s)' % value
@@ -453,7 +453,7 @@ class Update(Insert):
     def params(self):
         p = ()
         for value in self.values:
-            if isinstance(value, Column):
+            if isinstance(value, Expression):
                 p += value.params
             elif isinstance(value, Select):
                 p += list(value)[1]
@@ -497,7 +497,7 @@ class Delete(Query):
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Column, And, Or))
+            assert isinstance(value, (Expression, And, Or))
         self.__where = value
 
     @property
@@ -630,7 +630,7 @@ class Join(FromItem):
     def condition(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Column, And, Or))
+            assert isinstance(value, (Expression, And, Or))
         self.__condition = value
 
     @property
@@ -702,35 +702,14 @@ class From(list):
         return From(super(From, self).__add__([other]))
 
 
-class Column(object):
-    __slots__ = ('__from', '__name')
-
-    def __init__(self, from_, name):
-        self.__from = from_
-        self.__name = name
-
-    @property
-    def table(self):
-        return self.__from
-
-    @property
-    def name(self):
-        return self.__name
+class Expression(object):
 
     def __str__(self):
-        if self.__name == '*':
-            t = '%s'
-        else:
-            t = '"%s"'
-        if self.__from.alias:
-            t = '"%s".' + t
-            return t % (self.__from.alias, self.__name)
-        else:
-            return t % self.__name
+        raise NotImplementedError
 
     @property
     def params(self):
-        return ()
+        raise NotImplementedError
 
     def __and__(self, other):
         from sql.operators import And
@@ -825,16 +804,53 @@ class Column(object):
         return ILike(self, test)
 
 
-class Order(Column):
-    __slots__ = ()
+class Column(Expression):
+    __slots__ = ('__from', '__name')
+
+    def __init__(self, from_, name):
+        super(Column, self).__init__()
+        self.__from = from_
+        self.__name = name
+
+    @property
+    def table(self):
+        return self.__from
+
+    @property
+    def name(self):
+        return self.__name
+
+    def __str__(self):
+        if self.__name == '*':
+            t = '%s'
+        else:
+            t = '"%s"'
+        if self.__from.alias:
+            t = '"%s".' + t
+            return t % (self.__from.alias, self.__name)
+        else:
+            return t % self.__name
+
+    @property
+    def params(self):
+        return ()
+
+
+class Order(Expression):
+    __slots__ = ('expression')
     _sql = ''
 
-    def __init__(self, column):
-        super(Order, self).__init__(column.table, column.name)
+    def __init__(self, expression):
+        super(Order, self).__init__()
+        self.expression = expression
         # TODO USING
 
     def __str__(self):
-        return '%s %s' % (super(Order, self).__str__(), self._sql)
+        return '%s %s' % (self.expression, self._sql)
+
+    @property
+    def params(self):
+        return self.expression.params
 
 
 class Asc(Order):

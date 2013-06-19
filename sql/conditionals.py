@@ -1,12 +1,12 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 
-from sql import Column, Flavor
+from sql import Expression, Flavor
 
 __all__ = ['Case', 'Coalesce', 'NullIf', 'Greatest', 'Least']
 
 
-class Conditional(Column):
+class Conditional(Expression):
     _sql = ''
     table = ''
     name = ''

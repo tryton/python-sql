@@ -1,7 +1,7 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 
-from sql import Column, Select, Flavor
+from sql import Expression, Select, Flavor
 
 __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
     'Equal', 'NotEqual', 'Add', 'Sub', 'Mul', 'FloorDiv', 'Mod', 'Pow',
@@ -29,10 +29,8 @@ class Operator(object):
     def params(self):
         params = ()
         for operand in self._operands:
-            if isinstance(operand, Operator):
+            if isinstance(operand, (Operator, Expression)):
                 params += operand.params
-            elif isinstance(operand, Column):
-                pass
             elif isinstance(operand, Select):
                 params += list(operand)[1]
             elif isinstance(operand, (list, tuple)):
@@ -46,7 +44,7 @@ class Operator(object):
     @staticmethod
     def _format(operand):
         param = Flavor.get().param
-        if isinstance(operand, Column):
+        if isinstance(operand, Expression):
             return str(operand)
         elif isinstance(operand, Select):
             return '(%s)' % operand
@@ -73,7 +71,7 @@ class Operator(object):
             return Or((self, other))
 
 
-class UnaryOperator(Operator, Column):
+class UnaryOperator(Operator, Expression):
     __slots__ = 'operand'
     _operator = ''
 
@@ -88,7 +86,7 @@ class UnaryOperator(Operator, Column):
         return '(%s %s)' % (self._operator, self.operand)
 
 
-class BinaryOperator(Operator, Column):
+class BinaryOperator(Operator, Expression):
     __slots__ = ('left', 'right')
     _operator = ''
 
