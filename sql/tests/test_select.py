@@ -2,7 +2,7 @@
 #this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table
+from sql import Table, Join
 
 
 class TestSelect(unittest.TestCase):
@@ -10,7 +10,7 @@ class TestSelect(unittest.TestCase):
 
     def test_select1(self):
         query = self.table.select()
-        self.assertEqual(str(query), 'SELECT "a".* FROM "t" AS "a"')
+        self.assertEqual(str(query), 'SELECT * FROM "t" AS "a"')
         self.assertEqual(query.params, ())
 
     def test_select2(self):
@@ -25,7 +25,7 @@ class TestSelect(unittest.TestCase):
     def test_select3(self):
         query = self.table.select(where=(self.table.c == 'foo'))
         self.assertEqual(str(query),
-            'SELECT "a".* FROM "t" AS "a" WHERE ("a"."c" = %s)')
+            'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s)')
         self.assertEqual(query.params, ('foo',))
 
     def test_select_union(self):
@@ -33,17 +33,27 @@ class TestSelect(unittest.TestCase):
         query2 = Table('t2').select()
         union = query1 | query2
         self.assertEqual(str(union),
-            'SELECT "a".* FROM "t" AS "a" UNION SELECT "b".* FROM "t2" AS "b"')
+            'SELECT * FROM "t" AS "a" UNION SELECT * FROM "t2" AS "b"')
         union.all_ = True
         self.assertEqual(str(union),
-            'SELECT "a".* FROM "t" AS "a" UNION ALL '
-            'SELECT "b".* FROM "t2" AS "b"')
+            'SELECT * FROM "t" AS "a" UNION ALL '
+            'SELECT * FROM "t2" AS "b"')
         self.assertEqual(str(union.select()),
-            'SELECT "a".* FROM ('
-            'SELECT "b".* FROM "t" AS "b" UNION ALL '
-            'SELECT "c".* FROM "t2" AS "c") AS "a"')
+            'SELECT * FROM ('
+            'SELECT * FROM "t" AS "b" UNION ALL '
+            'SELECT * FROM "t2" AS "c") AS "a"')
         query1.where = self.table.c == 'foo'
         self.assertEqual(str(union),
-            'SELECT "a".* FROM "t" AS "a" WHERE ("a"."c" = %s) UNION ALL '
-            'SELECT "b".* FROM "t2" AS "b"')
+            'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s) UNION ALL '
+            'SELECT * FROM "t2" AS "b"')
         self.assertEqual(union.params, ('foo',))
+
+    def test_select_join(self):
+        t1 = Table('t1')
+        t2 = Table('t2')
+        join = Join(t1, t2)
+
+        self.assertEqual(str(join.select()),
+            'SELECT * FROM "t1" AS "a" INNER JOIN "t2" AS "b"')
+        self.assertEqual(str(join.select(getattr(t1, '*'))),
+            'SELECT "a".* FROM "t1" AS "a" INNER JOIN "t2" AS "b"')

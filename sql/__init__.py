@@ -256,7 +256,10 @@ class Select(Query, FromItem):
     def __str__(self):
         with AliasManager():
             from_ = str(self.from_)
-            columns = ', '.join(map(str, self.columns))
+            if self.columns:
+                columns = ', '.join(map(str, self.columns))
+            else:
+                columns = '*'
             where = ''
             if self.where:
                 where = ' WHERE ' + str(self.where)
@@ -664,8 +667,15 @@ class Join(FromItem):
             p += self.condition.params
         return p
 
+    @property
+    def alias(self):
+        raise AttributeError
+
     def __getattr__(self, name):
         raise AttributeError
+
+    def select(self, *args, **kwargs):
+        return super(Join, self).select(*args, **kwargs)
 
 # TODO function as FromItem
 
@@ -674,8 +684,6 @@ class From(list):
     __slots__ = ()
 
     def select(self, *args, **kwargs):
-        if not args:
-            args = tuple(Column(x, '*') for x in self)
         return Select(args, from_=self, **kwargs)
 
     def __str__(self):
