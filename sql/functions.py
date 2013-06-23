@@ -367,7 +367,7 @@ class DateTrunc(Function):
 
 
 class Extract(FunctionKeyword):
-    __slots__ = ('field', 'source')
+    __slots__ = ()
     _function = 'EXTRACT'
     _keywords = ('', 'FROM')
 
