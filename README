@@ -23,6 +23,10 @@ Simple selects::
     >>> tuple(select)
     ('SELECT "a"."name" FROM "user" AS "a"', ())
 
+    >>> select = user.select(Count(Literal(1)))
+    >>> tuple(select)
+    ('SELECT COUNT(%s) FROM "user" AS "a"', (1,))
+
     >>> select = user.select(user.id, user.name)
     >>> tuple(select)
     ('SELECT "a"."id", "a"."name" FROM "user" AS "a"', ())

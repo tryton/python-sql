@@ -3,7 +3,7 @@
 from __future__ import division
 
 __version__ = '0.1'
-__all__ = ['Flavor', 'Table', 'Column', 'Join', 'Asc', 'Desc']
+__all__ = ['Flavor', 'Table', 'Literal', 'Column', 'Join', 'Asc', 'Desc']
 
 import string
 from threading import local, currentThread
@@ -802,6 +802,25 @@ class Expression(object):
     def ilike(self, test):
         from sql.operators import ILike
         return ILike(self, test)
+
+
+class Literal(Expression):
+    __slots__ = ('__value')
+
+    def __init__(self, value):
+        super(Literal, self).__init__()
+        self.__value = value
+
+    @property
+    def value(self):
+        return self.__value
+
+    def __str__(self):
+        return Flavor.get().param
+
+    @property
+    def params(self):
+        return (self.__value,)
 
 
 class Column(Expression):
