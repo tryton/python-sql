@@ -802,6 +802,14 @@ class Expression(object):
         from sql.operators import ILike
         return ILike(self, test)
 
+    @property
+    def asc(self):
+        return Asc(self)
+
+    @property
+    def desc(self):
+        return Desc(self)
+
 
 class Literal(Expression):
     __slots__ = ('__value')

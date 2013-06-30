@@ -74,7 +74,7 @@ Select with order_by::
     ('SELECT * FROM "user" AS "a" ORDER BY "a"."date"', ())
     >>> tuple(user.select(order_by=Asc(user.date)))
     ('SELECT * FROM "user" AS "a" ORDER BY "a"."date" ASC', ())
-    >>> tuple(user.select(order_by=(Asc(user.date), Desc(user.id))))
+    >>> tuple(user.select(order_by=(user.date.asc, user.id.desc)))
     ('SELECT * FROM "user" AS "a" ORDER BY "a"."date" ASC, "a"."id" DESC', ())
 
 Select with sub-select::
