@@ -3,6 +3,7 @@
 import unittest
 
 from sql import Table, Join
+from sql.functions import Now
 
 
 class TestSelect(unittest.TestCase):
@@ -57,3 +58,15 @@ class TestSelect(unittest.TestCase):
             'SELECT * FROM "t1" AS "a" INNER JOIN "t2" AS "b"')
         self.assertEqual(str(join.select(getattr(t1, '*'))),
             'SELECT "a".* FROM "t1" AS "a" INNER JOIN "t2" AS "b"')
+
+    def test_select_subselect(self):
+        t1 = Table('t1')
+        select = t1.select()
+        self.assertEqual(str(select.select()),
+            'SELECT * FROM (SELECT * FROM "t1" AS "b") AS "a"')
+        self.assertEqual(select.params, ())
+
+    def test_select_function(self):
+        query = Now().select()
+        self.assertEqual(str(query), 'SELECT * FROM NOW() AS "a"')
+        self.assertEqual(query.params, ())

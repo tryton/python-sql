@@ -3,7 +3,7 @@
 
 from itertools import chain
 
-from sql import Expression, Flavor
+from sql import Expression, Flavor, FromItem
 
 __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'Log', 'Mod', 'Pi', 'Power', 'Radians', 'Random', 'Round', 'SetSeed',
@@ -21,7 +21,7 @@ __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
 # Mathematical
 
 
-class Function(Expression):
+class Function(Expression, FromItem):
     __slots__ = ('args',)
     table = ''
     name = ''

@@ -451,7 +451,7 @@ class Update(Insert):
             where = ''
             if self.where:
                 where = ' WHERE ' + str(self.where)
-            return ('UPDATE %s SET' % self.table + columns + values + from_
+            return ('UPDATE %s SET' % From([self.table]) + columns + values + from_
                 + where)
 
     @property
@@ -574,10 +574,7 @@ class Table(FromItem):
         self.__name = name
 
     def __str__(self):
-        if self.alias:
-            return '"%s" AS "%s"' % (self.__name, self.alias)
-        else:
-            return '"%s"' % self.__name
+        return '"%s"' % self.__name
 
     @property
     def params(self):
@@ -650,12 +647,8 @@ class Join(FromItem):
         self.__type_ = value
 
     def __str__(self):
-        def format(from_):
-            if isinstance(from_, Select):
-                return '(%s)' % from_
-            return str(from_)
-        join = '%s %s JOIN %s' % (format(self.left), self.type_,
-            format(self.right))
+        join = '%s %s JOIN %s' % (From([self.left]), self.type_,
+            From([self.right]))
         if self.condition:
             condition = ' ON %s' % self.condition
         else:
@@ -682,8 +675,6 @@ class Join(FromItem):
     def select(self, *args, **kwargs):
         return super(Join, self).select(*args, **kwargs)
 
-# TODO function as FromItem
-
 
 class From(list):
     __slots__ = ()
@@ -695,7 +686,10 @@ class From(list):
         def format(from_):
             if isinstance(from_, Query):
                 return '(%s) AS "%s"' % (from_, from_.alias)
-            return str(from_)
+            elif not hasattr(from_, 'alias'):
+                return str(from_)
+            else:
+                return '%s AS "%s"' % (from_, from_.alias)
         return ', '.join(map(format, self))
 
     @property
