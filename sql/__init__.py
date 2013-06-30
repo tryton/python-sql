@@ -451,8 +451,8 @@ class Update(Insert):
             where = ''
             if self.where:
                 where = ' WHERE ' + str(self.where)
-            return ('UPDATE %s SET' % From([self.table]) + columns + values + from_
-                + where)
+            return ('UPDATE %s SET' % From([self.table]) + columns + values +
+                from_ + where)
 
     @property
     def params(self):
