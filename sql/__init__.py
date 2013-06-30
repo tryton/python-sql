@@ -349,9 +349,6 @@ class Insert(Query):
     def values(self, value):
         if value is not None:
             assert isinstance(value, (list, Select))
-            if isinstance(value, list):
-                if not all(isinstance(x, list) for x in value):
-                    value = [value]
         self.__values = value
 
     @property
@@ -364,16 +361,24 @@ class Insert(Query):
             assert isinstance(value, list)
         self.__returning = value
 
+    @staticmethod
+    def _format(value):
+        if isinstance(value, Expression):
+            return str(value)
+        elif isinstance(value, Select):
+            return '(%s)' % value
+        else:
+            return Flavor.get().param
+
     def __str__(self):
         columns = ''
         if self.columns:
             assert all(col.table == self.table for col in self.columns)
             columns = ' (' + ', '.join(map(str, self.columns)) + ')'
-        param = Flavor.get().param
         if isinstance(self.values, list):
             values = ' VALUES ' + ', '.join(
-                '(' + ', '.join((param,) * len(value)) + ')'
-                for value in self.values)
+                '(' + ', '.join(map(self._format, v)) + ')'
+                for v in self.values)
             # TODO manage DEFAULT
         elif isinstance(self.values, Select):
             values = ' %s' % str(self.values)
@@ -387,7 +392,16 @@ class Insert(Query):
     @property
     def params(self):
         if isinstance(self.values, list):
-            return sum((tuple(value) for value in self.values), ())
+            p = ()
+            for values in self.values:
+                for value in values:
+                    if isinstance(value, Expression):
+                        p += value.params
+                    elif isinstance(value, Select):
+                        p += list(value)[1]
+                    else:
+                        p += (value,)
+            return p
         elif isinstance(self.values, Select):
             return list(self.values)[1]
         else:
@@ -424,15 +438,6 @@ class Update(Insert):
         if value is not None:
             assert isinstance(value, (Expression, And, Or))
         self.__where = value
-
-    @staticmethod
-    def _format(value):
-        if isinstance(value, Expression):
-            return str(value)
-        elif isinstance(value, Select):
-            return '(%s)' % value
-        else:
-            return Flavor.get().param
 
     def __str__(self):
         assert all(col.table == self.table for col in self.columns)

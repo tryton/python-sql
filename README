@@ -96,7 +96,7 @@ Insert query with default values::
 Insert query with values::
 
     >>> tuple(user.insert(columns=[user.name, user.login],
-    ...         values=['Foo', 'foo']))
+    ...         values=[['Foo', 'foo']]))
     ('INSERT INTO "user" ("name", "login") VALUES (%s, %s)', ('Foo', 'foo'))
     >>> tuple(user.insert(columns=[user.name, user.login],
     ...         values=[['Foo', 'foo'], ['Bar', 'bar']]))
