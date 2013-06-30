@@ -15,8 +15,8 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(abs_.params, ())
 
         abs_ = Abs(-12)
-        self.assertEqual(str(abs_), 'ABS(-12)')
-        self.assertEqual(abs_.params, ())
+        self.assertEqual(str(abs_), 'ABS(%s)')
+        self.assertEqual(abs_.params, (-12,))
 
     def test_mapping(self):
         class MyAbs(Function):
@@ -36,11 +36,11 @@ class TestFunctions(unittest.TestCase):
 
     def test_overlay(self):
         overlay = Overlay(self.table.c1, 'test', 3)
-        self.assertEqual(str(overlay), 'OVERLAY("c1" PLACING %s FROM 3)')
-        self.assertEqual(overlay.params, ('test',))
+        self.assertEqual(str(overlay), 'OVERLAY("c1" PLACING %s FROM %s)')
+        self.assertEqual(overlay.params, ('test', 3))
         overlay = Overlay(self.table.c1, 'test', 3, 7)
-        self.assertEqual(str(overlay), 'OVERLAY("c1" PLACING %s FROM 3 TO 7)')
-        self.assertEqual(overlay.params, ('test',))
+        self.assertEqual(str(overlay), 'OVERLAY("c1" PLACING %s FROM %s TO %s)')
+        self.assertEqual(overlay.params, ('test', 3, 7))
 
     def test_trim(self):
         trim = Trim(' test ')

@@ -30,18 +30,19 @@ class Function(Expression):
     def __init__(self, *args):
         self.args = args
 
+    @staticmethod
+    def _format(value):
+        if isinstance(value, Expression):
+            return str(value)
+        else:
+            return Flavor().get().param
+
     def __str__(self):
         Mapping = Flavor.get().function_mapping.get(self.__class__)
         if Mapping:
             return str(Mapping(*self.args))
-        param = Flavor.get().param
-
-        def format(arg):
-            if isinstance(arg, basestring):
-                return param
-            else:
-                return str(arg)
-        return self._function + '(' + ', '.join(map(format, self.args)) + ')'
+        return self._function + '(' + ', '.join(
+            map(self._format, self.args)) + ')'
 
     @property
     def params(self):
@@ -50,10 +51,10 @@ class Function(Expression):
             return Mapping(*self.args).params
         p = ()
         for arg in self.args:
-            if isinstance(arg, basestring):
-                p += (arg,)
-            elif hasattr(arg, 'params'):
+            if isinstance(arg, Expression):
                 p += arg.params
+            else:
+                p += (arg,)
         return p
 
 
@@ -66,17 +67,10 @@ class FunctionKeyword(Function):
         Mapping = Flavor.get().function_mapping.get(self.__class__)
         if Mapping:
             return str(Mapping(*self.args))
-        param = Flavor.get().param
-
-        def format(arg):
-            if isinstance(arg, basestring):
-                return param
-            else:
-                return str(arg)
         return (self._function + '('
             + ' '.join(chain(*zip(
                         self._keywords,
-                        map(format, self.args))))[1:]
+                        map(self._format, self.args))))[1:]
             + ')')
 
 
