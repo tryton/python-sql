@@ -138,6 +138,9 @@ class FromItem(object):
     def select(self, *args, **kwargs):
         return From((self,)).select(*args, **kwargs)
 
+    def join(self, right, type_='INNER', condition=None):
+        return Join(self, right, type_=type_, condition=condition)
+
 
 class Select(Query, FromItem):
     __slots__ = ('__columns', '__where', '__group_by', '__having',

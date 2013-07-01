@@ -46,7 +46,7 @@ Select with where condition::
 
 Select with join::
 
-    >>> join = Join(user, Table('user_group'))
+    >>> join = user.join(Table('user_group'))
     >>> join.condition = join.right.user == user.id
     >>> select = join.select(user.name, join.right.group)
     >>> tuple(select)
@@ -54,8 +54,8 @@ Select with join::
 
 Select with multiple joins::
 
-    >>> join1 = Join(user, Table('user'))
-    >>> join2 = Join(join1, Table('user'))
+    >>> join1 = user.join(Table('user'))
+    >>> join2 = join1.join(Table('user'))
     >>> select = join2.select(user.id, join1.right.id, join2.right.id)
     >>> tuple(select)
     ('SELECT "a"."id", "b"."id", "c"."id" FROM "user" AS "a" INNER JOIN "user" AS "b" INNER JOIN "user" AS "c"', ())
