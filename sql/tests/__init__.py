@@ -8,6 +8,7 @@ import doctest
 import sql
 
 here = os.path.dirname(__file__)
+readme = os.path.normpath(os.path.join(here, '..', '..', 'README'))
 
 
 def test_suite():
@@ -26,6 +27,9 @@ def additional_tests():
     suite = unittest.TestSuite()
     for mod in (sql,):
         suite.addTest(doctest.DocTestSuite(mod))
+    if os.path.isfile(readme):
+        suite.addTest(doctest.DocFileSuite(readme, module_relative=False,
+                tearDown=lambda t: sql.Flavor.set(sql.Flavor())))
     return suite
 
 
