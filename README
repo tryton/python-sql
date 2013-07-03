@@ -68,6 +68,11 @@ Select with group_by::
     >>> tuple(select)
     ('SELECT SUM("a"."amount"), "a"."currency" FROM "invoice" AS "a" GROUP BY "a"."currency"', ())
 
+Select with output name::
+
+    >>> tuple(user.select(user.name.as_('First Name')))
+    ('SELECT "a"."name" AS "First Name" FROM "user" AS "a"', ())
+
 Select with order_by::
 
     >>> tuple(user.select(order_by=user.date))

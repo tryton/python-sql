@@ -256,11 +256,18 @@ class Select(Query, FromItem):
             assert isinstance(all(isinstance(f, For) for f in value))
         self.__for_ = value
 
+    @staticmethod
+    def _format_column(column):
+        if isinstance(column, As):
+            return '%s AS %s' % (column.expression, column)
+        else:
+            return str(column)
+
     def __str__(self):
         with AliasManager():
             from_ = str(self.from_)
             if self.columns:
-                columns = ', '.join(map(str, self.columns))
+                columns = ', '.join(map(self._format_column, self.columns))
             else:
                 columns = '*'
             where = ''
@@ -295,6 +302,8 @@ class Select(Query, FromItem):
     def params(self):
         p = ()
         for column in self.columns:
+            if isinstance(column, As):
+                p += column.expression.params
             p += column.params
         p += self.from_.params
         if self.where:
@@ -805,6 +814,9 @@ class Expression(object):
         from sql.operators import ILike
         return ILike(self, test)
 
+    def as_(self, output_name):
+        return As(self, output_name)
+
     @property
     def asc(self):
         return Asc(self)
@@ -859,6 +871,22 @@ class Column(Expression):
             return t % (self.__from.alias, self.__name)
         else:
             return t % self.__name
+
+    @property
+    def params(self):
+        return ()
+
+
+class As(Expression):
+    __slots__ = ('expression', 'output_name')
+
+    def __init__(self, expression, output_name):
+        super(As, self).__init__()
+        self.expression = expression
+        self.output_name = output_name
+
+    def __str__(self):
+        return '"%s"' % self.output_name
 
     @property
     def params(self):

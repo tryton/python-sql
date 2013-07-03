@@ -70,3 +70,16 @@ class TestSelect(unittest.TestCase):
         query = Now().select()
         self.assertEqual(str(query), 'SELECT * FROM NOW() AS "a"')
         self.assertEqual(query.params, ())
+
+    def test_select_group_by(self):
+        column = self.table.c
+        query = self.table.select(column, group_by=column)
+        self.assertEqual(str(query),
+            'SELECT "a"."c" FROM "t" AS "a" GROUP BY "a"."c"')
+        self.assertEqual(query.params, ())
+
+        output = column.as_('c1')
+        query = self.table.select(output, group_by=output)
+        self.assertEqual(str(query),
+            'SELECT "a"."c" AS "c1" FROM "t" AS "a" GROUP BY "c1"')
+        self.assertEqual(query.params, ())
