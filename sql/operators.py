@@ -168,12 +168,12 @@ class Equal(BinaryOperator):
     _operator = '='
 
     @property
-    def params(self):
+    def _operands(self):
         if self.left is None:
             return (self.right,)
         elif self.right is None:
-            return (self.right,)
-        return super(Equal, self).params
+            return (self.left,)
+        return super(Equal, self)._operands
 
     def __str__(self):
         if self.left is None:
