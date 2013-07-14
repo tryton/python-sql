@@ -10,12 +10,12 @@ class TestUpdate(unittest.TestCase):
 
     def test_update1(self):
         query = self.table.update([self.table.c], ['foo'])
-        self.assertEqual(str(query), 'UPDATE "t" AS "a" SET ("c") = (%s)')
+        self.assertEqual(str(query), 'UPDATE "t" SET "c" = %s')
         self.assertEqual(query.params, ('foo',))
 
         query.where = (self.table.b == True)
         self.assertEqual(str(query),
-            'UPDATE "t" AS "a" SET ("c") = (%s) WHERE ("a"."b" = %s)')
+            'UPDATE "t" SET "c" = %s WHERE ("b" = %s)')
         self.assertEqual(query.params, ('foo', True))
 
     def test_update2(self):
@@ -23,6 +23,6 @@ class TestUpdate(unittest.TestCase):
         t2 = Table('t2')
         query = t1.update([t1.c], ['foo'], from_=[t2], where=(t1.c == t2.c))
         self.assertEqual(str(query),
-            'UPDATE "t1" AS "b" SET ("c") = (%s) FROM "t2" AS "a" '
+            'UPDATE "t1" AS "b" SET "c" = %s FROM "t2" AS "a" '
             'WHERE ("b"."c" = "a"."c")')
         self.assertEqual(query.params, ('foo',))

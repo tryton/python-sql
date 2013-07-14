@@ -454,17 +454,24 @@ class Update(Insert):
     def __str__(self):
         assert all(col.table == self.table for col in self.columns)
         # Get columns without alias
-        columns = ' (' + ', '.join(map(str, self.columns)) + ')'
-        with AliasManager():
+        columns = map(str, self.columns)
+
+        def format():
             from_ = ''
             if self.from_:
                 from_ = ' FROM %s' % str(self.from_)
-            values = ' = (' + ', '.join(map(self._format, self.values)) + ')'
+            values = ', '.join('%s = %s' % (c, self._format(v))
+                for c, v in zip(columns, self.values))
             where = ''
             if self.where:
                 where = ' WHERE ' + str(self.where)
-            return ('UPDATE %s SET' % From([self.table]) + columns + values +
-                from_ + where)
+            return ('UPDATE %s SET ' % From([self.table]) + values + from_ +
+                where)
+        if self.from_:
+            with AliasManager():
+                return format()
+        else:
+            return format()
 
     @property
     def params(self):
@@ -698,10 +705,10 @@ class From(list):
         def format(from_):
             if isinstance(from_, Query):
                 return '(%s) AS "%s"' % (from_, from_.alias)
-            elif not hasattr(from_, 'alias'):
-                return str(from_)
-            else:
+            elif getattr(from_, 'alias', None):
                 return '%s AS "%s"' % (from_, from_.alias)
+            else:
+                return str(from_)
         return ', '.join(map(format, self))
 
     @property
