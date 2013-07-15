@@ -2,8 +2,9 @@
 #this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, Join
+from sql import Table, Join, Literal
 from sql.functions import Now
+from sql.aggregate import Min
 
 
 class TestSelect(unittest.TestCase):
@@ -83,3 +84,25 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT "a"."c" AS "c1" FROM "t" AS "a" GROUP BY "c1"')
         self.assertEqual(query.params, ())
+
+        query = self.table.select(Literal('foo'), group_by=Literal('foo'))
+        self.assertEqual(str(query),
+            'SELECT %s FROM "t" AS "a" GROUP BY %s')
+        self.assertEqual(query.params, ('foo', 'foo'))
+
+    def test_select_having(self):
+        col1 = self.table.col1
+        col2 = self.table.col2
+        query = self.table.select(col1, Min(col2),
+            having=(Min(col2) > 3))
+        self.assertEqual(str(query),
+            'SELECT "a"."col1", MIN("a"."col2") FROM "t" AS "a" '
+            'HAVING (MIN("a"."col2") > %s)')
+        self.assertEqual(query.params, (3,))
+
+    def test_select_order(self):
+        c = self.table.c
+        query = self.table.select(c, order_by=Literal(1))
+        self.assertEqual(str(query),
+            'SELECT "a"."c" FROM "t" AS "a" ORDER BY %s')
+        self.assertEqual(query.params, (1,))

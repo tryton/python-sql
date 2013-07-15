@@ -308,6 +308,14 @@ class Select(Query, FromItem):
         p += self.from_.params
         if self.where:
             p += self.where.params
+        if self.group_by:
+            for expression in self.group_by:
+                p += expression.params
+        if self.having:
+            p += self.having.params
+        if self.order_by:
+            for expression in self.order_by:
+                p += expression.params
         return p
 
     def __or__(self, other):
