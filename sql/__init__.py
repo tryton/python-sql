@@ -805,6 +805,9 @@ class Expression(object):
         from sql.operators import Equal
         return Equal(self, other)
 
+    # When overriding __eq__, __hash__ is implicitly set to None
+    __hash__ = object.__hash__
+
     def __ne__(self, other):
         from sql.operators import NotEqual
         return NotEqual(self, other)
