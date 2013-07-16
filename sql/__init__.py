@@ -728,6 +728,7 @@ class From(list):
 
 
 class Expression(object):
+    __slots__ = ()
 
     def __str__(self):
         raise NotImplementedError

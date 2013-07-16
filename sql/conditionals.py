@@ -7,6 +7,7 @@ __all__ = ['Case', 'Coalesce', 'NullIf', 'Greatest', 'Least']
 
 
 class Conditional(Expression):
+    __slots__ = ()
     _sql = ''
     table = ''
     name = ''
@@ -85,12 +86,15 @@ class Coalesce(Conditional):
 
 
 class NullIf(Coalesce):
+    __slots__ = ()
     _conditional = 'NULLIF'
 
 
 class Greatest(Coalesce):
+    __slots__ = ()
     _conditional = 'GREATEST'
 
 
 class Least(Coalesce):
+    __slots__ = ()
     _conditional = 'LEAST'
