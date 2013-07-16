@@ -2,7 +2,7 @@
 #this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, Join, Literal
+from sql import Table, Join, Union, Literal
 from sql.functions import Now
 from sql.aggregate import Min
 
@@ -49,6 +49,10 @@ class TestSelect(unittest.TestCase):
             'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s) UNION ALL '
             'SELECT * FROM "t2" AS "b"')
         self.assertEqual(union.params, ('foo',))
+
+        union = Union(query1)
+        self.assertEqual(str(union), str(query1))
+        self.assertEqual(union.params, query1.params)
 
     def test_select_join(self):
         t1 = Table('t1')

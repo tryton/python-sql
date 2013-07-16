@@ -558,24 +558,23 @@ class Delete(Query):
 
 
 class CombiningQuery(Query, FromItem):
-    __slots__ = ('query1', 'query2', 'all_')
+    __slots__ = ('queries', 'all_')
     _operator = ''
 
-    def __init__(self, query1, query2, all_=False):
+    def __init__(self, *queries, **kwargs):
         super(CombiningQuery, self).__init__()
-        assert isinstance(query1, Select) and isinstance(query2, Select)
-        self.query1 = query1
-        self.query2 = query2
-        self.all_ = all_
+        assert all(isinstance(q, Select) for q in queries)
+        self.queries = queries
+        self.all_ = kwargs.get('all_', False)
 
     def __str__(self):
         with AliasManager():
-            return '%s %s %s%s' % (self.query1, self._operator,
-                'ALL ' if self.all_ else '', self.query2)
+            operator = ' %s %s' % (self._operator, 'ALL ' if self.all_ else '')
+            return operator.join(map(str, self.queries))
 
     @property
     def params(self):
-        return self.query1.params + self.query2.params
+        return sum((q.params for q in self.queries), ())
 
 
 class Union(CombiningQuery):
