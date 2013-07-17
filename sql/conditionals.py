@@ -16,8 +16,8 @@ class Conditional(Expression):
 class Case(Conditional):
     __slots__ = ('whens', 'else_')
 
-    def __init__(self, *args, **kwargs):
-        self.whens = args
+    def __init__(self, *whens, **kwargs):
+        self.whens = whens
         self.else_ = kwargs.get('else_')
 
     def __str__(self):
@@ -60,8 +60,8 @@ class Coalesce(Conditional):
     __slots__ = ('values')
     _conditional = 'COALESCE'
 
-    def __init__(self, *args):
-        self.values = args
+    def __init__(self, *values):
+        self.values = values
 
     def __str__(self):
         param = Flavor.get().param
