@@ -142,31 +142,94 @@ class FromItem(object):
         return Join(self, right, type_=type_, condition=condition)
 
 
-class Select(Query, FromItem):
-    __slots__ = ('__columns', '__where', '__group_by', '__having',
-        '__order_by', '__limit', '__offset', '__for_', 'from_')
+class _SelectQueryMixin(object):
+    __slots__ = ('__order_by', '__limit', '__offset')
+
+    def __init__(self, *args, **kwargs):
+        self.__order_by = None
+        self.__limit = None
+        self.__offset = None
+        self.order_by = kwargs.pop('order_by', None)
+        self.limit = kwargs.pop('limit', None)
+        self.offset = kwargs.pop('offset', None)
+        super(_SelectQueryMixin, self).__init__(*args, **kwargs)
+
+    @property
+    def order_by(self):
+        return self.__order_by
+
+    @order_by.setter
+    def order_by(self, value):
+        if value is not None:
+            if isinstance(value, Expression):
+                value = [value]
+            assert all(isinstance(col, Expression) for col in value)
+        self.__order_by = value
+
+    @property
+    def _order_by_str(self):
+        order_by = ''
+        if self.order_by:
+            order_by = ' ORDER BY ' + ', '.join(map(str, self.order_by))
+        return order_by
+
+    @property
+    def limit(self):
+        return self.__limit
+
+    @limit.setter
+    def limit(self, value):
+        if value is not None:
+            assert isinstance(value, (int, long))
+        self.__limit = value
+
+    @property
+    def _limit_str(self):
+        limit = ''
+        if self.limit is not None:
+            limit = ' LIMIT %s' % self.limit
+        elif self.offset is not None:
+            max_limit = Flavor.get().max_limit
+            if max_limit:
+                limit = ' LIMIT %s' % max_limit
+        return limit
+
+    @property
+    def offset(self):
+        return self.__offset
+
+    @offset.setter
+    def offset(self, value):
+        if value is not None:
+            assert isinstance(value, (int, long))
+        self.__offset = value
+
+    @property
+    def _offset_str(self):
+        offset = ''
+        if self.offset:
+            offset = ' OFFSET %s' % self.offset
+        return offset
+
+
+class Select(Query, FromItem, _SelectQueryMixin):
+    __slots__ = ('__columns', '__where', '__group_by', '__having', '__for_',
+        'from_')
 
     def __init__(self, columns, from_=None, where=None, group_by=None,
-            having=None, order_by=None, limit=None, offset=None,
-            for_=None):
-        super(Select, self).__init__()
+            having=None, for_=None, **kwargs):
         self.__columns = None
         self.__where = None
         self.__group_by = None
         self.__having = None
-        self.__order_by = None
-        self.__limit = None
-        self.__offset = None
         self.__for_ = None
+        super(Select, self).__init__(**kwargs)
         # TODO ALL|DISTINCT
         self.columns = columns
         self.from_ = from_
         self.where = where
         self.group_by = group_by
         self.having = having
-        self.order_by = order_by
-        self.limit = limit
-        self.offset = offset
         self.for_ = for_
 
     @property
@@ -213,38 +276,6 @@ class Select(Query, FromItem):
         self.__having = value
 
     @property
-    def order_by(self):
-        return self.__order_by
-
-    @order_by.setter
-    def order_by(self, value):
-        if value is not None:
-            if isinstance(value, Expression):
-                value = [value]
-            assert all(isinstance(col, Expression) for col in value)
-        self.__order_by = value
-
-    @property
-    def limit(self):
-        return self.__limit
-
-    @limit.setter
-    def limit(self, value):
-        if value is not None:
-            assert isinstance(value, (int, long))
-        self.__limit = value
-
-    @property
-    def offset(self):
-        return self.__offset
-
-    @offset.setter
-    def offset(self, value):
-        if value is not None:
-            assert isinstance(value, (int, long))
-        self.__offset = value
-
-    @property
     def for_(self):
         return self.__for_
 
@@ -279,24 +310,12 @@ class Select(Query, FromItem):
             having = ''
             if self.having:
                 having = ' HAVING ' + str(self.having)
-            order_by = ''
-            if self.order_by:
-                order_by = ' ORDER BY ' + ', '.join(map(str, self.order_by))
-            limit = ''
-            if self.limit is not None:
-                limit = ' LIMIT %s' % self.limit
-            elif self.offset is not None:
-                max_limit = Flavor.get().max_limit
-                if max_limit:
-                    limit = ' LIMIT %s' % max_limit
-            offset = ''
-            if self.offset:
-                offset = ' OFFSET %s' % self.offset
             for_ = ''
             if self.for_ is not None:
                 for_ = ' '.join(self.for_)
             return ('SELECT %s FROM %s' % (columns, from_) + where + group_by
-                + having + order_by + limit + offset + for_)
+                + having + self._order_by_str + self._limit_str +
+                self._offset_str + for_)
 
     @property
     def params(self):
@@ -557,24 +576,29 @@ class Delete(Query):
         return self.where.params if self.where else ()
 
 
-class CombiningQuery(Query, FromItem):
+class CombiningQuery(Query, FromItem, _SelectQueryMixin):
     __slots__ = ('queries', 'all_')
     _operator = ''
 
     def __init__(self, *queries, **kwargs):
-        super(CombiningQuery, self).__init__()
         assert all(isinstance(q, Select) for q in queries)
         self.queries = queries
-        self.all_ = kwargs.get('all_', False)
+        self.all_ = kwargs.pop('all_', False)
+        super(CombiningQuery, self).__init__(**kwargs)
 
     def __str__(self):
         with AliasManager():
             operator = ' %s %s' % (self._operator, 'ALL ' if self.all_ else '')
-            return operator.join(map(str, self.queries))
+            return (operator.join(map(str, self.queries)) + self._order_by_str
+                + self._limit_str + self._offset_str)
 
     @property
     def params(self):
-        return sum((q.params for q in self.queries), ())
+        p = sum((q.params for q in self.queries), ())
+        if self.order_by:
+            for expression in self.order_by:
+                p += expression.params
+        return p
 
 
 class Union(CombiningQuery):

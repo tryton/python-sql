@@ -54,6 +54,17 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(union), str(query1))
         self.assertEqual(union.params, query1.params)
 
+    def test_select_union_order(self):
+        query1 = self.table.select()
+        query2 = Table('t2').select()
+        union = query1 | query2
+        union.order_by = Literal(1)
+        self.assertEqual(str(union),
+            'SELECT * FROM "t" AS "a" UNION '
+            'SELECT * FROM "t2" AS "b" '
+            'ORDER BY %s')
+        self.assertEqual(union.params, (1,))
+
     def test_select_join(self):
         t1 = Table('t1')
         t2 = Table('t2')
