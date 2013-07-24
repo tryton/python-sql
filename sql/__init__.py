@@ -859,6 +859,9 @@ class Expression(object):
     def as_(self, output_name):
         return As(self, output_name)
 
+    def cast(self, typename):
+        return Cast(self, typename)
+
     @property
     def asc(self):
         return Asc(self)
@@ -933,6 +936,22 @@ class As(Expression):
     @property
     def params(self):
         return ()
+
+
+class Cast(Expression):
+    __slots__ = ('expression', 'typename')
+
+    def __init__(self, expression, typename):
+        super(Expression, self).__init__()
+        self.expression = expression
+        self.typename = typename
+
+    def __str__(self):
+        return 'CAST(%s AS %s)' % (self.expression, self.typename)
+
+    @property
+    def params(self):
+        return self.expression.params
 
 
 class Order(Expression):
