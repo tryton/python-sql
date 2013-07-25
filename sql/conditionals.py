@@ -12,6 +12,13 @@ class Conditional(Expression):
     table = ''
     name = ''
 
+    @staticmethod
+    def _format(value):
+        if isinstance(value, Expression):
+            return str(value)
+        else:
+            return Flavor().get().param
+
 
 class Case(Conditional):
     __slots__ = ('whens', 'else_')
@@ -22,17 +29,11 @@ class Case(Conditional):
 
     def __str__(self):
         case = 'CASE '
-        param = Flavor.get().param
         for cond, result in self.whens:
-            case += 'WHEN ' + str(cond)
-            if isinstance(result, basestring):
-                result = param
-            case += ' THEN ' + str(result) + ' '
+            case += 'WHEN %s THEN %s ' % (
+                self._format(cond), self._format(result))
         if self.else_ is not None:
-            else_ = self.else_
-            if isinstance(self.else_, basestring):
-                else_ = param
-            case += 'ELSE ' + str(else_) + ' '
+            case += 'ELSE %s ' % self._format(self.else_)
         case += 'END'
         return case
 
@@ -40,18 +41,18 @@ class Case(Conditional):
     def params(self):
         p = ()
         for cond, result in self.whens:
-            if hasattr(cond, 'params'):
+            if isinstance(cond, Expression):
                 p += cond.params
-            elif isinstance(cond, basestring):
+            else:
                 p += (cond,)
-            if hasattr(result, 'params'):
+            if isinstance(result, Expression):
                 p += result.params
-            elif isinstance(result, basestring):
+            else:
                 p += (result,)
         if self.else_ is not None:
-            if hasattr(self.else_, 'params'):
+            if isinstance(self.else_, Expression):
                 p += self.else_.params
-            elif isinstance(self.else_, basestring):
+            else:
                 p += (self.else_,)
         return p
 
@@ -64,24 +65,17 @@ class Coalesce(Conditional):
         self.values = values
 
     def __str__(self):
-        param = Flavor.get().param
-
-        def format(value):
-            if isinstance(value, basestring):
-                return param
-            else:
-                return str(value)
         return (self._conditional
-            + '(' + ', '.join(map(format, self.values)) + ')')
+            + '(' + ', '.join(map(self._format, self.values)) + ')')
 
     @property
     def params(self):
         p = ()
         for value in self.values:
-            if isinstance(value, basestring):
-                p += (value,)
-            elif hasattr(value, 'params'):
+            if isinstance(value, Expression):
                 p += value.params
+            else:
+                p += (value,)
         return p
 
 

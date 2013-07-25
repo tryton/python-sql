@@ -19,6 +19,15 @@ class TestConditionals(unittest.TestCase):
             'ELSE "c3" END')
         self.assertEqual(case.params, ('foo', 'bar'))
 
+    def test_case_no_expression(self):
+        case = Case((True, self.table.c1), (self.table.c2, False),
+            else_=False)
+        self.assertEqual(str(case),
+            'CASE WHEN %s THEN "c1" '
+            'WHEN "c2" THEN %s '
+            'ELSE %s END')
+        self.assertEqual(case.params, (True, False, False))
+
     def test_coalesce(self):
         coalesce = Coalesce(self.table.c1, self.table.c2, 'foo')
         self.assertEqual(str(coalesce), 'COALESCE("c1", "c2", %s)')
