@@ -947,11 +947,19 @@ class Cast(Expression):
         self.typename = typename
 
     def __str__(self):
-        return 'CAST(%s AS %s)' % (self.expression, self.typename)
+        param = Flavor.get().param
+        if isinstance(self.expression, Expression):
+            value = self.expression
+        else:
+            value = param
+        return 'CAST(%s AS %s)' % (value, self.typename)
 
     @property
     def params(self):
-        return self.expression.params
+        if isinstance(self.expression, Expression):
+            return self.expression.params
+        else:
+            return (self.expression,)
 
 
 class Order(Expression):
