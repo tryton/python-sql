@@ -1,7 +1,7 @@
 #This file is part of python-sql.  The COPYRIGHT file at the top level of
 #this repository contains the full copyright notices and license terms.
 
-from sql import Expression, Select, Flavor
+from sql import Expression, Select, CombiningQuery, Flavor
 
 __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
     'Equal', 'NotEqual', 'Add', 'Sub', 'Mul', 'FloorDiv', 'Mod', 'Pow',
@@ -10,7 +10,7 @@ __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
     'NotILike', 'In', 'NotIn', 'Exists', 'Any', 'Some', 'All']
 
 
-class Operator(object):
+class Operator(Expression):
     __slots__ = ()
 
     @property
@@ -27,29 +27,31 @@ class Operator(object):
 
     @property
     def params(self):
-        params = ()
-        for operand in self._operands:
-            if isinstance(operand, (Operator, Expression)):
-                params += operand.params
-            elif isinstance(operand, Select):
-                params += list(operand)[1]
-            elif isinstance(operand, (list, tuple)):
-                params += tuple(operand)
-            elif operand is None:
-                pass
-            else:
-                params += (operand,)
-        return params
 
-    @staticmethod
-    def _format(operand):
+        def convert(operands):
+            params = ()
+            for operand in operands:
+                if isinstance(operand, Expression):
+                    params += operand.params
+                elif isinstance(operand, (Select, CombiningQuery)):
+                    params += list(operand)[1]
+                elif isinstance(operand, (list, tuple)):
+                    params += convert(operand)
+                elif operand is None:
+                    pass
+                else:
+                    params += (operand,)
+            return params
+        return convert(self._operands)
+
+    def _format(self, operand):
         param = Flavor.get().param
         if isinstance(operand, Expression):
             return str(operand)
-        elif isinstance(operand, Select):
+        elif isinstance(operand, (Select, CombiningQuery)):
             return '(%s)' % operand
         elif isinstance(operand, (list, tuple)):
-            return '(' + ', '.join((param,) * len(operand)) + ')'
+            return '(' + ', '.join(self._format(o) for o in operand) + ')'
         elif operand is None:
             return ''
         else:
@@ -71,7 +73,7 @@ class Operator(object):
             return Or((self, other))
 
 
-class UnaryOperator(Operator, Expression):
+class UnaryOperator(Operator):
     __slots__ = 'operand'
     _operator = ''
 
@@ -86,7 +88,7 @@ class UnaryOperator(Operator, Expression):
         return '(%s %s)' % (self._operator, self.operand)
 
 
-class BinaryOperator(Operator, Expression):
+class BinaryOperator(Operator):
     __slots__ = ('left', 'right')
     _operator = ''
 

@@ -3,7 +3,7 @@
 import unittest
 
 from sql import Table, Literal
-from sql.operators import And, Not, Less, Equal, NotEqual
+from sql.operators import And, Not, Less, Equal, NotEqual, In
 
 
 class TestOperators(unittest.TestCase):
@@ -73,3 +73,20 @@ class TestOperators(unittest.TestCase):
         equal = NotEqual(None, self.table.c1)
         self.assertEqual(str(equal), '("c1" IS NOT NULL)')
         self.assertEqual(equal.params, ())
+
+    def test_in(self):
+        in_ = In(self.table.c1, [self.table.c2, 1])
+        self.assertEqual(str(in_), '("c1" IN ("c2", %s))')
+        self.assertEqual(in_.params, (1,))
+
+        t2 = Table('t2')
+        in_ = In(self.table.c1, t2.select(t2.c2))
+        self.assertEqual(str(in_),
+            '("c1" IN (SELECT "a"."c2" FROM "t2" AS "a"))')
+        self.assertEqual(in_.params, ())
+
+        in_ = In(self.table.c1, t2.select(t2.c2) | t2.select(t2.c3))
+        self.assertEqual(str(in_),
+            '("c1" IN (SELECT "a"."c2" FROM "t2" AS "a" '
+            'UNION SELECT "a"."c3" FROM "t2" AS "a"))')
+        self.assertEqual(in_.params, ())
