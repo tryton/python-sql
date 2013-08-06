@@ -271,7 +271,7 @@ class Trim(Function):
     __slots__ = ('position', 'characters', 'string')
     _function = 'TRIM'
 
-    def __init__(self, string, position='both', characters=' '):
+    def __init__(self, string, position='BOTH', characters=' '):
         assert position.upper() in ('LEADING', 'TRAILING', 'BOTH')
         self.position = position.upper()
         self.characters = characters
