@@ -40,7 +40,7 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(overlay.params, ('test', 3))
         overlay = Overlay(self.table.c1, 'test', 3, 7)
         self.assertEqual(str(overlay),
-            'OVERLAY("c1" PLACING %s FROM %s TO %s)')
+            'OVERLAY("c1" PLACING %s FROM %s FOR %s)')
         self.assertEqual(overlay.params, ('test', 3, 7))
 
     def test_trim(self):

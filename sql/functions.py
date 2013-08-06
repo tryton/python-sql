@@ -252,7 +252,7 @@ class OctetLength(Function):
 class Overlay(FunctionKeyword):
     __slots__ = ()
     _function = 'OVERLAY'
-    _keywords = ('', 'PLACING', 'FROM', 'TO')
+    _keywords = ('', 'PLACING', 'FROM', 'FOR')
 
 
 class Position(FunctionKeyword):
