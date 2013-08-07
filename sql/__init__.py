@@ -581,7 +581,7 @@ class CombiningQuery(Query, FromItem, _SelectQueryMixin):
     _operator = ''
 
     def __init__(self, *queries, **kwargs):
-        assert all(isinstance(q, Select) for q in queries)
+        assert all(isinstance(q, _SelectQueryMixin) for q in queries)
         self.queries = queries
         self.all_ = kwargs.pop('all_', False)
         super(CombiningQuery, self).__init__(**kwargs)
