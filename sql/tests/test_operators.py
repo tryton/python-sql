@@ -75,9 +75,9 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(equal.params, ())
 
     def test_in(self):
-        in_ = In(self.table.c1, [self.table.c2, 1])
-        self.assertEqual(str(in_), '("c1" IN ("c2", %s))')
-        self.assertEqual(in_.params, (1,))
+        in_ = In(self.table.c1, [self.table.c2, 1, None])
+        self.assertEqual(str(in_), '("c1" IN ("c2", %s, %s))')
+        self.assertEqual(in_.params, (1, None))
 
         t2 = Table('t2')
         in_ = In(self.table.c1, t2.select(t2.c2))

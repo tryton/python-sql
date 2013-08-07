@@ -37,8 +37,6 @@ class Operator(Expression):
                     params += list(operand)[1]
                 elif isinstance(operand, (list, tuple)):
                     params += convert(operand)
-                elif operand is None:
-                    pass
                 else:
                     params += (operand,)
             return params
@@ -52,8 +50,6 @@ class Operator(Expression):
             return '(%s)' % operand
         elif isinstance(operand, (list, tuple)):
             return '(' + ', '.join(self._format(o) for o in operand) + ')'
-        elif operand is None:
-            return ''
         else:
             return param
 
