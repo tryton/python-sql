@@ -188,7 +188,7 @@ class _SelectQueryMixin(object):
         limit = ''
         if self.limit is not None:
             limit = ' LIMIT %s' % self.limit
-        elif self.offset is not None:
+        elif self.offset:
             max_limit = Flavor.get().max_limit
             if max_limit:
                 limit = ' LIMIT %s' % max_limit

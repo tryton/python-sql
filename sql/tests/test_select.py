@@ -2,7 +2,7 @@
 #this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, Join, Union, Literal
+from sql import Table, Join, Union, Literal, Flavor
 from sql.functions import Now
 from sql.aggregate import Min
 
@@ -121,3 +121,39 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT "a"."c" FROM "t" AS "a" ORDER BY %s')
         self.assertEqual(query.params, (1,))
+
+    def test_select_limit_offset(self):
+        query = self.table.select(limit=50, offset=10)
+        self.assertEqual(str(query),
+            'SELECT * FROM "t" AS "a" LIMIT 50 OFFSET 10')
+        self.assertEqual(query.params, ())
+
+        query.limit = None
+        self.assertEqual(str(query),
+            'SELECT * FROM "t" AS "a" OFFSET 10')
+        self.assertEqual(query.params, ())
+
+        query.offset = 0
+        self.assertEqual(str(query),
+            'SELECT * FROM "t" AS "a"')
+        self.assertEqual(query.params, ())
+
+        flavor = Flavor(max_limit=-1)
+        Flavor.set(flavor)
+        try:
+            query.offset = None
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a"')
+            self.assertEqual(query.params, ())
+
+            query.offset = 0
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a"')
+            self.assertEqual(query.params, ())
+
+            query.offset = 10
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a" LIMIT -1 OFFSET 10')
+            self.assertEqual(query.params, ())
+        finally:
+            Flavor.set(Flavor())
