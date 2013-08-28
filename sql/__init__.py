@@ -29,7 +29,7 @@
 
 from __future__ import division
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['Flavor', 'Table', 'Literal', 'Column', 'Join', 'Asc', 'Desc']
 
 import string
