@@ -59,7 +59,7 @@ setup(name='python-sql',
         'Topic :: Database',
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],
-    license='LGPL-3',
+    license='BSD',
     test_suite='sql.tests',
     use_2to3=True,
     )
