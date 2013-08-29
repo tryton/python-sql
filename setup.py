@@ -47,7 +47,6 @@ setup(name='python-sql',
     author='B2CK',
     author_email='info@b2ck.com',
     url='http://code.google.com/p/python-sql/',
-    download_url='http://code.google.com/p/python-sql/downloads/',
     packages=find_packages(),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
