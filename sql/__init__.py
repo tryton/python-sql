@@ -35,6 +35,7 @@ __all__ = ['Flavor', 'Table', 'Literal', 'Column', 'Join', 'Asc', 'Desc']
 import string
 from functools import partial
 from threading import local, currentThread
+from collections import defaultdict
 
 
 def alias(i, letters=string.ascii_lowercase):
@@ -118,7 +119,7 @@ class AliasManager(object):
     @classmethod
     def __enter__(cls):
         if getattr(cls.local, 'alias', None) is None:
-            cls.local.alias = {}
+            cls.local.alias = defaultdict(cls.alias_factory)
             cls.local.nested = 0
         cls.local.nested += 1
 
@@ -132,9 +133,12 @@ class AliasManager(object):
     def get(cls, from_):
         if getattr(cls.local, 'alias', None) is None:
             return ''
-        i = len(cls.local.alias)
-        cls.local.alias.setdefault(from_, alias(i))
         return cls.local.alias[from_]
+
+    @classmethod
+    def alias_factory(cls):
+        i = len(cls.local.alias)
+        return alias(i)
 
 
 class Query(object):
@@ -765,10 +769,12 @@ class From(list):
         def format(from_):
             if isinstance(from_, Query):
                 return '(%s) AS "%s"' % (from_, from_.alias)
-            elif getattr(from_, 'alias', None):
-                return '%s AS "%s"' % (from_, from_.alias)
             else:
-                return str(from_)
+                alias = getattr(from_, 'alias', None)
+                if alias:
+                    return '%s AS "%s"' % (from_, alias)
+                else:
+                    return str(from_)
         return ', '.join(map(format, self))
 
     @property
@@ -943,9 +949,10 @@ class Column(Expression):
             t = '%s'
         else:
             t = '"%s"'
-        if self.__from.alias:
+        alias = self.__from.alias
+        if alias:
             t = '"%s".' + t
-            return t % (self.__from.alias, self.__name)
+            return t % (alias, self.__name)
         else:
             return t % self.__name
 
