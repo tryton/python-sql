@@ -74,13 +74,13 @@ class Function(Expression, FromItem):
         Mapping = Flavor.get().function_mapping.get(self.__class__)
         if Mapping:
             return Mapping(*self.args).params
-        p = ()
+        p = []
         for arg in self.args:
             if isinstance(arg, Expression):
-                p += arg.params
+                p.extend(arg.params)
             else:
-                p += (arg,)
-        return p
+                p.append(arg)
+        return tuple(p)
 
 
 class FunctionKeyword(Function):
@@ -321,13 +321,13 @@ class Trim(Function):
         Mapping = Flavor.get().function_mapping.get(self.__class__)
         if Mapping:
             return Mapping(*self.args).params
-        p = ()
+        p = []
         for arg in (self.characters, self.string):
             if isinstance(arg, basestring):
-                p += (arg,)
+                p.append(arg)
             elif hasattr(arg, 'params'):
-                p += arg.params
-        return p
+                p.extend(arg.params)
+        return tuple(p)
 
 
 class Upper(Function):

@@ -55,20 +55,18 @@ class Operator(Expression):
     def params(self):
 
         def convert(operands):
-            params = ()
+            params = []
             for operand in operands:
-                if isinstance(operand, Expression):
-                    params += operand.params
-                elif isinstance(operand, (Select, CombiningQuery)):
-                    params += list(operand)[1]
+                if isinstance(operand, (Expression, Select, CombiningQuery)):
+                    params.extend(operand.params)
                 elif isinstance(operand, (list, tuple)):
-                    params += convert(operand)
+                    params.extend(convert(operand))
                 elif isinstance(operand, array):
-                    params += tuple(operand)
+                    params.extend(operand)
                 else:
-                    params += (operand,)
+                    params.append(operand)
             return params
-        return convert(self._operands)
+        return tuple(convert(self._operands))
 
     def _format(self, operand):
         param = Flavor.get().param

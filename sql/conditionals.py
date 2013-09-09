@@ -64,22 +64,22 @@ class Case(Conditional):
 
     @property
     def params(self):
-        p = ()
+        p = []
         for cond, result in self.whens:
             if isinstance(cond, Expression):
-                p += cond.params
+                p.extend(cond.params)
             else:
-                p += (cond,)
+                p.append(cond)
             if isinstance(result, Expression):
-                p += result.params
+                p.extend(result.params)
             else:
-                p += (result,)
+                p.append(result)
         if self.else_ is not None:
             if isinstance(self.else_, Expression):
-                p += self.else_.params
+                p.extend(self.else_.params)
             else:
-                p += (self.else_,)
-        return p
+                p.append(self.else_)
+        return tuple(p)
 
 
 class Coalesce(Conditional):
@@ -95,13 +95,13 @@ class Coalesce(Conditional):
 
     @property
     def params(self):
-        p = ()
+        p = []
         for value in self.values:
             if isinstance(value, Expression):
-                p += value.params
+                p.extend(value.params)
             else:
-                p += (value,)
-        return p
+                p.append(value)
+        return tuple(p)
 
 
 class NullIf(Coalesce):

@@ -346,23 +346,23 @@ class Select(Query, FromItem, _SelectQueryMixin):
 
     @property
     def params(self):
-        p = ()
+        p = []
         for column in self.columns:
             if isinstance(column, As):
-                p += column.expression.params
-            p += column.params
-        p += self.from_.params
+                p.extend(column.expression.params)
+            p.extend(column.params)
+        p.extend(self.from_.params)
         if self.where:
-            p += self.where.params
+            p.extend(self.where.params)
         if self.group_by:
             for expression in self.group_by:
-                p += expression.params
+                p.extend(expression.params)
         if self.having:
-            p += self.having.params
+            p.extend(self.having.params)
         if self.order_by:
             for expression in self.order_by:
-                p += expression.params
-        return p
+                p.extend(expression.params)
+        return tuple(p)
 
     def __or__(self, other):
         return Union(self, other)
@@ -458,18 +458,16 @@ class Insert(Query):
     @property
     def params(self):
         if isinstance(self.values, list):
-            p = ()
+            p = []
             for values in self.values:
                 for value in values:
-                    if isinstance(value, Expression):
-                        p += value.params
-                    elif isinstance(value, Select):
-                        p += list(value)[1]
+                    if isinstance(value, (Expression, Select)):
+                        p.extend(value.params)
                     else:
-                        p += (value,)
-            return p
+                        p.append(value)
+            return tuple(p)
         elif isinstance(self.values, Select):
-            return list(self.values)[1]
+            return self.values.params
         else:
             return ()
 
@@ -529,19 +527,17 @@ class Update(Insert):
 
     @property
     def params(self):
-        p = ()
+        p = []
         for value in self.values:
-            if isinstance(value, Expression):
-                p += value.params
-            elif isinstance(value, Select):
-                p += list(value)[1]
+            if isinstance(value, (Expression, Select)):
+                p.extend(value.params)
             else:
-                p += (value,)
+                p.append(value)
         if self.from_:
-            p += self.from_.params
+            p.extend(self.from_.params)
         if self.where:
-            p += self.where.params
-        return p
+            p.extend(self.where.params)
+        return tuple(p)
 
 
 class Delete(Query):
@@ -621,11 +617,13 @@ class CombiningQuery(Query, FromItem, _SelectQueryMixin):
 
     @property
     def params(self):
-        p = sum((q.params for q in self.queries), ())
+        p = []
+        for q in self.queries:
+            p.extend(q.params)
         if self.order_by:
             for expression in self.order_by:
-                p += expression.params
-        return p
+                p.extend(expression.params)
+        return tuple(p)
 
 
 class Union(CombiningQuery):
@@ -734,13 +732,13 @@ class Join(FromItem):
 
     @property
     def params(self):
-        p = ()
+        p = []
         for item in (self.left, self.right):
             if hasattr(item, 'params'):
-                p += item.params
+                p.extend(item.params)
         if hasattr(self.condition, 'params'):
-            p += self.condition.params
-        return p
+            p.extend(self.condition.params)
+        return tuple(p)
 
     @property
     def alias(self):
@@ -771,7 +769,10 @@ class From(list):
 
     @property
     def params(self):
-        return sum((from_.params for from_ in self), ())
+        p = []
+        for from_ in self:
+            p.extend(from_.params)
+        return tuple(p)
 
     def __add__(self, other):
         assert isinstance(other, (Join, Select))
