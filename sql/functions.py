@@ -303,10 +303,11 @@ class Trim(Function):
         self.string = string
 
     def __str__(self):
-        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        flavor = Flavor.get()
+        Mapping = flavor.function_mapping.get(self.__class__)
         if Mapping:
             return str(Mapping(self.string, self.position, self.characters))
-        param = Flavor.get().param
+        param = flavor.param
 
         def format(arg):
             if isinstance(arg, basestring):
@@ -449,10 +450,11 @@ class AtTimeZone(Function):
         self.zone = zone
 
     def __str__(self):
-        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        flavor = Flavor.get()
+        Mapping = flavor.function_mapping.get(self.__class__)
         if Mapping:
             return str(Mapping(*self.args))
-        param = Flavor.get().param
+        param = flavor.param
         return '%s AT TIME ZONE %s' % (str(self.field), param)
 
     @property

@@ -33,6 +33,7 @@ __version__ = '0.2'
 __all__ = ['Flavor', 'Table', 'Literal', 'Column', 'Join', 'Asc', 'Desc']
 
 import string
+from functools import partial
 from threading import local, currentThread
 
 
@@ -428,13 +429,15 @@ class Insert(Query):
         self.__returning = value
 
     @staticmethod
-    def _format(value):
+    def _format(value, param=None):
+        if param is None:
+            param = Flavor.get().param
         if isinstance(value, Expression):
             return str(value)
         elif isinstance(value, Select):
             return '(%s)' % value
         else:
-            return Flavor.get().param
+            return param
 
     def __str__(self):
         columns = ''
@@ -442,8 +445,9 @@ class Insert(Query):
             assert all(col.table == self.table for col in self.columns)
             columns = ' (' + ', '.join(map(str, self.columns)) + ')'
         if isinstance(self.values, list):
+            format_ = partial(self._format, param=Flavor.get().param)
             values = ' VALUES ' + ', '.join(
-                '(' + ', '.join(map(self._format, v)) + ')'
+                '(' + ', '.join(map(format_, v)) + ')'
                 for v in self.values)
             # TODO manage DEFAULT
         elif isinstance(self.values, Select):
@@ -975,11 +979,10 @@ class Cast(Expression):
         self.typename = typename
 
     def __str__(self):
-        param = Flavor.get().param
         if isinstance(self.expression, Expression):
             value = self.expression
         else:
-            value = param
+            value = Flavor.get().param
         return 'CAST(%s AS %s)' % (value, self.typename)
 
     @property
