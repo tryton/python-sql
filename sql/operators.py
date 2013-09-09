@@ -25,6 +25,7 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from array import array
 
 from sql import Expression, Select, CombiningQuery, Flavor
 
@@ -62,6 +63,8 @@ class Operator(Expression):
                     params += list(operand)[1]
                 elif isinstance(operand, (list, tuple)):
                     params += convert(operand)
+                elif isinstance(operand, array):
+                    params += tuple(operand)
                 else:
                     params += (operand,)
             return params
@@ -75,6 +78,8 @@ class Operator(Expression):
             return '(%s)' % operand
         elif isinstance(operand, (list, tuple)):
             return '(' + ', '.join(self._format(o) for o in operand) + ')'
+        elif isinstance(operand, array):
+            return '(' + ', '.join((param,) * len(operand)) + ')'
         else:
             return param
 

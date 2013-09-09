@@ -27,6 +27,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import unittest
+from array import array
 
 from sql import Table, Literal
 from sql.operators import And, Not, Less, Equal, NotEqual, In
@@ -116,3 +117,8 @@ class TestOperators(unittest.TestCase):
             '("c1" IN (SELECT "a"."c2" FROM "t2" AS "a" '
             'UNION SELECT "a"."c3" FROM "t2" AS "a"))')
         self.assertEqual(in_.params, ())
+
+        in_ = In(self.table.c1, array('l', range(10)))
+        self.assertEqual(str(in_),
+            '("c1" IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s))')
+        self.assertEqual(in_.params, tuple(range(10)))
