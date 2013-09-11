@@ -119,13 +119,13 @@ Update query with values::
     >>> tuple(user.update(columns=[user.active], values=[True]))
     ('UPDATE "user" SET "active" = %s', (True,))
     >>> tuple(invoice.update(columns=[invoice.total], values=[invoice.amount + invoice.tax]))
-    ('UPDATE "invoice" SET "total" = ("amount" + "tax")', ())
+    ('UPDATE "invoice" SET "total" = ("invoice"."amount" + "invoice"."tax")', ())
 
 Update query with where condition::
 
     >>> tuple(user.update(columns=[user.active], values=[True], where=(
     ...         user.active == False)))
-    ('UPDATE "user" SET "active" = %s WHERE ("active" = %s)', (True, False))
+    ('UPDATE "user" SET "active" = %s WHERE ("user"."active" = %s)', (True, False))
 
 Update query with from list::
 

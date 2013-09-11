@@ -136,6 +136,11 @@ class AliasManager(object):
         return cls.local.alias[from_]
 
     @classmethod
+    def set(cls, from_, alias):
+        assert cls.local.alias.get(from_) is None
+        cls.local.alias[from_] = alias
+
+    @classmethod
     def alias_factory(cls):
         i = len(cls.local.alias)
         return alias(i)
@@ -516,22 +521,20 @@ class Update(Insert):
         # Get columns without alias
         columns = map(str, self.columns)
 
-        def format():
+        with AliasManager():
             from_ = ''
             if self.from_:
+                table = From([self.table])
                 from_ = ' FROM %s' % str(self.from_)
+            else:
+                table = self.table
+                AliasManager.set(table, str(table)[1:-1])
             values = ', '.join('%s = %s' % (c, self._format(v))
                 for c, v in zip(columns, self.values))
             where = ''
             if self.where:
                 where = ' WHERE ' + str(self.where)
-            return ('UPDATE %s SET ' % From([self.table]) + values + from_ +
-                where)
-        if self.from_:
-            with AliasManager():
-                return format()
-        else:
-            return format()
+            return 'UPDATE %s SET ' % table + values + from_ + where
 
     @property
     def params(self):
