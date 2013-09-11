@@ -823,9 +823,13 @@ class Expression(object):
         from sql.operators import Mul
         return Mul(self, other)
 
+    def __div__(self, other):
+        from sql.operators import Div
+        return Div(self, other)
+
     def __floordiv__(self, other):
-        from sql.operators import FloorDiv
-        return FloorDiv(self, other)
+        from sql.functions import Div
+        return Div(self, other)
 
     def __mod__(self, other):
         from sql.operators import Mod

@@ -25,12 +25,13 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import warnings
 from array import array
 
 from sql import Expression, Select, CombiningQuery, Flavor
 
 __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
-    'Equal', 'NotEqual', 'Add', 'Sub', 'Mul', 'FloorDiv', 'Mod', 'Pow',
+    'Equal', 'NotEqual', 'Add', 'Sub', 'Mul', 'Div', 'FloorDiv', 'Mod', 'Pow',
     'SquareRoot', 'CubeRoot', 'Factorial', 'Abs', 'BAnd', 'BOr', 'BXor',
     'BNot', 'LShift', 'RShift', 'Concat', 'Like', 'NotLike', 'ILike',
     'NotILike', 'In', 'NotIn', 'Exists', 'Any', 'Some', 'All']
@@ -238,9 +239,20 @@ class Mul(BinaryOperator):
     _operator = '*'
 
 
+class Div(BinaryOperator):
+    __slots__ = ()
+    _operator = '/'
+
+
+# For backward compatibility
 class FloorDiv(BinaryOperator):
     __slots__ = ()
     _operator = '/'
+
+    def __init__(self, left, right):
+        warnings.warn('FloorDiv operator is deprecated, use Div function',
+            DeprecationWarning, stacklevel=2)
+        super(FloorDiv, self).__init__(left, right)
 
 
 class Mod(BinaryOperator):

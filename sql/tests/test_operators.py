@@ -27,10 +27,11 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import unittest
+import warnings
 from array import array
 
 from sql import Table, Literal
-from sql.operators import And, Not, Less, Equal, NotEqual, In
+from sql.operators import And, Not, Less, Equal, NotEqual, In, FloorDiv
 
 
 class TestOperators(unittest.TestCase):
@@ -122,3 +123,12 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(str(in_),
             '("c1" IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s))')
         self.assertEqual(in_.params, tuple(range(10)))
+
+    def test_floordiv(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            FloorDiv(4, 2)
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
+            self.assertIn('FloorDiv operator is deprecated, use Div function',
+                str(w[-1].message))
