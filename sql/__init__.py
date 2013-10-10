@@ -110,7 +110,7 @@ class AliasManager(object):
     '''
     Context Manager for unique alias generation
     '''
-    __slots__ = 'local'
+    __slots__ = ()
 
     local = local()
     local.alias = None
