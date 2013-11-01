@@ -30,7 +30,7 @@
 import unittest
 
 from sql import Table, Join, Union, Literal, Flavor
-from sql.functions import Now
+from sql.functions import Now, Function
 from sql.aggregate import Min
 
 
@@ -113,6 +113,17 @@ class TestSelect(unittest.TestCase):
         query = Now().select()
         self.assertEqual(str(query), 'SELECT * FROM NOW() AS "a"')
         self.assertEqual(query.params, ())
+
+    def test_select_function_columns_definitions(self):
+        class Crosstab(Function):
+            _function = 'CROSSTAB'
+
+        query = Crosstab('query1', 'query2',
+            columns_definitions=[
+                ('c1', 'INT'), ('c2', 'CHAR'), ('c3', 'BOOL')]).select()
+        self.assertEqual(str(query), 'SELECT * FROM CROSSTAB(%s, %s) '
+            'AS "a" ("c1" INT, "c2" CHAR, "c3" BOOL)')
+        self.assertEqual(query.params, ('query1', 'query2'))
 
     def test_select_group_by(self):
         column = self.table.c

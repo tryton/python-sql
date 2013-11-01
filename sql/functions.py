@@ -47,13 +47,24 @@ __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
 
 
 class Function(Expression, FromItem):
-    __slots__ = ('args',)
+    __slots__ = ('args', '__columns_definitions')
     table = ''
     name = ''
     _function = ''
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         self.args = args
+        self.columns_definitions = kwargs.get('columns_definitions', [])
+
+    @property
+    def columns_definitions(self):
+        return ', '.join('"%s" %s' % (c, d)
+            for c, d in self.__columns_definitions)
+
+    @columns_definitions.setter
+    def columns_definitions(self, value):
+        assert isinstance(value, list)
+        self.__columns_definitions = value
 
     @staticmethod
     def _format(value):

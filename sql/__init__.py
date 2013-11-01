@@ -774,7 +774,14 @@ class From(list):
                 return '(%s) AS "%s"' % (from_, from_.alias)
             else:
                 alias = getattr(from_, 'alias', None)
-                if alias:
+                columns_definitions = getattr(from_, 'columns_definitions',
+                    None)
+                # XXX find a better test for __getattr__ which returns Column
+                if (alias and columns_definitions
+                        and not isinstance(columns_definitions, Column)):
+                    return '%s AS "%s" (%s)' % (from_, alias,
+                        columns_definitions)
+                elif alias:
                     return '%s AS "%s"' % (from_, alias)
                 else:
                     return str(from_)
