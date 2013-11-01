@@ -78,3 +78,18 @@ class TestFunctions(unittest.TestCase):
         time_zone = AtTimeZone(self.table.c1, 'UTC')
         self.assertEqual(str(time_zone), '"c1" AT TIME ZONE %s')
         self.assertEqual(time_zone.params, ('UTC',))
+
+    def test_at_time_zone_mapping(self):
+        class MyAtTimeZone(Function):
+            _function = 'MY_TIMEZONE'
+
+        time_zone = AtTimeZone(self.table.c1, 'UTC')
+        flavor = Flavor(function_mapping={
+                AtTimeZone: MyAtTimeZone,
+                })
+        Flavor.set(flavor)
+        try:
+            self.assertEqual(str(time_zone), 'MY_TIMEZONE("c1", %s)')
+            self.assertEqual(time_zone.params, ('UTC',))
+        finally:
+            Flavor.set(Flavor())

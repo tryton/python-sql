@@ -453,7 +453,7 @@ class AtTimeZone(Function):
         flavor = Flavor.get()
         Mapping = flavor.function_mapping.get(self.__class__)
         if Mapping:
-            return str(Mapping(*self.args))
+            return str(Mapping(self.field, self.zone))
         param = flavor.param
         return '%s AT TIME ZONE %s' % (str(self.field), param)
 
