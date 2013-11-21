@@ -470,26 +470,29 @@ class Insert(Query):
 
     @property
     def params(self):
+        p = []
         if isinstance(self.values, list):
-            p = []
             for values in self.values:
                 for value in values:
                     if isinstance(value, (Expression, Select)):
                         p.extend(value.params)
                     else:
                         p.append(value)
-            return tuple(p)
         elif isinstance(self.values, Select):
-            return self.values.params
-        else:
-            return ()
+            p.extend(self.values.params)
+        if self.returning:
+            for exp in self.returning:
+                p.extend(exp.params)
+        return tuple(p)
 
 
 class Update(Insert):
     __slots__ = ('__where', '__values', 'from_')
 
-    def __init__(self, table, columns, values, from_=None, where=None):
-        super(Update, self).__init__(table, columns=columns, values=values)
+    def __init__(self, table, columns, values, from_=None, where=None,
+            returning=None):
+        super(Update, self).__init__(table, columns=columns, values=values,
+            returning=returning)
         self.__where = None
         self.from_ = From(from_) if from_ else None
         self.where = where
@@ -534,7 +537,11 @@ class Update(Insert):
             where = ''
             if self.where:
                 where = ' WHERE ' + str(self.where)
-            return 'UPDATE %s SET ' % table + values + from_ + where
+            returning = ''
+            if self.returning:
+                returning = ' RETURNING ' + ', '.join(map(str, self.returning))
+            return ('UPDATE %s SET ' % table + values + from_ + where
+                + returning)
 
     @property
     def params(self):
@@ -548,6 +555,9 @@ class Update(Insert):
             p.extend(self.from_.params)
         if self.where:
             p.extend(self.where.params)
+        if self.returning:
+            for exp in self.returning:
+                p.extend(exp.params)
         return tuple(p)
 
 
@@ -607,7 +617,13 @@ class Delete(Query):
 
     @property
     def params(self):
-        return self.where.params if self.where else ()
+        p = []
+        if self.where:
+            p.extend(self.where.params)
+        if self.returning:
+            for exp in self.returning:
+                p.extend(exp.params)
+        return tuple(p)
 
 
 class CombiningQuery(Query, FromItem, _SelectQueryMixin):
@@ -670,9 +686,9 @@ class Table(FromItem):
         return Insert(self, columns=columns, values=values,
             returning=returning)
 
-    def update(self, columns, values, from_=None, where=None):
+    def update(self, columns, values, from_=None, where=None, returning=None):
         return Update(self, columns=columns, values=values, from_=from_,
-            where=where)
+            where=where, returning=returning)
 
     def delete(self, only=False, using=None, where=None, returning=None):
         return Delete(self, only=only, using=using, where=where,

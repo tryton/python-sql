@@ -70,3 +70,11 @@ class TestInsert(unittest.TestCase):
         self.assertEqual(str(query),
             'INSERT INTO "t" ("c") VALUES (ABS(%s))')
         self.assertEqual(query.params, (-1,))
+
+    def test_insert_returning(self):
+        query = self.table.insert([self.table.c1, self.table.c2],
+            [['foo', 'bar']], returning=[self.table.c1, self.table.c2])
+        self.assertEqual(str(query),
+            'INSERT INTO "t" ("c1", "c2") VALUES (%s, %s) '
+            'RETURNING "c1", "c2"')
+        self.assertEqual(query.params, ('foo', 'bar'))

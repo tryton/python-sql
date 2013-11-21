@@ -61,3 +61,10 @@ class TestUpdate(unittest.TestCase):
             'UPDATE "t1" SET "c" = ('
             'SELECT "b"."c" FROM "t2" AS "b" WHERE ("b"."i" = "t1"."i"))')
         self.assertEqual(query.params, ())
+
+    def test_update_returning(self):
+        query = self.table.update([self.table.c], ['foo'],
+            returning=[self.table.c])
+        self.assertEqual(str(query),
+            'UPDATE "t" SET "c" = %s RETURNING "t"."c"')
+        self.assertEqual(query.params, ('foo',))

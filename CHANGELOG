@@ -1,3 +1,5 @@
+* Add returning to Update
+* Add missing params for returning
 * Add columns definitions to Function
 * Fix AtTimeZone mapping
 

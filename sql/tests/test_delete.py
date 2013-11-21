@@ -52,3 +52,8 @@ class TestDelete(unittest.TestCase):
             'DELETE FROM "t1" WHERE ("c" IN ('
             'SELECT "a"."c" FROM "t2" AS "a"))')
         self.assertEqual(query.params, ())
+
+    def test_delete_returning(self):
+        query = self.table.delete(returning=[self.table.c])
+        self.assertEqual(str(query), 'DELETE FROM "t" RETURNING "c"')
+        self.assertEqual(query.params, ())
