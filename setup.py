@@ -30,10 +30,12 @@
 from setuptools import setup, find_packages
 import os
 import re
+import codecs
 
 
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    return codecs.open(
+        os.path.join(os.path.dirname(__file__), fname), 'r', 'utf-8').read()
 
 
 def get_version():
