@@ -112,7 +112,7 @@ class UnaryOperator(Operator):
         return (self.operand,)
 
     def __str__(self):
-        return '(%s %s)' % (self._operator, self.operand)
+        return '(%s %s)' % (self._operator, self._format(self.operand))
 
 
 class BinaryOperator(Operator):

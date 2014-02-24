@@ -31,7 +31,7 @@ import warnings
 from array import array
 
 from sql import Table, Literal
-from sql.operators import And, Not, Less, Equal, NotEqual, In, FloorDiv
+from sql.operators import And, Not, Less, Equal, NotEqual, In, FloorDiv, Exists
 
 
 class TestOperators(unittest.TestCase):
@@ -123,6 +123,14 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(str(in_),
             '("c1" IN (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s))')
         self.assertEqual(in_.params, tuple(range(10)))
+
+    def test_exists(self):
+        exists = Exists(self.table.select(self.table.c1,
+                where=self.table.c1 == 1))
+        self.assertEqual(str(exists),
+            '(EXISTS (SELECT "a"."c1" FROM "t" AS "a" '
+            'WHERE ("a"."c1" = %s)))')
+        self.assertEqual(exists.params, (1,))
 
     def test_floordiv(self):
         with warnings.catch_warnings(record=True) as w:
