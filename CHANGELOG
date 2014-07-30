@@ -1,3 +1,4 @@
+* Allow to add Table to existing From list
 * Fix Select with for_ clause
 * Add Null alias for None
 * Add missing format of operand in Unary operator

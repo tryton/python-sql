@@ -811,7 +811,8 @@ class From(list):
         return tuple(p)
 
     def __add__(self, other):
-        assert isinstance(other, (Join, Select))
+        assert isinstance(other, FromItem)
+        assert not isinstance(other, CombiningQuery)
         return From(super(From, self).__add__([other]))
 
 

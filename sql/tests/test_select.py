@@ -57,6 +57,14 @@ class TestSelect(unittest.TestCase):
             'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s)')
         self.assertEqual(query.params, ('foo',))
 
+    def test_select_from_list(self):
+        t2 = Table('t2')
+        t3 = Table('t3')
+        query = (self.table + t2 + t3).select(self.table.c, getattr(t2, '*'))
+        self.assertEqual(str(query),
+            'SELECT "a"."c", "b".* FROM "t" AS "a", "t2" AS "b", "t3" AS "c"')
+        self.assertEqual(query.params, ())
+
     def test_select_union(self):
         query1 = self.table.select()
         query2 = Table('t2').select()
