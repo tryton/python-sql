@@ -28,7 +28,7 @@
 
 import unittest
 
-from sql import Table
+from sql import Table, Literal
 
 
 class TestUpdate(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestUpdate(unittest.TestCase):
         self.assertEqual(str(query), 'UPDATE "t" SET "c" = %s')
         self.assertEqual(query.params, ('foo',))
 
-        query.where = (self.table.b == True)
+        query.where = (self.table.b == Literal(True))
         self.assertEqual(str(query),
             'UPDATE "t" SET "c" = %s WHERE ("t"."b" = %s)')
         self.assertEqual(query.params, ('foo', True))
