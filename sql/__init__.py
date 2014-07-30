@@ -854,6 +854,8 @@ class Expression(object):
         from sql.operators import Div
         return Div(self, other)
 
+    __truediv__ = __div__
+
     def __floordiv__(self, other):
         from sql.functions import Div
         return Div(self, other)
