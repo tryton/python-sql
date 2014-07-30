@@ -30,7 +30,7 @@ import unittest
 import warnings
 from array import array
 
-from sql import Table, Literal
+from sql import Table, Literal, Null
 from sql.operators import And, Not, Less, Equal, NotEqual, In, FloorDiv, Exists
 
 
@@ -73,19 +73,19 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(str(equal), '(%s = %s)')
         self.assertEqual(equal.params, ('foo', 'bar'))
 
-        equal = Equal(self.table.c1, None)
+        equal = Equal(self.table.c1, Null)
         self.assertEqual(str(equal), '("c1" IS NULL)')
         self.assertEqual(equal.params, ())
 
-        equal = Equal(Literal('test'), None)
+        equal = Equal(Literal('test'), Null)
         self.assertEqual(str(equal), '(%s IS NULL)')
         self.assertEqual(equal.params, ('test',))
 
-        equal = Equal(None, self.table.c1)
+        equal = Equal(Null, self.table.c1)
         self.assertEqual(str(equal), '("c1" IS NULL)')
         self.assertEqual(equal.params, ())
 
-        equal = Equal(None, Literal('test'))
+        equal = Equal(Null, Literal('test'))
         self.assertEqual(str(equal), '(%s IS NULL)')
         self.assertEqual(equal.params, ('test',))
 
@@ -94,16 +94,16 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(str(equal), '("c1" != "c2")')
         self.assertEqual(equal.params, ())
 
-        equal = NotEqual(self.table.c1, None)
+        equal = NotEqual(self.table.c1, Null)
         self.assertEqual(str(equal), '("c1" IS NOT NULL)')
         self.assertEqual(equal.params, ())
 
-        equal = NotEqual(None, self.table.c1)
+        equal = NotEqual(Null, self.table.c1)
         self.assertEqual(str(equal), '("c1" IS NOT NULL)')
         self.assertEqual(equal.params, ())
 
     def test_in(self):
-        in_ = In(self.table.c1, [self.table.c2, 1, None])
+        in_ = In(self.table.c1, [self.table.c2, 1, Null])
         self.assertEqual(str(in_), '("c1" IN ("c2", %s, %s))')
         self.assertEqual(in_.params, (1, None))
 

@@ -28,7 +28,7 @@
 import warnings
 from array import array
 
-from sql import Expression, Select, CombiningQuery, Flavor
+from sql import Expression, Select, CombiningQuery, Flavor, Null
 
 __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
     'Equal', 'NotEqual', 'Add', 'Sub', 'Mul', 'Div', 'FloorDiv', 'Mod', 'Pow',
@@ -198,16 +198,16 @@ class Equal(BinaryOperator):
 
     @property
     def _operands(self):
-        if self.left is None:
+        if self.left is Null:
             return (self.right,)
-        elif self.right is None:
+        elif self.right is Null:
             return (self.left,)
         return super(Equal, self)._operands
 
     def __str__(self):
-        if self.left is None:
+        if self.left is Null:
             return '(%s IS NULL)' % self.right
-        elif self.right is None:
+        elif self.right is Null:
             return '(%s IS NULL)' % self.left
         return super(Equal, self).__str__()
 
@@ -217,9 +217,9 @@ class NotEqual(Equal):
     _operator = '!='
 
     def __str__(self):
-        if self.left is None:
+        if self.left is Null:
             return '(%s IS NOT NULL)' % self.right
-        elif self.right is None:
+        elif self.right is Null:
             return '(%s IS NOT NULL)' % self.left
         return super(Equal, self).__str__()
 

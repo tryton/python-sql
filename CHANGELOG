@@ -1,3 +1,4 @@
+* Add Null alias for None
 * Add missing format of operand in Unary operator
 
 Version 0.3 - 2014-01-31

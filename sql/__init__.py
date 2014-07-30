@@ -957,6 +957,8 @@ class Literal(Expression):
     def params(self):
         return (self.__value,)
 
+Null = None
+
 
 class Column(Expression):
     __slots__ = ('__from', '__name')
