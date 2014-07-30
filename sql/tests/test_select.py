@@ -29,7 +29,7 @@
 
 import unittest
 
-from sql import Table, Join, Union, Literal, Flavor
+from sql import Table, Join, Union, Literal, Flavor, For
 from sql.functions import Now, Function
 from sql.aggregate import Min
 
@@ -195,3 +195,10 @@ class TestSelect(unittest.TestCase):
             self.assertEqual(query.params, ())
         finally:
             Flavor.set(Flavor())
+
+    def test_select_for(self):
+        c = self.table.c
+        query = self.table.select(c, for_=For('UPDATE'))
+        self.assertEqual(str(query),
+            'SELECT "a"."c" FROM "t" AS "a" FOR UPDATE')
+        self.assertEqual(query.params, ())

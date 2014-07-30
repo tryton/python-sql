@@ -321,7 +321,7 @@ class Select(Query, FromItem, _SelectQueryMixin):
         if value is not None:
             if isinstance(value, For):
                 value = [value]
-            assert isinstance(all(isinstance(f, For) for f in value))
+            assert all(isinstance(f, For) for f in value)
         self.__for_ = value
 
     @staticmethod
@@ -349,7 +349,7 @@ class Select(Query, FromItem, _SelectQueryMixin):
                 having = ' HAVING ' + str(self.having)
             for_ = ''
             if self.for_ is not None:
-                for_ = ' '.join(self.for_)
+                for_ = ' ' + ' '.join(map(str, self.for_))
             return ('SELECT %s FROM %s' % (columns, from_) + where + group_by
                 + having + self._order_by_str + self._limit_str +
                 self._offset_str + for_)
