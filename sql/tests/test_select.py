@@ -92,6 +92,20 @@ class TestSelect(unittest.TestCase):
             'ORDER BY %s')
         self.assertEqual(union.params, (1,))
 
+    def test_select_intersect(self):
+        query1 = self.table.select()
+        query2 = Table('t2').select()
+        intersect = query1 & query2
+        self.assertEqual(str(intersect),
+            'SELECT * FROM "t" AS "a" INTERSECT SELECT * FROM "t2" AS "b"')
+
+    def test_select_except(self):
+        query1 = self.table.select()
+        query2 = Table('t2').select()
+        except_ = query1 - query2
+        self.assertEqual(str(except_),
+            'SELECT * FROM "t" AS "a" EXCEPT SELECT * FROM "t2" AS "b"')
+
     def test_select_join(self):
         t1 = Table('t1')
         t2 = Table('t2')
