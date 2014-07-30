@@ -35,6 +35,7 @@ class TestColumn(unittest.TestCase):
     def test_column(self):
         column = Column(Table('t'), 'c')
         self.assertEqual(str(column), '"c"')
+        self.assertEqual(column.name, 'c')
 
         with AliasManager():
             self.assertEqual(str(column), '"a"."c"')
