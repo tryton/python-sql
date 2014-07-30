@@ -1077,7 +1077,7 @@ class For(object):
     @tables.setter
     def tables(self, value):
         if not isinstance(value, list):
-            value = list(value)
+            value = [value]
         all(isinstance(table, Table) for table in value)
         self.__tables = value
 
