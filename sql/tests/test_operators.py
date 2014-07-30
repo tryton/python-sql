@@ -49,6 +49,30 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(str(and_), '(%s AND "c2")')
         self.assertEqual(and_.params, (True,))
 
+    def test_operator_operators(self):
+        and_ = And((Literal(True), self.table.c1))
+        and2 = and_ & And((Literal(True), self.table.c2))
+        self.assertEqual(str(and2), '((%s AND "c1") AND %s AND "c2")')
+        self.assertEqual(and2.params, (True, True))
+
+        and3 = and_ & Literal(True)
+        self.assertEqual(str(and3), '((%s AND "c1") AND %s)')
+        self.assertEqual(and3.params, (True, True))
+
+        or_ = Or((Literal(True), self.table.c1))
+        or2 = or_ | Or((Literal(True), self.table.c2))
+        self.assertEqual(str(or2), '((%s OR "c1") OR %s OR "c2")')
+        self.assertEqual(or2.params, (True, True))
+
+        or3 = or_ | Literal(True)
+        self.assertEqual(str(or3), '((%s OR "c1") OR %s)')
+        self.assertEqual(or3.params, (True, True))
+
+    def test_operator_compat_column(self):
+        and_ = And((self.table.c1, self.table.c2))
+        self.assertEqual(and_.table, '')
+        self.assertEqual(and_.name, '')
+
     def test_or(self):
         for or_ in [Or((self.table.c1, self.table.c2)),
                 self.table.c1 | self.table.c2]:
