@@ -30,44 +30,88 @@ import unittest
 import warnings
 from array import array
 
-from sql import Table, Literal, Null
-from sql.operators import And, Not, Less, Equal, NotEqual, In, FloorDiv, Exists
+from sql import Table, Literal, Null, Flavor
+from sql.operators import (And, Or, Not, Neg, Pos, Less, Greater, LessEqual,
+    GreaterEqual, Equal, NotEqual, Sub, Mul, Div, Mod, Pow, Abs, LShift,
+    RShift, Like, NotLike, ILike, NotILike, In, NotIn, FloorDiv, Exists)
 
 
 class TestOperators(unittest.TestCase):
     table = Table('t')
 
     def test_and(self):
-        and_ = And((self.table.c1, self.table.c2))
-        self.assertEqual(str(and_), '("c1" AND "c2")')
-        self.assertEqual(and_.params, ())
+        for and_ in [And((self.table.c1, self.table.c2)),
+                self.table.c1 & self.table.c2]:
+            self.assertEqual(str(and_), '("c1" AND "c2")')
+            self.assertEqual(and_.params, ())
 
         and_ = And((Literal(True), self.table.c2))
         self.assertEqual(str(and_), '(%s AND "c2")')
         self.assertEqual(and_.params, (True,))
 
+    def test_or(self):
+        for or_ in [Or((self.table.c1, self.table.c2)),
+                self.table.c1 | self.table.c2]:
+            self.assertEqual(str(or_), '("c1" OR "c2")')
+            self.assertEqual(or_.params, ())
+
     def test_not(self):
-        not_ = Not(self.table.c)
-        self.assertEqual(str(not_), '(NOT "c")')
-        self.assertEqual(not_.params, ())
+        for not_ in [Not(self.table.c), ~self.table.c]:
+            self.assertEqual(str(not_), '(NOT "c")')
+            self.assertEqual(not_.params, ())
 
         not_ = Not(Literal(False))
         self.assertEqual(str(not_), '(NOT %s)')
         self.assertEqual(not_.params, (False,))
 
+    def test_neg(self):
+        for neg in [Neg(self.table.c1), -self.table.c1]:
+            self.assertEqual(str(neg), '(- "c1")')
+            self.assertEqual(neg.params, ())
+
+    def test_pos(self):
+        for pos in [Pos(self.table.c1), +self.table.c1]:
+            self.assertEqual(str(pos), '(+ "c1")')
+            self.assertEqual(pos.params, ())
+
     def test_less(self):
-        less = Less(self.table.c1, self.table.c2)
-        self.assertEqual(str(less), '("c1" < "c2")')
-        self.assertEqual(less.params, ())
+        for less in [Less(self.table.c1, self.table.c2),
+                self.table.c1 < self.table.c2,
+                ~GreaterEqual(self.table.c1, self.table.c2)]:
+            self.assertEqual(str(less), '("c1" < "c2")')
+            self.assertEqual(less.params, ())
 
         less = Less(Literal(0), self.table.c2)
         self.assertEqual(str(less), '(%s < "c2")')
         self.assertEqual(less.params, (0,))
 
+    def test_greater(self):
+        for greater in [Greater(self.table.c1, self.table.c2),
+                self.table.c1 > self.table.c2,
+                ~LessEqual(self.table.c1, self.table.c2)]:
+            self.assertEqual(str(greater), '("c1" > "c2")')
+            self.assertEqual(greater.params, ())
+
+    def test_less_equal(self):
+        for less in [LessEqual(self.table.c1, self.table.c2),
+                self.table.c1 <= self.table.c2,
+                ~Greater(self.table.c1, self.table.c2)]:
+            self.assertEqual(str(less), '("c1" <= "c2")')
+            self.assertEqual(less.params, ())
+
+    def test_greater_equal(self):
+        for greater in [GreaterEqual(self.table.c1, self.table.c2),
+                self.table.c1 >= self.table.c2,
+                ~Less(self.table.c1, self.table.c2)]:
+            self.assertEqual(str(greater), '("c1" >= "c2")')
+            self.assertEqual(greater.params, ())
+
     def test_equal(self):
-        equal = Equal(self.table.c1, self.table.c2)
-        self.assertEqual(str(equal), '("c1" = "c2")')
-        self.assertEqual(equal.params, ())
+        for equal in [Equal(self.table.c1, self.table.c2),
+                self.table.c1 == self.table.c2,
+                ~NotEqual(self.table.c1, self.table.c2)]:
+            self.assertEqual(str(equal), '("c1" = "c2")')
+            self.assertEqual(equal.params, ())
 
         equal = Equal(Literal('foo'), Literal('bar'))
         self.assertEqual(str(equal), '(%s = %s)')
@@ -90,9 +134,11 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(equal.params, ('test',))
 
     def test_not_equal(self):
-        equal = NotEqual(self.table.c1, self.table.c2)
-        self.assertEqual(str(equal), '("c1" != "c2")')
-        self.assertEqual(equal.params, ())
+        for equal in [NotEqual(self.table.c1, self.table.c2),
+                self.table.c1 != self.table.c2,
+                ~Equal(self.table.c1, self.table.c2)]:
+            self.assertEqual(str(equal), '("c1" != "c2")')
+            self.assertEqual(equal.params, ())
 
         equal = NotEqual(self.table.c1, Null)
         self.assertEqual(str(equal), '("c1" IS NOT NULL)')
@@ -102,10 +148,108 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(str(equal), '("c1" IS NOT NULL)')
         self.assertEqual(equal.params, ())
 
+    def test_sub(self):
+        for sub in [Sub(self.table.c1, self.table.c2),
+                self.table.c1 - self.table.c2]:
+            self.assertEqual(str(sub), '("c1" - "c2")')
+            self.assertEqual(sub.params, ())
+
+    def test_mul(self):
+        for mul in [Mul(self.table.c1, self.table.c2),
+                self.table.c1 * self.table.c2]:
+            self.assertEqual(str(mul), '("c1" * "c2")')
+            self.assertEqual(mul.params, ())
+
+    def test_div(self):
+        for div in [Div(self.table.c1, self.table.c2),
+                self.table.c1 / self.table.c2]:
+            self.assertEqual(str(div), '("c1" / "c2")')
+            self.assertEqual(div.params, ())
+
+    def test_mod(self):
+        for mod in [Mod(self.table.c1, self.table.c2),
+                self.table.c1 % self.table.c2]:
+            self.assertEqual(str(mod), '("c1" % "c2")')
+            self.assertEqual(mod.params, ())
+
+    def test_pow(self):
+        for pow_ in [Pow(self.table.c1, self.table.c2),
+                self.table.c1 ** self.table.c2]:
+            self.assertEqual(str(pow_), '("c1" ^ "c2")')
+            self.assertEqual(pow_.params, ())
+
+    def test_abs(self):
+        for abs_ in [Abs(self.table.c1), abs(self.table.c1)]:
+            self.assertEqual(str(abs_), '(@ "c1")')
+            self.assertEqual(abs_.params, ())
+
+    def test_lshift(self):
+        for lshift in [LShift(self.table.c1, 2),
+                self.table.c1 << 2]:
+            self.assertEqual(str(lshift), '("c1" << %s)')
+            self.assertEqual(lshift.params, (2,))
+
+    def test_rshift(self):
+        for rshift in [RShift(self.table.c1, 2),
+                self.table.c1 >> 2]:
+            self.assertEqual(str(rshift), '("c1" >> %s)')
+            self.assertEqual(rshift.params, (2,))
+
+    def test_like(self):
+        for like in [Like(self.table.c1, 'foo'),
+                self.table.c1.like('foo'),
+                ~NotLike(self.table.c1, 'foo'),
+                ~~Like(self.table.c1, 'foo')]:
+            self.assertEqual(str(like), '("c1" LIKE %s)')
+            self.assertEqual(like.params, ('foo',))
+
+    def test_ilike(self):
+        flavor = Flavor(ilike=True)
+        Flavor.set(flavor)
+        try:
+            for like in [ILike(self.table.c1, 'foo'),
+                    self.table.c1.ilike('foo'),
+                    ~NotILike(self.table.c1, 'foo')]:
+                self.assertEqual(str(like), '("c1" ILIKE %s)')
+                self.assertEqual(like.params, ('foo',))
+        finally:
+            Flavor.set(Flavor())
+
+        flavor = Flavor(ilike=False)
+        Flavor.set(flavor)
+        try:
+            like = ILike(self.table.c1, 'foo')
+            self.assertEqual(str(like), '("c1" LIKE %s)')
+            self.assertEqual(like.params, ('foo',))
+        finally:
+            Flavor.set(Flavor())
+
+    def test_not_ilike(self):
+        flavor = Flavor(ilike=True)
+        Flavor.set(flavor)
+        try:
+            for like in [NotILike(self.table.c1, 'foo'),
+                    ~self.table.c1.ilike('foo')]:
+                self.assertEqual(str(like), '("c1" NOT ILIKE %s)')
+                self.assertEqual(like.params, ('foo',))
+        finally:
+            Flavor.set(Flavor())
+
+        flavor = Flavor(ilike=False)
+        Flavor.set(flavor)
+        try:
+            like = NotILike(self.table.c1, 'foo')
+            self.assertEqual(str(like), '("c1" NOT LIKE %s)')
+            self.assertEqual(like.params, ('foo',))
+        finally:
+            Flavor.set(Flavor())
+
     def test_in(self):
-        in_ = In(self.table.c1, [self.table.c2, 1, Null])
-        self.assertEqual(str(in_), '("c1" IN ("c2", %s, %s))')
-        self.assertEqual(in_.params, (1, None))
+        for in_ in [In(self.table.c1, [self.table.c2, 1, Null]),
+                ~NotIn(self.table.c1, [self.table.c2, 1, Null]),
+                ~~In(self.table.c1, [self.table.c2, 1, Null])]:
+            self.assertEqual(str(in_), '("c1" IN ("c2", %s, %s))')
+            self.assertEqual(in_.params, (1, None))
 
         t2 = Table('t2')
         in_ = In(self.table.c1, t2.select(t2.c2))

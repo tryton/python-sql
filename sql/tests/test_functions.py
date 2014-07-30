@@ -29,7 +29,7 @@
 import unittest
 
 from sql import Table, Flavor
-from sql.functions import Function, Abs, Overlay, Trim, AtTimeZone
+from sql.functions import Function, Abs, Overlay, Trim, AtTimeZone, Div
 
 
 class TestFunctions(unittest.TestCase):
@@ -93,3 +93,9 @@ class TestFunctions(unittest.TestCase):
             self.assertEqual(time_zone.params, ('UTC',))
         finally:
             Flavor.set(Flavor())
+
+    def test_div(self):
+        for div in [Div(self.table.c1, self.table.c2),
+                self.table.c1 // self.table.c2]:
+            self.assertEqual(str(div), 'DIV("c1", "c2")')
+            self.assertEqual(div.params, ())
