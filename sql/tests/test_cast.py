@@ -37,6 +37,7 @@ class TestCast(unittest.TestCase):
     def test_cast(self):
         for cast in [Cast(self.column, 'int'), self.column.cast('int')]:
             self.assertEqual(str(cast), 'CAST("c" AS int)')
+            self.assertEqual(cast.params, ())
 
     def test_cast_no_expression(self):
         cast = Cast(1.1, 'int')
