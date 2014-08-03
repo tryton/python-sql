@@ -1,3 +1,4 @@
+Version 0.4 - 2014-08-03
 * Fix Mapping in Trim function
 * Add __truediv__ alias of __div__ for Python3
 * Fix For tables setter when tables is not a list
