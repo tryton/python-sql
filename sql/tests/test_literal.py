@@ -36,3 +36,4 @@ class TestLiteral(unittest.TestCase):
         literal = Literal(1)
         self.assertEqual(str(literal), '%s')
         self.assertEqual(literal.params, (1,))
+        self.assertEqual(literal.value, 1)

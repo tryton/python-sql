@@ -28,7 +28,7 @@
 
 import unittest
 
-from sql import Table
+from sql import Table, Literal
 
 
 class TestUpdate(unittest.TestCase):
@@ -39,7 +39,7 @@ class TestUpdate(unittest.TestCase):
         self.assertEqual(str(query), 'UPDATE "t" SET "c" = %s')
         self.assertEqual(query.params, ('foo',))
 
-        query.where = (self.table.b == True)
+        query.where = (self.table.b == Literal(True))
         self.assertEqual(str(query),
             'UPDATE "t" SET "c" = %s WHERE ("t"."b" = %s)')
         self.assertEqual(query.params, ('foo', True))
@@ -56,11 +56,13 @@ class TestUpdate(unittest.TestCase):
     def test_update_subselect(self):
         t1 = Table('t1')
         t2 = Table('t2')
-        query = t1.update([t1.c], [t2.select(t2.c, where=t2.i == t1.i)])
-        self.assertEqual(str(query),
-            'UPDATE "t1" SET "c" = ('
-            'SELECT "b"."c" FROM "t2" AS "b" WHERE ("b"."i" = "t1"."i"))')
-        self.assertEqual(query.params, ())
+        query_list = t1.update([t1.c], [t2.select(t2.c, where=t2.i == t1.i)])
+        query_nolist = t1.update([t1.c], t2.select(t2.c, where=t2.i == t1.i))
+        for query in [query_list, query_nolist]:
+            self.assertEqual(str(query),
+                'UPDATE "t1" SET "c" = ('
+                'SELECT "b"."c" FROM "t2" AS "b" WHERE ("b"."i" = "t1"."i"))')
+            self.assertEqual(query.params, ())
 
     def test_update_returning(self):
         query = self.table.update([self.table.c], ['foo'],

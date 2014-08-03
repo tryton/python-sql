@@ -29,7 +29,7 @@
 
 import unittest
 
-from sql import Table, Join, Union, Literal, Flavor
+from sql import Table, Join, Union, Literal, Flavor, For
 from sql.functions import Now, Function
 from sql.aggregate import Min
 
@@ -56,6 +56,14 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s)')
         self.assertEqual(query.params, ('foo',))
+
+    def test_select_from_list(self):
+        t2 = Table('t2')
+        t3 = Table('t3')
+        query = (self.table + t2 + t3).select(self.table.c, getattr(t2, '*'))
+        self.assertEqual(str(query),
+            'SELECT "a"."c", "b".* FROM "t" AS "a", "t2" AS "b", "t3" AS "c"')
+        self.assertEqual(query.params, ())
 
     def test_select_union(self):
         query1 = self.table.select()
@@ -91,6 +99,20 @@ class TestSelect(unittest.TestCase):
             'SELECT * FROM "t2" AS "b" '
             'ORDER BY %s')
         self.assertEqual(union.params, (1,))
+
+    def test_select_intersect(self):
+        query1 = self.table.select()
+        query2 = Table('t2').select()
+        intersect = query1 & query2
+        self.assertEqual(str(intersect),
+            'SELECT * FROM "t" AS "a" INTERSECT SELECT * FROM "t2" AS "b"')
+
+    def test_select_except(self):
+        query1 = self.table.select()
+        query2 = Table('t2').select()
+        except_ = query1 - query2
+        self.assertEqual(str(except_),
+            'SELECT * FROM "t" AS "a" EXCEPT SELECT * FROM "t2" AS "b"')
 
     def test_select_join(self):
         t1 = Table('t1')
@@ -195,3 +217,10 @@ class TestSelect(unittest.TestCase):
             self.assertEqual(query.params, ())
         finally:
             Flavor.set(Flavor())
+
+    def test_select_for(self):
+        c = self.table.c
+        query = self.table.select(c, for_=For('UPDATE'))
+        self.assertEqual(str(query),
+            'SELECT "a"."c" FROM "t" AS "a" FOR UPDATE')
+        self.assertEqual(query.params, ())

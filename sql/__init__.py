@@ -29,7 +29,7 @@
 
 from __future__ import division
 
-__version__ = '0.3'
+__version__ = '0.5'
 __all__ = ['Flavor', 'Table', 'Literal', 'Column', 'Join', 'Asc', 'Desc']
 
 import string
@@ -321,7 +321,7 @@ class Select(Query, FromItem, _SelectQueryMixin):
         if value is not None:
             if isinstance(value, For):
                 value = [value]
-            assert isinstance(all(isinstance(f, For) for f in value))
+            assert all(isinstance(f, For) for f in value)
         self.__for_ = value
 
     @staticmethod
@@ -349,7 +349,7 @@ class Select(Query, FromItem, _SelectQueryMixin):
                 having = ' HAVING ' + str(self.having)
             for_ = ''
             if self.for_ is not None:
-                for_ = ' '.join(self.for_)
+                for_ = ' ' + ' '.join(map(str, self.for_))
             return ('SELECT %s FROM %s' % (columns, from_) + where + group_by
                 + having + self._order_by_str + self._limit_str +
                 self._offset_str + for_)
@@ -811,7 +811,8 @@ class From(list):
         return tuple(p)
 
     def __add__(self, other):
-        assert isinstance(other, (Join, Select))
+        assert isinstance(other, FromItem)
+        assert not isinstance(other, CombiningQuery)
         return From(super(From, self).__add__([other]))
 
 
@@ -852,6 +853,8 @@ class Expression(object):
     def __div__(self, other):
         from sql.operators import Div
         return Div(self, other)
+
+    __truediv__ = __div__
 
     def __floordiv__(self, other):
         from sql.functions import Div
@@ -956,6 +959,8 @@ class Literal(Expression):
     @property
     def params(self):
         return (self.__value,)
+
+Null = None
 
 
 class Column(Expression):
@@ -1074,7 +1079,7 @@ class For(object):
     @tables.setter
     def tables(self, value):
         if not isinstance(value, list):
-            value = list(value)
+            value = [value]
         all(isinstance(table, Table) for table in value)
         self.__tables = value
 
