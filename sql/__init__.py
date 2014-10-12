@@ -166,6 +166,8 @@ class FromItem(object):
         return AliasManager.get(self)
 
     def __getattr__(self, name):
+        if name.startswith('__'):
+            raise AttributeError
         return Column(self, name)
 
     def __add__(self, other):
@@ -180,12 +182,12 @@ class FromItem(object):
 
 
 class _SelectQueryMixin(object):
-    __slots__ = ('__order_by', '__limit', '__offset')
+    __slots__ = ('_order_by', '_limit', '_offset')
 
     def __init__(self, *args, **kwargs):
-        self.__order_by = None
-        self.__limit = None
-        self.__offset = None
+        self._order_by = None
+        self._limit = None
+        self._offset = None
         self.order_by = kwargs.pop('order_by', None)
         self.limit = kwargs.pop('limit', None)
         self.offset = kwargs.pop('offset', None)
@@ -193,7 +195,7 @@ class _SelectQueryMixin(object):
 
     @property
     def order_by(self):
-        return self.__order_by
+        return self._order_by
 
     @order_by.setter
     def order_by(self, value):
@@ -201,7 +203,7 @@ class _SelectQueryMixin(object):
             if isinstance(value, Expression):
                 value = [value]
             assert all(isinstance(col, Expression) for col in value)
-        self.__order_by = value
+        self._order_by = value
 
     @property
     def _order_by_str(self):
@@ -212,13 +214,13 @@ class _SelectQueryMixin(object):
 
     @property
     def limit(self):
-        return self.__limit
+        return self._limit
 
     @limit.setter
     def limit(self, value):
         if value is not None:
             assert isinstance(value, (int, long))
-        self.__limit = value
+        self._limit = value
 
     @property
     def _limit_str(self):
@@ -233,13 +235,13 @@ class _SelectQueryMixin(object):
 
     @property
     def offset(self):
-        return self.__offset
+        return self._offset
 
     @offset.setter
     def offset(self, value):
         if value is not None:
             assert isinstance(value, (int, long))
-        self.__offset = value
+        self._offset = value
 
     @property
     def _offset_str(self):
@@ -250,16 +252,16 @@ class _SelectQueryMixin(object):
 
 
 class Select(Query, FromItem, _SelectQueryMixin):
-    __slots__ = ('__columns', '__where', '__group_by', '__having', '__for_',
+    __slots__ = ('_columns', '_where', '_group_by', '_having', '_for_',
         'from_')
 
     def __init__(self, columns, from_=None, where=None, group_by=None,
             having=None, for_=None, **kwargs):
-        self.__columns = None
-        self.__where = None
-        self.__group_by = None
-        self.__having = None
-        self.__for_ = None
+        self._columns = None
+        self._where = None
+        self._group_by = None
+        self._having = None
+        self._for_ = None
         super(Select, self).__init__(**kwargs)
         # TODO ALL|DISTINCT
         self.columns = columns
@@ -271,27 +273,27 @@ class Select(Query, FromItem, _SelectQueryMixin):
 
     @property
     def columns(self):
-        return self.__columns
+        return self._columns
 
     @columns.setter
     def columns(self, value):
         assert all(isinstance(col, Expression) for col in value)
-        self.__columns = tuple(value)
+        self._columns = tuple(value)
 
     @property
     def where(self):
-        return self.__where
+        return self._where
 
     @where.setter
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
             assert isinstance(value, (Expression, And, Or))
-        self.__where = value
+        self._where = value
 
     @property
     def group_by(self):
-        return self.__group_by
+        return self._group_by
 
     @group_by.setter
     def group_by(self, value):
@@ -299,22 +301,22 @@ class Select(Query, FromItem, _SelectQueryMixin):
             if isinstance(value, Expression):
                 value = [value]
             assert all(isinstance(col, Expression) for col in value)
-        self.__group_by = value
+        self._group_by = value
 
     @property
     def having(self):
-        return self.__having
+        return self._having
 
     @having.setter
     def having(self, value):
         from sql.operators import And, Or
         if value is not None:
             assert isinstance(value, (Expression, And, Or))
-        self.__having = value
+        self._having = value
 
     @property
     def for_(self):
-        return self.__for_
+        return self._for_
 
     @for_.setter
     def for_(self, value):
@@ -322,7 +324,7 @@ class Select(Query, FromItem, _SelectQueryMixin):
             if isinstance(value, For):
                 value = [value]
             assert all(isinstance(f, For) for f in value)
-        self.__for_ = value
+        self._for_ = value
 
     @staticmethod
     def _format_column(column):
@@ -385,13 +387,13 @@ class Select(Query, FromItem, _SelectQueryMixin):
 
 
 class Insert(Query):
-    __slots__ = ('__table', '__columns', '__values', '__returning')
+    __slots__ = ('_table', '_columns', '_values', '_returning')
 
     def __init__(self, table, columns=None, values=None, returning=None):
-        self.__table = None
-        self.__columns = None
-        self.__values = None
-        self.__returning = None
+        self._table = None
+        self._columns = None
+        self._values = None
+        self._returning = None
         self.table = table
         self.columns = columns
         self.values = values
@@ -399,43 +401,43 @@ class Insert(Query):
 
     @property
     def table(self):
-        return self.__table
+        return self._table
 
     @table.setter
     def table(self, value):
         assert isinstance(value, Table)
-        self.__table = value
+        self._table = value
 
     @property
     def columns(self):
-        return self.__columns
+        return self._columns
 
     @columns.setter
     def columns(self, value):
         if value is not None:
             assert all(isinstance(col, Column) for col in value)
             assert all(col.table == self.table for col in value)
-        self.__columns = value
+        self._columns = value
 
     @property
     def values(self):
-        return self.__values
+        return self._values
 
     @values.setter
     def values(self, value):
         if value is not None:
             assert isinstance(value, (list, Select))
-        self.__values = value
+        self._values = value
 
     @property
     def returning(self):
-        return self.__returning
+        return self._returning
 
     @returning.setter
     def returning(self, value):
         if value is not None:
             assert isinstance(value, list)
-        self.__returning = value
+        self._returning = value
 
     @staticmethod
     def _format(value, param=None):
@@ -487,37 +489,37 @@ class Insert(Query):
 
 
 class Update(Insert):
-    __slots__ = ('__where', '__values', 'from_')
+    __slots__ = ('_where', '_values', 'from_')
 
     def __init__(self, table, columns, values, from_=None, where=None,
             returning=None):
         super(Update, self).__init__(table, columns=columns, values=values,
             returning=returning)
-        self.__where = None
+        self._where = None
         self.from_ = From(from_) if from_ else None
         self.where = where
 
     @property
     def values(self):
-        return self.__values
+        return self._values
 
     @values.setter
     def values(self, value):
         if isinstance(value, Select):
             value = [value]
         assert isinstance(value, list)
-        self.__values = value
+        self._values = value
 
     @property
     def where(self):
-        return self.__where
+        return self._where
 
     @where.setter
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
             assert isinstance(value, (Expression, And, Or))
-        self.__where = value
+        self._where = value
 
     def __str__(self):
         assert all(col.table == self.table for col in self.columns)
@@ -562,13 +564,13 @@ class Update(Insert):
 
 
 class Delete(Query):
-    __slots__ = ('__table', '__where', '__returning', 'only')
+    __slots__ = ('_table', '_where', '_returning', 'only')
 
     def __init__(self, table, only=False, using=None, where=None,
             returning=None):
-        self.__table = None
-        self.__where = None
-        self.__returning = None
+        self._table = None
+        self._where = None
+        self._returning = None
         self.table = table
         self.only = only
         # TODO using (not standard)
@@ -577,33 +579,33 @@ class Delete(Query):
 
     @property
     def table(self):
-        return self.__table
+        return self._table
 
     @table.setter
     def table(self, value):
         assert isinstance(value, Table)
-        self.__table = value
+        self._table = value
 
     @property
     def where(self):
-        return self.__where
+        return self._where
 
     @where.setter
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
             assert isinstance(value, (Expression, And, Or))
-        self.__where = value
+        self._where = value
 
     @property
     def returning(self):
-        return self.__returning
+        return self._returning
 
     @returning.setter
     def returning(self, value):
         if value is not None:
             assert isinstance(value, list)
-        self.__returning = value
+        self._returning = value
 
     def __str__(self):
         only = ' ONLY' if self.only else ''
@@ -669,14 +671,14 @@ class Except(CombiningQuery):
 
 
 class Table(FromItem):
-    __slots__ = '__name'
+    __slots__ = '_name'
 
     def __init__(self, name):
         super(Table, self).__init__()
-        self.__name = name
+        self._name = name
 
     def __str__(self):
-        return '"%s"' % self.__name
+        return '"%s"' % self._name
 
     @property
     def params(self):
@@ -696,13 +698,13 @@ class Table(FromItem):
 
 
 class Join(FromItem):
-    __slots__ = ('__left', '__right', '__condition', '__type_')
+    __slots__ = ('_left', '_right', '_condition', '_type_')
 
     def __init__(self, left, right, type_='INNER', condition=None):
         super(Join, self).__init__()
-        self.__left, self.__right = None, None
-        self.__condition = None
-        self.__type_ = None
+        self._left, self._right = None, None
+        self._condition = None
+        self._type_ = None
         self.left = left
         self.right = right
         self.condition = condition
@@ -710,43 +712,43 @@ class Join(FromItem):
 
     @property
     def left(self):
-        return self.__left
+        return self._left
 
     @left.setter
     def left(self, value):
         assert isinstance(value, FromItem)
-        self.__left = value
+        self._left = value
 
     @property
     def right(self):
-        return self.__right
+        return self._right
 
     @right.setter
     def right(self, value):
         assert isinstance(value, FromItem)
-        self.__right = value
+        self._right = value
 
     @property
     def condition(self):
-        return self.__condition
+        return self._condition
 
     @condition.setter
     def condition(self, value):
         from sql.operators import And, Or
         if value is not None:
             assert isinstance(value, (Expression, And, Or))
-        self.__condition = value
+        self._condition = value
 
     @property
     def type_(self):
-        return self.__type_
+        return self._type_
 
     @type_.setter
     def type_(self, value):
         value = value.upper()
         assert value in ('INNER', 'LEFT', 'LEFT OUTER',
             'RIGHT', 'RIGHT OUTER', 'FULL', 'FULL OUTER', 'CROSS')
-        self.__type_ = value
+        self._type_ = value
 
     def __str__(self):
         join = '%s %s JOIN %s' % (From([self.left]), self.type_,
@@ -943,53 +945,53 @@ class Expression(object):
 
 
 class Literal(Expression):
-    __slots__ = ('__value')
+    __slots__ = ('_value')
 
     def __init__(self, value):
         super(Literal, self).__init__()
-        self.__value = value
+        self._value = value
 
     @property
     def value(self):
-        return self.__value
+        return self._value
 
     def __str__(self):
         return Flavor.get().param
 
     @property
     def params(self):
-        return (self.__value,)
+        return (self._value,)
 
 Null = None
 
 
 class Column(Expression):
-    __slots__ = ('__from', '__name')
+    __slots__ = ('_from', '_name')
 
     def __init__(self, from_, name):
         super(Column, self).__init__()
-        self.__from = from_
-        self.__name = name
+        self._from = from_
+        self._name = name
 
     @property
     def table(self):
-        return self.__from
+        return self._from
 
     @property
     def name(self):
-        return self.__name
+        return self._name
 
     def __str__(self):
-        if self.__name == '*':
+        if self._name == '*':
             t = '%s'
         else:
             t = '"%s"'
-        alias = self.__from.alias
+        alias = self._from.alias
         if alias:
             t = '"%s".' + t
-            return t % (alias, self.__name)
+            return t % (alias, self._name)
         else:
-            return t % self.__name
+            return t % self._name
 
     @property
     def params(self):
@@ -1063,35 +1065,35 @@ class Desc(Order):
 
 
 class For(object):
-    __slots__ = ('__tables', '__type_', 'nowait')
+    __slots__ = ('_tables', '_type_', 'nowait')
 
     def __init__(self, type_, *tables, **kwargs):
-        self.__tables = None
-        self.__type_ = None
+        self._tables = None
+        self._type_ = None
         self.tables = list(tables)
         self.type_ = type_
         self.nowait = kwargs.get('nowait')
 
     @property
     def tables(self):
-        return self.__tables
+        return self._tables
 
     @tables.setter
     def tables(self, value):
         if not isinstance(value, list):
             value = [value]
         all(isinstance(table, Table) for table in value)
-        self.__tables = value
+        self._tables = value
 
     @property
     def type_(self):
-        return self.__type_
+        return self._type_
 
     @type_.setter
     def type_(self, value):
         value = value.upper()
         assert value in ('UPDATE', 'SHARE')
-        self.__type_ = value
+        self._type_ = value
 
     def __str__(self):
         tables = ''

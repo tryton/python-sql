@@ -28,6 +28,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import unittest
+from copy import deepcopy
 
 from sql import Table, Join, Union, Literal, Flavor, For
 from sql.functions import Now, Function
@@ -224,3 +225,10 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT "a"."c" FROM "t" AS "a" FOR UPDATE')
         self.assertEqual(query.params, ())
+
+    def test_copy(self):
+        query = self.table.select()
+        copy_query = deepcopy(query)
+        self.assertNotEqual(query, copy_query)
+        self.assertEqual(str(copy_query), 'SELECT * FROM "t" AS "a"')
+        self.assertEqual(copy_query.params, ())
