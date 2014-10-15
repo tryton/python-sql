@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2013, Cédric Krier
+# Copyright (c) 2011-2014, Cédric Krier
 # Copyright (c) 2013, Nicolas Évrard
-# Copyright (c) 2011-2013, B2CK
+# Copyright (c) 2011-2014, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,10 @@
 from __future__ import division
 
 __version__ = '0.5'
-__all__ = ['Flavor', 'Table', 'Literal', 'Column', 'Join', 'Asc', 'Desc']
+__all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
+    'Asc', 'Desc']
 
 import string
-from functools import partial
 from threading import local, currentThread
 from collections import defaultdict
 
@@ -133,12 +133,12 @@ class AliasManager(object):
     def get(cls, from_):
         if getattr(cls.local, 'alias', None) is None:
             return ''
-        return cls.local.alias[from_]
+        return cls.local.alias[id(from_)]
 
     @classmethod
     def set(cls, from_, alias):
         assert cls.local.alias.get(from_) is None
-        cls.local.alias[from_] = alias
+        cls.local.alias[id(from_)] = alias
 
     @classmethod
     def alias_factory(cls):
@@ -156,6 +156,15 @@ class Query(object):
     def __iter__(self):
         yield str(self)
         yield self.params
+
+    def __or__(self, other):
+        return Union(self, other)
+
+    def __and__(self, other):
+        return Interesect(self, other)
+
+    def __sub__(self, other):
+        return Except(self, other)
 
 
 class FromItem(object):
@@ -376,15 +385,6 @@ class Select(Query, FromItem, _SelectQueryMixin):
                 p.extend(expression.params)
         return tuple(p)
 
-    def __or__(self, other):
-        return Union(self, other)
-
-    def __and__(self, other):
-        return Interesect(self, other)
-
-    def __sub__(self, other):
-        return Except(self, other)
-
 
 class Insert(Query):
     __slots__ = ('_table', '_columns', '_values', '_returning')
@@ -427,6 +427,8 @@ class Insert(Query):
     def values(self, value):
         if value is not None:
             assert isinstance(value, (list, Select))
+        if isinstance(value, list):
+            value = Values(value)
         self._values = value
 
     @property
@@ -455,14 +457,9 @@ class Insert(Query):
         if self.columns:
             assert all(col.table == self.table for col in self.columns)
             columns = ' (' + ', '.join(map(str, self.columns)) + ')'
-        if isinstance(self.values, list):
-            format_ = partial(self._format, param=Flavor.get().param)
-            values = ' VALUES ' + ', '.join(
-                '(' + ', '.join(map(format_, v)) + ')'
-                for v in self.values)
-            # TODO manage DEFAULT
-        elif isinstance(self.values, Select):
+        if isinstance(self.values, Query):
             values = ' %s' % str(self.values)
+            # TODO manage DEFAULT
         elif self.values is None:
             values = ' DEFAULT VALUES'
         returning = ''
@@ -473,14 +470,7 @@ class Insert(Query):
     @property
     def params(self):
         p = []
-        if isinstance(self.values, list):
-            for values in self.values:
-                for value in values:
-                    if isinstance(value, (Expression, Select)):
-                        p.extend(value.params)
-                    else:
-                        p.append(value)
-        elif isinstance(self.values, Select):
+        if isinstance(self.values, Query):
             p.extend(self.values.params)
         if self.returning:
             for exp in self.returning:
@@ -633,7 +623,7 @@ class CombiningQuery(Query, FromItem, _SelectQueryMixin):
     _operator = ''
 
     def __init__(self, *queries, **kwargs):
-        assert all(isinstance(q, _SelectQueryMixin) for q in queries)
+        assert all(isinstance(q, Query) for q in queries)
         self.queries = queries
         self.all_ = kwargs.pop('all_', False)
         super(CombiningQuery, self).__init__(**kwargs)
@@ -788,21 +778,22 @@ class From(list):
 
     def __str__(self):
         def format(from_):
+            template = '%s'
             if isinstance(from_, Query):
-                return '(%s) AS "%s"' % (from_, from_.alias)
+                template = '(%s)'
+            alias = getattr(from_, 'alias', None)
+            # TODO column_alias
+            columns_definitions = getattr(from_, 'columns_definitions',
+                None)
+            # XXX find a better test for __getattr__ which returns Column
+            if (alias and columns_definitions
+                    and not isinstance(columns_definitions, Column)):
+                return (template + ' AS "%s" (%s)') % (from_, alias,
+                    columns_definitions)
+            elif alias:
+                return (template + ' AS "%s"') % (from_, alias)
             else:
-                alias = getattr(from_, 'alias', None)
-                columns_definitions = getattr(from_, 'columns_definitions',
-                    None)
-                # XXX find a better test for __getattr__ which returns Column
-                if (alias and columns_definitions
-                        and not isinstance(columns_definitions, Column)):
-                    return '%s AS "%s" (%s)' % (from_, alias,
-                        columns_definitions)
-                elif alias:
-                    return '%s AS "%s"' % (from_, alias)
-                else:
-                    return str(from_)
+                return template % from_
         return ', '.join(map(format, self))
 
     @property
@@ -816,6 +807,35 @@ class From(list):
         assert isinstance(other, FromItem)
         assert not isinstance(other, CombiningQuery)
         return From(super(From, self).__add__([other]))
+
+
+class Values(list, Query, FromItem):
+    __slots__ = ()
+
+    # TODO order, fetch
+
+    def __str__(self):
+        param = Flavor.get().param
+
+        def format_(value):
+            if isinstance(value, Expression):
+                return str(value)
+            else:
+                return param
+        return 'VALUES ' + ', '.join(
+            '(%s)' % ', '.join(map(format_, v))
+            for v in self)
+
+    @property
+    def params(self):
+        p = []
+        for values in self:
+            for value in values:
+                if isinstance(value, Expression):
+                    p.extend(value.params)
+                else:
+                    p.append(value)
+        return tuple(p)
 
 
 class Expression(object):
