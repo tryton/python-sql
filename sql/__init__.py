@@ -34,6 +34,7 @@ __all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
     'Asc', 'Desc']
 
 import string
+import warnings
 from threading import local, currentThread
 from collections import defaultdict
 
@@ -161,7 +162,7 @@ class Query(object):
         return Union(self, other)
 
     def __and__(self, other):
-        return Interesect(self, other)
+        return Intersect(self, other)
 
     def __sub__(self, other):
         return Except(self, other)
@@ -650,9 +651,16 @@ class Union(CombiningQuery):
     _operator = 'UNION'
 
 
-class Interesect(CombiningQuery):
+class Intersect(CombiningQuery):
     __slots__ = ()
     _operator = 'INTERSECT'
+
+
+class Interesect(Intersect):
+    def __init__(self, *args, **kwargs):
+        warnings.warn('Interesect query is deprecated, use Intersect',
+            DeprecationWarning, stacklevel=2)
+        super(Interesect, self).__init__(*args, **kwargs)
 
 
 class Except(CombiningQuery):
