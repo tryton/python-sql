@@ -193,8 +193,27 @@ class TestOperators(unittest.TestCase):
     def test_mod(self):
         for mod in [Mod(self.table.c1, self.table.c2),
                 self.table.c1 % self.table.c2]:
+            self.assertEqual(str(mod), '("c1" %% "c2")')
+            self.assertEqual(mod.params, ())
+
+    def test_mod_paramstyle(self):
+        flavor = Flavor(paramstyle='format')
+        Flavor.set(flavor)
+        try:
+            mod = Mod(self.table.c1, self.table.c2)
+            self.assertEqual(str(mod), '("c1" %% "c2")')
+            self.assertEqual(mod.params, ())
+        finally:
+            Flavor.set(Flavor())
+
+        flavor = Flavor(paramstyle='qmark')
+        Flavor.set(flavor)
+        try:
+            mod = Mod(self.table.c1, self.table.c2)
             self.assertEqual(str(mod), '("c1" % "c2")')
             self.assertEqual(mod.params, ())
+        finally:
+            Flavor.set(Flavor())
 
     def test_pow(self):
         for pow_ in [Pow(self.table.c1, self.table.c2),

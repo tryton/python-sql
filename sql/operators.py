@@ -257,7 +257,14 @@ class FloorDiv(BinaryOperator):
 
 class Mod(BinaryOperator):
     __slots__ = ()
-    _operator = '%'
+
+    @property
+    def _operator(self):
+        # '%' must be escaped with format paramstyle
+        if Flavor.get().paramstyle == 'format':
+            return '%%'
+        else:
+            return '%'
 
 
 class Pow(BinaryOperator):

@@ -1,3 +1,4 @@
+* Escape Mod operator '%' with format paramstyle
 * Deprecate Interesect in favor of Intersect
 * Add Values
 
