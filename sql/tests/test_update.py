@@ -28,7 +28,7 @@
 
 import unittest
 
-from sql import Table, Literal
+from sql import Table, Literal, With
 
 
 class TestUpdate(unittest.TestCase):
@@ -70,3 +70,17 @@ class TestUpdate(unittest.TestCase):
         self.assertEqual(str(query),
             'UPDATE "t" SET "c" = %s RETURNING "t"."c"')
         self.assertEqual(query.params, ('foo',))
+
+    def test_with(self):
+        t1 = Table('t1')
+        w = With(query=t1.select(t1.c1))
+
+        query = self.table.update(
+            [self.table.c2],
+            with_=[w],
+            values=[w.select(w.c3, where=w.c4 == 2)])
+        self.assertEqual(str(query),
+            'WITH b AS (SELECT "c"."c1" FROM "t1" AS "c") '
+            'UPDATE "t" SET "c2" = (SELECT "b"."c3" FROM b AS "b" '
+            'WHERE ("b"."c4" = %s))')
+        self.assertEqual(query.params, (2,))

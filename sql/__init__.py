@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2011-2014, Cédric Krier
-# Copyright (c) 2013, Nicolas Évrard
+# Copyright (c) 2013-2014, Nicolas Évrard
 # Copyright (c) 2011-2014, B2CK
 # All rights reserved.
 #
@@ -116,12 +116,21 @@ class AliasManager(object):
     local = local()
     local.alias = None
     local.nested = 0
+    local.exclude = None
+
+    def __init__(self, exclude=None):
+        if exclude:
+            if self.local.exclude is None:
+                self.local.exclude = []
+            self.local.exclude.extend(exclude)
 
     @classmethod
     def __enter__(cls):
         if getattr(cls.local, 'alias', None) is None:
             cls.local.alias = defaultdict(cls.alias_factory)
             cls.local.nested = 0
+        if getattr(cls.local, 'exclude', None) is None:
+            cls.local.exclude = []
         cls.local.nested += 1
 
     @classmethod
@@ -129,10 +138,13 @@ class AliasManager(object):
         cls.local.nested -= 1
         if not cls.local.nested:
             cls.local.alias = None
+            cls.local.exclude = None
 
     @classmethod
     def get(cls, from_):
         if getattr(cls.local, 'alias', None) is None:
+            return ''
+        if from_ in cls.local.exclude:
             return ''
         return cls.local.alias[id(from_)]
 
@@ -168,6 +180,45 @@ class Query(object):
         return Except(self, other)
 
 
+class WithQuery(Query):
+    __slots__ = ('_with',)
+
+    def __init__(self, **kwargs):
+        self._with = None
+        self.with_ = kwargs.pop('with_', None)
+        super(Query, self).__init__(**kwargs)
+
+    @property
+    def with_(self):
+        return self._with
+
+    @with_.setter
+    def with_(self, value):
+        if value is not None:
+            if isinstance(value, With):
+                value = [value]
+            assert all(isinstance(w, With) for w in value)
+        self._with = value
+
+    def _with_str(self):
+        if not self.with_:
+            return ''
+        recursive = (' RECURSIVE' if any(w.recursive for w in self.with_)
+            else '')
+        with_ = ('WITH%s ' % recursive
+            + ', '.join(w.statement() for w in self.with_)
+            + ' ')
+        return with_
+
+    def _with_params(self):
+        if not self.with_:
+            return ()
+        params = []
+        for w in self.with_:
+            params.extend(w.statement_params())
+        return tuple(params)
+
+
 class FromItem(object):
     __slots__ = ()
 
@@ -191,7 +242,32 @@ class FromItem(object):
         return Join(self, right, type_=type_, condition=condition)
 
 
-class _SelectQueryMixin(object):
+class With(FromItem):
+    __slots__ = ('columns', 'query', 'recursive')
+
+    def __init__(self, *columns, **kwargs):
+        self.recursive = kwargs.pop('recursive', False)
+        self.columns = columns
+        self.query = kwargs.pop('query', None)
+        super(With, self).__init__(**kwargs)
+
+    def statement(self):
+        columns = ('(%s)' % ', '.join('"%s"' % c for c in self.columns)
+            if self.columns else '')
+        return '%s%s AS (%s)' % (self.alias, columns, self.query)
+
+    def statement_params(self):
+        return self.query.params
+
+    def __str__(self):
+        return self.alias
+
+    @property
+    def params(self):
+        return tuple()
+
+
+class SelectQuery(WithQuery):
     __slots__ = ('_order_by', '_limit', '_offset')
 
     def __init__(self, *args, **kwargs):
@@ -201,7 +277,7 @@ class _SelectQueryMixin(object):
         self.order_by = kwargs.pop('order_by', None)
         self.limit = kwargs.pop('limit', None)
         self.offset = kwargs.pop('offset', None)
-        super(_SelectQueryMixin, self).__init__(*args, **kwargs)
+        super(SelectQuery, self).__init__(*args, **kwargs)
 
     @property
     def order_by(self):
@@ -261,7 +337,7 @@ class _SelectQueryMixin(object):
         return offset
 
 
-class Select(Query, FromItem, _SelectQueryMixin):
+class Select(FromItem, SelectQuery):
     __slots__ = ('_columns', '_where', '_group_by', '_having', '_for_',
         'from_')
 
@@ -362,13 +438,15 @@ class Select(Query, FromItem, _SelectQueryMixin):
             for_ = ''
             if self.for_ is not None:
                 for_ = ' ' + ' '.join(map(str, self.for_))
-            return ('SELECT %s FROM %s' % (columns, from_) + where + group_by
-                + having + self._order_by_str + self._limit_str +
-                self._offset_str + for_)
+            return (self._with_str()
+                + 'SELECT %s FROM %s' % (columns, from_)
+                + where + group_by + having + self._order_by_str
+                + self._limit_str + self._offset_str + for_)
 
     @property
     def params(self):
         p = []
+        p.extend(self._with_params())
         for column in self.columns:
             if isinstance(column, As):
                 p.extend(column.expression.params)
@@ -387,10 +465,11 @@ class Select(Query, FromItem, _SelectQueryMixin):
         return tuple(p)
 
 
-class Insert(Query):
+class Insert(WithQuery):
     __slots__ = ('_table', '_columns', '_values', '_returning')
 
-    def __init__(self, table, columns=None, values=None, returning=None):
+    def __init__(self, table, columns=None, values=None, returning=None,
+            **kwargs):
         self._table = None
         self._columns = None
         self._values = None
@@ -399,6 +478,7 @@ class Insert(Query):
         self.columns = columns
         self.values = values
         self.returning = returning
+        super(Insert, self).__init__(**kwargs)
 
     @property
     def table(self):
@@ -466,11 +546,15 @@ class Insert(Query):
         returning = ''
         if self.returning:
             returning = ' RETURNING ' + ', '.join(map(str, self.returning))
-        return 'INSERT INTO %s' % self.table + columns + values + returning
+        with AliasManager():
+            return (self._with_str()
+                + 'INSERT INTO %s' % self.table + columns
+                + values + returning)
 
     @property
     def params(self):
         p = []
+        p.extend(self._with_params())
         if isinstance(self.values, Query):
             p.extend(self.values.params)
         if self.returning:
@@ -483,9 +567,9 @@ class Update(Insert):
     __slots__ = ('_where', '_values', 'from_')
 
     def __init__(self, table, columns, values, from_=None, where=None,
-            returning=None):
+            returning=None, **kwargs):
         super(Update, self).__init__(table, columns=columns, values=values,
-            returning=returning)
+            returning=returning, **kwargs)
         self._where = None
         self.from_ = From(from_) if from_ else None
         self.where = where
@@ -533,12 +617,14 @@ class Update(Insert):
             returning = ''
             if self.returning:
                 returning = ' RETURNING ' + ', '.join(map(str, self.returning))
-            return ('UPDATE %s SET ' % table + values + from_ + where
-                + returning)
+            return (self._with_str()
+                + 'UPDATE %s SET ' % table + values + from_
+                + where + returning)
 
     @property
     def params(self):
         p = []
+        p.extend(self._with_params())
         for value in self.values:
             if isinstance(value, (Expression, Select)):
                 p.extend(value.params)
@@ -554,11 +640,11 @@ class Update(Insert):
         return tuple(p)
 
 
-class Delete(Query):
+class Delete(WithQuery):
     __slots__ = ('_table', '_where', '_returning', 'only')
 
     def __init__(self, table, only=False, using=None, where=None,
-            returning=None):
+            returning=None, **kwargs):
         self._table = None
         self._where = None
         self._returning = None
@@ -567,6 +653,7 @@ class Delete(Query):
         # TODO using (not standard)
         self.where = where
         self.returning = returning
+        super(Delete, self).__init__(**kwargs)
 
     @property
     def table(self):
@@ -599,18 +686,22 @@ class Delete(Query):
         self._returning = value
 
     def __str__(self):
-        only = ' ONLY' if self.only else ''
-        where = ''
-        if self.where:
-            where = ' WHERE ' + str(self.where)
-        returning = ''
-        if self.returning:
-            returning = ' RETURNING ' + ', '.join(map(str, self.returning))
-        return 'DELETE FROM%s %s' % (only, self.table) + where + returning
+        with AliasManager(exclude=[self.table]):
+            only = ' ONLY' if self.only else ''
+            where = ''
+            if self.where:
+                where = ' WHERE ' + str(self.where)
+            returning = ''
+            if self.returning:
+                returning = ' RETURNING ' + ', '.join(map(str, self.returning))
+            return (self._with_str()
+                + 'DELETE FROM%s %s' % (only, self.table)
+                + where + returning)
 
     @property
     def params(self):
         p = []
+        p.extend(self._with_params())
         if self.where:
             p.extend(self.where.params)
         if self.returning:
@@ -619,7 +710,7 @@ class Delete(Query):
         return tuple(p)
 
 
-class CombiningQuery(Query, FromItem, _SelectQueryMixin):
+class CombiningQuery(FromItem, SelectQuery):
     __slots__ = ('queries', 'all_')
     _operator = ''
 
@@ -682,17 +773,19 @@ class Table(FromItem):
     def params(self):
         return ()
 
-    def insert(self, columns=None, values=None, returning=None):
+    def insert(self, columns=None, values=None, returning=None, with_=None):
         return Insert(self, columns=columns, values=values,
-            returning=returning)
+            returning=returning, with_=with_)
 
-    def update(self, columns, values, from_=None, where=None, returning=None):
+    def update(self, columns, values, from_=None, where=None, returning=None,
+            with_=None):
         return Update(self, columns=columns, values=values, from_=from_,
-            where=where, returning=returning)
+            where=where, returning=returning, with_=with_)
 
-    def delete(self, only=False, using=None, where=None, returning=None):
+    def delete(self, only=False, using=None, where=None, returning=None,
+            with_=None):
         return Delete(self, only=only, using=using, where=where,
-            returning=returning)
+            returning=returning, with_=with_)
 
 
 class Join(FromItem):

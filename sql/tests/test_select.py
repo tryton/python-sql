@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2011-2013, Cédric Krier
-# Copyright (c) 2013, Nicolas Évrard
+# Copyright (c) 2013-2014, Nicolas Évrard
 # Copyright (c) 2011-2013, B2CK
 # All rights reserved.
 #
@@ -31,7 +31,7 @@ import unittest
 import warnings
 from copy import deepcopy
 
-from sql import Table, Join, Union, Literal, Flavor, For
+from sql import Table, Join, Union, Literal, Flavor, For, With
 from sql.functions import Now, Function
 from sql.aggregate import Min
 
@@ -243,3 +243,12 @@ class TestSelect(unittest.TestCase):
         self.assertNotEqual(query, copy_query)
         self.assertEqual(str(copy_query), 'SELECT * FROM "t" AS "a"')
         self.assertEqual(copy_query.params, ())
+
+    def test_with(self):
+        w = With(query=self.table.select(self.table.c1))
+
+        query = w.select(with_=[w])
+        self.assertEqual(str(query),
+            'WITH a AS (SELECT "b"."c1" FROM "t" AS "b") '
+            'SELECT * FROM a AS "a"')
+        self.assertEqual(query.params, ())

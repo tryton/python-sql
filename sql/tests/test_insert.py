@@ -29,7 +29,7 @@
 
 import unittest
 
-from sql import Table
+from sql import Table, With
 from sql.functions import Abs
 
 
@@ -78,3 +78,16 @@ class TestInsert(unittest.TestCase):
             'INSERT INTO "t" ("c1", "c2") VALUES (%s, %s) '
             'RETURNING "c1", "c2"')
         self.assertEqual(query.params, ('foo', 'bar'))
+
+    def test_with(self):
+        t1 = Table('t1')
+        w = With(query=t1.select())
+
+        query = self.table.insert(
+            [self.table.c1],
+            with_=[w],
+            values=w.select())
+        self.assertEqual(str(query),
+            'WITH a AS (SELECT * FROM "t1" AS "b") '
+            'INSERT INTO "t" ("c1") SELECT * FROM a AS "a"')
+        self.assertEqual(query.params, ())
