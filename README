@@ -93,6 +93,12 @@ Select with sub-select::
     >>> tuple(subselect.select(subselect.user))
     ('SELECT "a"."user" FROM (SELECT "b"."user" FROM "user_group" AS "b" WHERE ("b"."active" = %s)) AS "a"', (True,))
 
+Select on other schema::
+
+    >>> other_table = Table('user', 'myschema')
+    >>> tuple(other_table.select())
+    ('SELECT * FROM "myschema"."user" AS "a"', ())
+
 Insert query with default values::
 
     >>> tuple(user.insert())

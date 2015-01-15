@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2014, Cédric Krier
+# Copyright (c) 2011-2015, Cédric Krier
 # Copyright (c) 2013-2014, Nicolas Évrard
-# Copyright (c) 2011-2014, B2CK
+# Copyright (c) 2011-2015, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -760,14 +760,22 @@ class Except(CombiningQuery):
 
 
 class Table(FromItem):
-    __slots__ = '_name'
+    __slots__ = ('_name', '_schema', '_database')
 
-    def __init__(self, name):
+    def __init__(self, name, schema=None, database=None):
         super(Table, self).__init__()
         self._name = name
+        self._schema = schema
+        self._database = database
 
     def __str__(self):
-        return '"%s"' % self._name
+        if self._database:
+            return '"%s"."%s"."%s"' % (
+                self._database, self._schema, self._name)
+        elif self._schema:
+            return '"%s"."%s"' % (self._schema, self._name)
+        else:
+            return '"%s"' % self._name
 
     @property
     def params(self):
