@@ -86,9 +86,9 @@ Select with sub-select::
 
     >>> user_group = Table('user_group')
     >>> subselect = user_group.select(user_group.user,
-    ...     where=(user_group.active == True))
+    ...     where=user_group.active == True)
     >>> user = Table('user')
-    >>> tuple(user.select(user.id, where=(user.id.in_(subselect))))
+    >>> tuple(user.select(user.id, where=user.id.in_(subselect)))
     ('SELECT "a"."id" FROM "user" AS "a" WHERE ("a"."id" IN (SELECT "b"."user" FROM "user_group" AS "b" WHERE ("b"."active" = %s)))', (True,))
     >>> tuple(subselect.select(subselect.user))
     ('SELECT "a"."user" FROM (SELECT "b"."user" FROM "user_group" AS "b" WHERE ("b"."active" = %s)) AS "a"', (True,))
@@ -129,15 +129,15 @@ Update query with values::
 
 Update query with where condition::
 
-    >>> tuple(user.update(columns=[user.active], values=[True], where=(
-    ...         user.active == False)))
+    >>> tuple(user.update(columns=[user.active], values=[True],
+    ...          where=user.active == False))
     ('UPDATE "user" SET "active" = %s WHERE ("user"."active" = %s)', (True, False))
 
 Update query with from list::
 
     >>> group = Table('user_group')
     >>> tuple(user.update(columns=[user.active], values=[group.active],
-    ...         from_=[group], where=(user.id == group.user)))
+    ...         from_=[group], where=user.id == group.user))
     ('UPDATE "user" AS "b" SET "active" = "a"."active" FROM "user_group" AS "a" WHERE ("b"."id" = "a"."user")', ())
 
 Delete query::
@@ -147,13 +147,13 @@ Delete query::
 
 Delete query with where condition::
 
-    >>> tuple(user.delete(where=(user.name == 'foo')))
+    >>> tuple(user.delete(where=user.name == 'foo'))
     ('DELETE FROM "user" WHERE ("name" = %s)', ('foo',))
 
 Delete query with sub-query::
 
-    >>> tuple(user.delete(where=(
-    ...             user.id.in_(user_group.select(user_group.user)))))
+    >>> tuple(user.delete(
+    ...             where=user.id.in_(user_group.select(user_group.user))))
     ('DELETE FROM "user" WHERE ("id" IN (SELECT "a"."user" FROM "user_group" AS "a"))', ())
 
 Flavors::
@@ -171,6 +171,6 @@ Flavors::
     ('SELECT * FROM "user" AS "a" LIMIT -1 OFFSET 10', ())
     >>> Flavor.set(Flavor(paramstyle='qmark'))
     >>> select = user.select()
-    >>> select.where = (user.name == 'foo')
+    >>> select.where = user.name == 'foo'
     >>> tuple(select)
     ('SELECT * FROM "user" AS "a" WHERE ("a"."name" = ?)', ('foo',))
