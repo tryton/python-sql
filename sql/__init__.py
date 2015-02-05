@@ -254,13 +254,13 @@ class With(FromItem):
     def statement(self):
         columns = ('(%s)' % ', '.join('"%s"' % c for c in self.columns)
             if self.columns else '')
-        return '%s%s AS (%s)' % (self.alias, columns, self.query)
+        return '"%s"%s AS (%s)' % (self.alias, columns, self.query)
 
     def statement_params(self):
         return self.query.params
 
     def __str__(self):
-        return self.alias
+        return '"%s"' % self.alias
 
     @property
     def params(self):

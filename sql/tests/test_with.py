@@ -40,7 +40,7 @@ class TestWith(unittest.TestCase):
                     where=self.table.id == 1))
 
             self.assertEqual(simple.statement(),
-                'a AS ('
+                '"a" AS ('
                 'SELECT "b"."id" FROM "t" AS "b" WHERE ("b"."id" = %s)'
                 ')')
             self.assertEqual(simple.statement_params(), (1,))
@@ -50,7 +50,7 @@ class TestWith(unittest.TestCase):
             second = With('a', query=self.table.select(self.table.a))
 
             self.assertEqual(second.statement(),
-                'a("a") AS ('
+                '"a"("a") AS ('
                 'SELECT "b"."a" FROM "t" AS "b"'
                 ')')
             self.assertEqual(second.statement_params(), ())
@@ -65,10 +65,10 @@ class TestWith(unittest.TestCase):
 
             wq = WithQuery(with_=[simple, second])
             self.assertEqual(wq._with_str(),
-                'WITH a AS ('
+                'WITH "a" AS ('
                 'SELECT "b"."id" FROM "t" AS "b" WHERE ("b"."id" = %s)'
-                '), c AS ('
-                'SELECT * FROM a AS "a"'
+                '), "c" AS ('
+                'SELECT * FROM "a" AS "a"'
                 ') ')
             self.assertEqual(wq._with_params(), (1,))
 
@@ -82,9 +82,9 @@ class TestWith(unittest.TestCase):
 
         q = upto10.select(with_=[upto10])
         self.assertEqual(str(q),
-            'WITH RECURSIVE a("n") AS ('
+            'WITH RECURSIVE "a"("n") AS ('
             'VALUES (%s) '
             'UNION ALL '
-            'SELECT ("a"."n" + %s) FROM a AS "a" WHERE ("a"."n" < %s)'
-            ') SELECT * FROM a AS "a"')
+            'SELECT ("a"."n" + %s) FROM "a" AS "a" WHERE ("a"."n" < %s)'
+            ') SELECT * FROM "a" AS "a"')
         self.assertEqual(q.params, (1, 1, 100))

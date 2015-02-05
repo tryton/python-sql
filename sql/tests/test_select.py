@@ -249,6 +249,6 @@ class TestSelect(unittest.TestCase):
 
         query = w.select(with_=[w])
         self.assertEqual(str(query),
-            'WITH a AS (SELECT "b"."c1" FROM "t" AS "b") '
-            'SELECT * FROM a AS "a"')
+            'WITH "a" AS (SELECT "b"."c1" FROM "t" AS "b") '
+            'SELECT * FROM "a" AS "a"')
         self.assertEqual(query.params, ())

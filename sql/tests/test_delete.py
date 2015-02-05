@@ -65,6 +65,6 @@ class TestDelete(unittest.TestCase):
         query = self.table.delete(with_=[w],
             where=self.table.c2.in_(w.select(w.c3)))
         self.assertEqual(str(query),
-            'WITH a AS (SELECT "b"."c1" FROM "t1" AS "b") '
-            'DELETE FROM "t" WHERE ("c2" IN (SELECT "a"."c3" FROM a AS "a"))')
+            'WITH "a" AS (SELECT "b"."c1" FROM "t1" AS "b") '
+            'DELETE FROM "t" WHERE ("c2" IN (SELECT "a"."c3" FROM "a" AS "a"))')
         self.assertEqual(query.params, ())

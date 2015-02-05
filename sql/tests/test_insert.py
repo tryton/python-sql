@@ -88,6 +88,6 @@ class TestInsert(unittest.TestCase):
             with_=[w],
             values=w.select())
         self.assertEqual(str(query),
-            'WITH a AS (SELECT * FROM "t1" AS "b") '
-            'INSERT INTO "t" ("c1") SELECT * FROM a AS "a"')
+            'WITH "a" AS (SELECT * FROM "t1" AS "b") '
+            'INSERT INTO "t" ("c1") SELECT * FROM "a" AS "a"')
         self.assertEqual(query.params, ())

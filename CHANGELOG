@@ -1,3 +1,5 @@
+* Add missing quote for with query name
+
 Version 0.5 - 2015-01-29
 * Add schema
 * Add Common Table Expression
