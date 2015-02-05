@@ -120,7 +120,7 @@ class AliasManager(object):
 
     def __init__(self, exclude=None):
         if exclude:
-            if self.local.exclude is None:
+            if getattr(self.local, 'exclude', None) is None:
                 self.local.exclude = []
             self.local.exclude.extend(exclude)
 

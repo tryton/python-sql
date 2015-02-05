@@ -46,7 +46,7 @@ class TestAliasManager(unittest.TestCase):
 
     def func1(self):
         try:
-            with AliasManager():
+            with AliasManager(exclude=[self.t2]):
                 a1 = AliasManager.get(self.t1)
                 a2 = AliasManager.get(self.t2)
                 self.synchro.wait()
@@ -61,7 +61,7 @@ class TestAliasManager(unittest.TestCase):
 
     def func2(self):
         try:
-            with AliasManager():
+            with AliasManager(exclude=[self.t2]):
                 a2 = AliasManager.get(self.t2)
                 a1 = AliasManager.get(self.t1)
                 self.synchro.set()
