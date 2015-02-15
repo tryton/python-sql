@@ -241,6 +241,25 @@ class FromItem(object):
     def join(self, right, type_='INNER', condition=None):
         return Join(self, right, type_=type_, condition=condition)
 
+    def lateral(self):
+        return Lateral(self)
+
+
+class Lateral(FromItem):
+    __slots__ = ('_from_item',)
+
+    def __init__(self, from_item):
+        self._from_item = from_item
+
+    def __str__(self):
+        template = '%s'
+        if isinstance(self._from_item, Query):
+            template = '(%s)'
+        return 'LATERAL ' + template % self._from_item
+
+    def __getattr__(self, name):
+        return getattr(self._from_item, name)
+
 
 class With(FromItem):
     __slots__ = ('columns', 'query', 'recursive')
