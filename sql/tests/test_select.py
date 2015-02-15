@@ -195,24 +195,25 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(query.params, (1,))
 
     def test_select_limit_offset(self):
-        query = self.table.select(limit=50, offset=10)
-        self.assertEqual(str(query),
-            'SELECT * FROM "t" AS "a" LIMIT 50 OFFSET 10')
-        self.assertEqual(query.params, ())
-
-        query.limit = None
-        self.assertEqual(str(query),
-            'SELECT * FROM "t" AS "a" OFFSET 10')
-        self.assertEqual(query.params, ())
-
-        query.offset = 0
-        self.assertEqual(str(query),
-            'SELECT * FROM "t" AS "a"')
-        self.assertEqual(query.params, ())
-
-        flavor = Flavor(max_limit=-1)
-        Flavor.set(flavor)
         try:
+            Flavor.set(Flavor(limitstyle='limit'))
+            query = self.table.select(limit=50, offset=10)
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a" LIMIT 50 OFFSET 10')
+            self.assertEqual(query.params, ())
+
+            query.limit = None
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a" OFFSET 10')
+            self.assertEqual(query.params, ())
+
+            query.offset = 0
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a"')
+            self.assertEqual(query.params, ())
+
+            Flavor.set(Flavor(limitstyle='limit', max_limit=-1))
+
             query.offset = None
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a"')
@@ -226,6 +227,27 @@ class TestSelect(unittest.TestCase):
             query.offset = 10
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a" LIMIT -1 OFFSET 10')
+            self.assertEqual(query.params, ())
+        finally:
+            Flavor.set(Flavor())
+
+    def test_select_offset_fetch(self):
+        try:
+            Flavor.set(Flavor(limitstyle='fetch'))
+            query = self.table.select(limit=50, offset=10)
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a" '
+                'OFFSET (10) ROWS FETCH FIRST (50) ROWS ONLY')
+            self.assertEqual(query.params, ())
+
+            query.limit = None
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a" OFFSET (10) ROWS')
+            self.assertEqual(query.params, ())
+
+            query.offset = 0
+            self.assertEqual(str(query),
+                'SELECT * FROM "t" AS "a"')
             self.assertEqual(query.params, ())
         finally:
             Flavor.set(Flavor())

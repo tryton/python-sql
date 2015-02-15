@@ -72,8 +72,10 @@ class Flavor(object):
         function_mapping - dictionary with Function to replace
     '''
 
-    def __init__(self, max_limit=None, paramstyle='format', ilike=False,
-            function_mapping=None):
+    def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
+            ilike=False, function_mapping=None):
+        assert limitstyle in ['fetch', 'limit']
+        self.limitstyle = limitstyle
         self.max_limit = max_limit
         self.paramstyle = paramstyle
         self.ilike = ilike
@@ -328,17 +330,6 @@ class SelectQuery(WithQuery):
         self._limit = value
 
     @property
-    def _limit_str(self):
-        limit = ''
-        if self.limit is not None:
-            limit = ' LIMIT %s' % self.limit
-        elif self.offset:
-            max_limit = Flavor.get().max_limit
-            if max_limit:
-                limit = ' LIMIT %s' % max_limit
-        return limit
-
-    @property
     def offset(self):
         return self._offset
 
@@ -349,11 +340,27 @@ class SelectQuery(WithQuery):
         self._offset = value
 
     @property
-    def _offset_str(self):
-        offset = ''
-        if self.offset:
-            offset = ' OFFSET %s' % self.offset
-        return offset
+    def _limit_offset_str(self):
+        if Flavor.get().limitstyle == 'limit':
+            offset = ''
+            if self.offset:
+                offset = ' OFFSET %s' % self.offset
+            limit = ''
+            if self.limit is not None:
+                limit = ' LIMIT %s' % self.limit
+            elif self.offset:
+                max_limit = Flavor.get().max_limit
+                if max_limit:
+                    limit = ' LIMIT %s' % max_limit
+            return limit + offset
+        else:
+            offset = ''
+            if self.offset:
+                offset = ' OFFSET (%s) ROWS' % self.offset
+            fetch = ''
+            if self.limit is not None:
+                fetch = ' FETCH FIRST (%s) ROWS ONLY' % self.limit
+            return offset + fetch
 
 
 class Select(FromItem, SelectQuery):
@@ -460,7 +467,7 @@ class Select(FromItem, SelectQuery):
             return (self._with_str()
                 + 'SELECT %s FROM %s' % (columns, from_)
                 + where + group_by + having + self._order_by_str
-                + self._limit_str + self._offset_str + for_)
+                + self._limit_offset_str + for_)
 
     @property
     def params(self):
@@ -743,7 +750,7 @@ class CombiningQuery(FromItem, SelectQuery):
         with AliasManager():
             operator = ' %s %s' % (self._operator, 'ALL ' if self.all_ else '')
             return (operator.join(map(str, self.queries)) + self._order_by_str
-                + self._limit_str + self._offset_str)
+                + self._limit_offset_str)
 
     @property
     def params(self):
