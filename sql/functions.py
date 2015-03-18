@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2013, Cédric Krier
-# Copyright (c) 2011-2013, B2CK
+# Copyright (c) 2011-2015, Cédric Krier
+# Copyright (c) 2011-2015, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 from itertools import chain
 
-from sql import Expression, Flavor, FromItem
+from sql import Expression, Flavor, FromItem, Window
 
 __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'Log', 'Mod', 'Pi', 'Power', 'Radians', 'Random', 'Round', 'SetSeed',
@@ -41,7 +41,9 @@ __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'DateTrunc', 'Extract', 'Isfinite', 'JustifyDays', 'JustifyHours',
     'JustifyInterval', 'Localtime', 'Localtimestamp', 'Now',
     'StatementTimestamp', 'Timeofday', 'TransactionTimestamp',
-    'AtTimeZone']
+    'AtTimeZone',
+    'RowNumber', 'Rank', 'DenseRank', 'PercentRank', 'CumeDist', 'Ntile',
+    'Lag', 'Lead', 'FirstValue', 'LastValue', 'NthValue']
 
 # Mathematical
 
@@ -474,3 +476,103 @@ class AtTimeZone(Function):
         if Mapping:
             return Mapping(self.field, self.zone).params
         return self.field.params + (self.zone,)
+
+
+class WindowFunction(Function):
+    __slots__ = ('_filter', '_window')
+
+    def __init__(self, *args, **kwargs):
+        self.filter_ = kwargs.pop('filter_', None)
+        self.window = kwargs['window']
+        super(WindowFunction, self).__init__(*args, **kwargs)
+
+    @property
+    def filter_(self):
+        return self._filter
+
+    @filter_.setter
+    def filter_(self, value):
+        from sql.operators import And, Or
+        if value is not None:
+            assert isinstance(value, (Expression, And, Or))
+        self._filter = value
+
+    @property
+    def window(self):
+        return self._window
+
+    @window.setter
+    def window(self, value):
+        if value:
+            assert isinstance(value, Window)
+        self._window = value
+
+    def __str__(self):
+        function = super(WindowFunction, self).__str__()
+        filter_ = ''
+        if self.filter_:
+            filter_ = ' FILTER (WHERE %s)' % self.filter_
+        over = ' OVER "%s"' % self.window.alias
+        return function + filter_ + over
+
+    @property
+    def params(self):
+        p = list(super(WindowFunction, self).params)
+        if self.filter_:
+            p.extend(self.filter_.params)
+        return tuple(p)
+
+
+class RowNumber(WindowFunction):
+    __slots__ = ()
+    _function = 'ROW_NUMBER'
+
+
+class Rank(WindowFunction):
+    __slots__ = ()
+    _function = 'RANK'
+
+
+class DenseRank(WindowFunction):
+    __slots__ = ()
+    _function = 'DENSE_RANK'
+
+
+class PercentRank(WindowFunction):
+    __slots__ = ()
+    _function = 'PERCENT_RANK'
+
+
+class CumeDist(WindowFunction):
+    __slots__ = ()
+    _function = 'CUME_DIST'
+
+
+class Ntile(WindowFunction):
+    __slots__ = ()
+    _function = 'NTILE'
+
+
+class Lag(WindowFunction):
+    __slots__ = ()
+    _function = 'LAG'
+
+
+class Lead(WindowFunction):
+    __slots__ = ()
+    _function = 'LEAD'
+
+
+class FirstValue(WindowFunction):
+    __slots__ = ()
+    _function = 'FIRST_VALUE'
+
+
+class LastValue(WindowFunction):
+    __slots__ = ()
+    _function = 'LAST_VALUE'
+
+
+class NthValue(WindowFunction):
+    __slots__ = ()
+    _function = 'NTH_VALUE'

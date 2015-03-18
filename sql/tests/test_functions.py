@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2013, Cédric Krier
-# Copyright (c) 2011-2013, B2CK
+# Copyright (c) 2011-2015, Cédric Krier
+# Copyright (c) 2011-2015, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,9 +28,9 @@
 
 import unittest
 
-from sql import Table, Flavor
+from sql import Table, Flavor, Window, AliasManager
 from sql.functions import (Function, FunctionKeyword, FunctionNotCallable, Abs,
-    Overlay, Trim, AtTimeZone, Div, CurrentTime)
+    Overlay, Trim, AtTimeZone, Div, CurrentTime, Rank)
 
 
 class TestFunctions(unittest.TestCase):
@@ -135,3 +135,23 @@ class TestFunctions(unittest.TestCase):
         current_time = CurrentTime()
         self.assertEqual(str(current_time), 'CURRENT_TIME')
         self.assertEqual(current_time.params, ())
+
+
+class TestWindowFunction(unittest.TestCase):
+
+    def test_window(self):
+        t = Table('t')
+        function = Rank(t.c, window=Window([]))
+
+        with AliasManager():
+            self.assertEqual(str(function), 'RANK("a"."c") OVER "b"')
+        self.assertEqual(function.params, ())
+
+    def test_filter(self):
+        t = Table('t')
+        function = Rank(t.c, filter_=t.c > 0, window=Window([]))
+
+        with AliasManager():
+            self.assertEqual(str(function),
+                'RANK("a"."c") FILTER (WHERE ("a"."c" > %s)) OVER "b"')
+        self.assertEqual(function.params, (0,))

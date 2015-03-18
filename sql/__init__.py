@@ -446,6 +446,8 @@ class Select(FromItem, SelectQuery):
             return str(column)
 
     def __str__(self):
+        from sql.functions import WindowFunction
+        from sql.aggregate import Aggregate
         with AliasManager():
             from_ = str(self.from_)
             if self.columns:
@@ -461,12 +463,27 @@ class Select(FromItem, SelectQuery):
             having = ''
             if self.having:
                 having = ' HAVING ' + str(self.having)
+            window = ''
+            windows = set()
+            for column in self.columns:
+                window_function = None
+                if isinstance(column, (WindowFunction, Aggregate)):
+                    window_function = column
+                elif (isinstance(column, As)
+                        and isinstance(column.expression,
+                            (WindowFunction, Aggregate))):
+                    window_function = column.expression
+                if window_function and window_function.window:
+                    windows.add(window_function.window)
+            if windows:
+                window = ' WINDOW ' + ', '.join(
+                    '"%s" AS (%s)' % (w.alias, w) for w in windows)
             for_ = ''
             if self.for_ is not None:
                 for_ = ' ' + ' '.join(map(str, self.for_))
             return (self._with_str()
                 + 'SELECT %s FROM %s' % (columns, from_)
-                + where + group_by + having + self._order_by_str
+                + where + group_by + having + window + self._order_by_str
                 + self._limit_offset_str + for_)
 
     @property
@@ -1190,6 +1207,115 @@ class Cast(Expression):
             return self.expression.params
         else:
             return (self.expression,)
+
+
+class Window(object):
+    __slots__ = ('_partition', '_order_by', '_frame', '_start', '_end')
+
+    def __init__(self, partition, order_by=None,
+            frame=None, start=None, end=0):
+        super(Window, self).__init__()
+        self._partition = None
+        self._order_by = None
+        self._frame = None
+        self._start = None
+        self._end = None
+        self.partition = partition
+        self.order_by = order_by
+        self.frame = frame
+        self.start = start
+        self.end = end
+
+    @property
+    def partition(self):
+        return self._partition
+
+    @partition.setter
+    def partition(self, value):
+        assert all(isinstance(e, Expression) for e in value)
+        self._partition = value
+
+    @property
+    def order_by(self):
+        return self._order_by
+
+    @order_by.setter
+    def order_by(self, value):
+        if value is not None:
+            if isinstance(value, Expression):
+                value = [value]
+            assert all(isinstance(col, Expression) for col in value)
+        self._order_by = value
+
+    @property
+    def frame(self):
+        return self._frame
+
+    @frame.setter
+    def frame(self, value):
+        if value:
+            assert value in ['RANGE', 'ROWS']
+        self._frame = value
+
+    @property
+    def start(self):
+        return self._start
+
+    @start.setter
+    def start(self, value):
+        if value:
+            assert isinstance(value, (int, long))
+        self._start = value
+
+    @property
+    def end(self):
+        return self._end
+
+    @end.setter
+    def end(self, value):
+        if value:
+            assert isinstance(value, (int, long))
+        self._end = value
+
+    @property
+    def alias(self):
+        return AliasManager.get(self)
+
+    def __str__(self):
+        partition = ''
+        if self.partition:
+            partition = 'PARTITION BY ' + ', '.join(map(str, self.partition))
+        order_by = ''
+        if self.order_by:
+            order_by = ' ORDER BY ' + ', '.join(map(str, self.order_by))
+
+        def format(frame, direction):
+            if frame is None:
+                return 'UNBOUNDED %s' % direction
+            elif not frame:
+                return 'CURRENT ROW'
+            elif frame < 0:
+                return '%s PRECEDING' % -frame
+            elif frame > 0:
+                return '%s FOLLOWING' % frame
+
+        frame = ''
+        if self.frame:
+            start = format(self.start, 'PRECEDING')
+            end = format(self.end, 'FOLLOWING')
+            frame = ' %s BETWEEN %s AND %s' % (self.frame, start, end)
+        return partition + order_by + frame
+
+    @property
+    def params(self):
+        p = []
+        if self.partition:
+            for expression in self.partition:
+                p.extend(expression.params)
+        if self.order_by:
+            for expression in self.order_by:
+                p.extend(expression.params)
+        return tuple(p)
 
 
 class Order(Expression):

@@ -1,3 +1,5 @@
+* Add window functions
+* Add filter and within group to aggregate
 * Add limitstyle with 'offset' and 'limit'
 * Add Lateral
 

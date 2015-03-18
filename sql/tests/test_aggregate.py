@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2013, Cédric Krier
-# Copyright (c) 2011-2013, B2CK
+# Copyright (c) 2011-2015, Cédric Krier
+# Copyright (c) 2011-2015, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 import unittest
 
-from sql import Table
+from sql import Table, Window, AliasManager
 from sql.aggregate import Avg
 
 
@@ -41,3 +41,19 @@ class TestAggregate(unittest.TestCase):
 
         avg = Avg(self.table.a + self.table.b)
         self.assertEqual(str(avg), 'AVG(("a" + "b"))')
+
+    def test_within(self):
+        avg = Avg(self.table.a, within=self.table.b)
+        self.assertEqual(str(avg), 'AVG("a") WITHIN GROUP (ORDER BY "b")')
+        self.assertEqual(avg.params, ())
+
+    def test_filter(self):
+        avg = Avg(self.table.a, filter_=self.table.a > 0)
+        self.assertEqual(str(avg), 'AVG("a") FILTER (WHERE ("a" > %s))')
+        self.assertEqual(avg.params, (0,))
+
+    def test_window(self):
+        avg = Avg(self.table.c, window=Window([]))
+        with AliasManager():
+            self.assertEqual(str(avg), 'AVG("a"."c") OVER "b"')
+        self.assertEqual(avg.params, ())

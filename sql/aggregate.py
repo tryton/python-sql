@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2013, Cédric Krier
-# Copyright (c) 2011-2013, B2CK
+# Copyright (c) 2011-2015, Cédric Krier
+# Copyright (c) 2011-2015, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,26 +27,80 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from sql import Expression
+from sql import Expression, Window
 
 __all__ = ['Avg', 'BitAnd', 'BitOr', 'BoolAnd', 'BoolOr', 'Count', 'Every',
     'Max', 'Min', 'Stddev', 'Sum', 'Variance']
 
 
 class Aggregate(Expression):
-    __slots__ = ('expression')
+    __slots__ = ('expression', '_within', '_filter', '_window')
     _sql = ''
 
-    def __init__(self, expression):
+    def __init__(self, expression, within=None, filter_=None, window=None):
+        # TODO order_by
         super(Aggregate, self).__init__()
         self.expression = expression
+        self.within = within
+        self.filter_ = filter_
+        self.window = window
+
+    @property
+    def within(self):
+        return self._within
+
+    @within.setter
+    def within(self, value):
+        if value is not None:
+            if isinstance(value, Expression):
+                value = [value]
+            assert all(isinstance(col, Expression) for col in value)
+        self._within = value
+
+    @property
+    def filter_(self):
+        return self._filter
+
+    @filter_.setter
+    def filter_(self, value):
+        from sql.operators import And, Or
+        if value is not None:
+            assert isinstance(value, (Expression, And, Or))
+        self._filter = value
+
+    @property
+    def window(self):
+        return self._window
+
+    @window.setter
+    def window(self, value):
+        if value:
+            assert isinstance(value, Window)
+        self._window = value
 
     def __str__(self):
-        return '%s(%s)' % (self._sql, self.expression)
+        aggregate = '%s(%s)' % (self._sql, self.expression)
+        within = ''
+        if self.within:
+            within = (' WITHIN GROUP (ORDER BY %s)'
+                % ', '.join(map(str, self.within)))
+        filter_ = ''
+        if self.filter_:
+            filter_ = ' FILTER (WHERE %s)' % self.filter_
+        window = ''
+        if self.window:
+            window = ' OVER "%s"' % self.window.alias
+        return aggregate + within + filter_ + window
 
     @property
     def params(self):
-        return self.expression.params
+        p = list(self.expression.params)
+        if self.within:
+            for expression in self.within:
+                p.extend(expression.params)
+        if self.filter_:
+            p.extend(self.filter_.params)
+        return tuple(p)
 
 
 class Avg(Aggregate):

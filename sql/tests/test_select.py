@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2013, Cédric Krier
+# Copyright (c) 2011-2015, Cédric Krier
 # Copyright (c) 2013-2014, Nicolas Évrard
-# Copyright (c) 2011-2013, B2CK
+# Copyright (c) 2011-2015, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,8 @@ import unittest
 import warnings
 from copy import deepcopy
 
-from sql import Table, Join, Union, Literal, Flavor, For, With
-from sql.functions import Now, Function
+from sql import Table, Join, Union, Literal, Flavor, For, With, Window
+from sql.functions import Now, Function, Rank
 from sql.aggregate import Min
 
 
@@ -274,3 +274,28 @@ class TestSelect(unittest.TestCase):
             'WITH "a" AS (SELECT "b"."c1" FROM "t" AS "b") '
             'SELECT * FROM "a" AS "a"')
         self.assertEqual(query.params, ())
+
+    def test_window(self):
+        query = self.table.select(Min(self.table.c1,
+                window=Window([self.table.c2])))
+
+        self.assertEqual(str(query),
+            'SELECT MIN("a"."c1") OVER "b" FROM "t" AS "a" '
+            'WINDOW "b" AS (PARTITION BY "a"."c2")')
+        self.assertEqual(query.params, ())
+
+        query = self.table.select(Rank(window=Window([])))
+        self.assertEqual(str(query),
+            'SELECT RANK() OVER "b" FROM "t" AS "a" '
+            'WINDOW "b" AS ()')
+        self.assertEqual(query.params, ())
+
+        window = Window([self.table.c1])
+        query = self.table.select(
+            Rank(filter_=self.table.c1 > 0, window=window),
+            Min(self.table.c1, window=window))
+        self.assertEqual(str(query),
+            'SELECT RANK() FILTER (WHERE ("a"."c1" > %s)) OVER "b", '
+            'MIN("a"."c1") OVER "b" FROM "t" AS "a" '
+            'WINDOW "b" AS (PARTITION BY "a"."c1")')
+        self.assertEqual(query.params, (0,))
