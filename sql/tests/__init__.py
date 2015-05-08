@@ -62,9 +62,9 @@ def additional_tests():
 def main():
     suite = test_suite()
     runner = unittest.TextTestRunner()
-    runner.run(suite)
+    return runner.run(suite)
 
 if __name__ == '__main__':
     sys.path.insert(0, os.path.dirname(os.path.dirname(
                 os.path.dirname(os.path.abspath(__file__)))))
-    main()
+    sys.exit(not main().wasSuccessful())
