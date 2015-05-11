@@ -445,9 +445,24 @@ class Select(FromItem, SelectQuery):
         else:
             return str(column)
 
-    def __str__(self):
+    def _window_functions(self):
         from sql.functions import WindowFunction
         from sql.aggregate import Aggregate
+        windows = set()
+        for column in self.columns:
+            window_function = None
+            if isinstance(column, (WindowFunction, Aggregate)):
+                window_function = column
+            elif (isinstance(column, As)
+                    and isinstance(column.expression,
+                        (WindowFunction, Aggregate))):
+                window_function = column.expression
+            if (window_function and window_function.window
+                    and window_function.window not in windows):
+                windows.add(window_function.window)
+                yield window_function
+
+    def __str__(self):
         with AliasManager():
             from_ = str(self.from_)
             if self.columns:
@@ -464,17 +479,7 @@ class Select(FromItem, SelectQuery):
             if self.having:
                 having = ' HAVING ' + str(self.having)
             window = ''
-            windows = set()
-            for column in self.columns:
-                window_function = None
-                if isinstance(column, (WindowFunction, Aggregate)):
-                    window_function = column
-                elif (isinstance(column, As)
-                        and isinstance(column.expression,
-                            (WindowFunction, Aggregate))):
-                    window_function = column.expression
-                if window_function and window_function.window:
-                    windows.add(window_function.window)
+            windows = [f.window for f in self._window_functions()]
             if windows:
                 window = ' WINDOW ' + ', '.join(
                     '"%s" AS (%s)' % (w.alias, w) for w in windows)
@@ -500,11 +505,13 @@ class Select(FromItem, SelectQuery):
         if self.group_by:
             for expression in self.group_by:
                 p.extend(expression.params)
-        if self.having:
-            p.extend(self.having.params)
         if self.order_by:
             for expression in self.order_by:
                 p.extend(expression.params)
+        if self.having:
+            p.extend(self.having.params)
+        for window_function in self._window_functions():
+            p.extend(window_function.window.params)
         return tuple(p)
 
 

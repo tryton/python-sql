@@ -31,8 +31,8 @@ import unittest
 import warnings
 from copy import deepcopy
 
-from sql import Table, Join, Union, Literal, Flavor, For, With, Window
-from sql.functions import Now, Function, Rank
+from sql import Table, Join, Union, Literal, Flavor, For, With, Window, Select
+from sql.functions import Now, Function, Rank, DatePart
 from sql.aggregate import Min
 
 
@@ -299,3 +299,24 @@ class TestSelect(unittest.TestCase):
             'MIN("a"."c1") OVER "b" FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY "a"."c1")')
         self.assertEqual(query.params, (0,))
+
+        window = Window([DatePart('year', self.table.date_col)])
+        query = self.table.select(
+            Min(self.table.c1, window=window))
+        self.assertEqual(str(query),
+            'SELECT MIN("a"."c1") OVER "b" FROM "t" AS "a" '
+            'WINDOW "b" AS (PARTITION BY DATE_PART(%s, "a"."date_col"))')
+        self.assertEqual(query.params, ('year',))
+
+    def test_order_params(self):
+        with_ = With(query=self.table.select(self.table.c,
+                where=(self.table.c > 1)))
+        w = Window([Literal(8)])
+        query = Select([Literal(2), Min(self.table.c, window=w)],
+            from_=self.table.select(where=self.table.c > 3),
+            with_=with_,
+            where=self.table.c > 4,
+            group_by=[Literal(5)],
+            order_by=[Literal(6)],
+            having=Literal(7))
+        self.assertEqual(query.params, (1, 2, 3, 4, 5, 6, 7, 8))
