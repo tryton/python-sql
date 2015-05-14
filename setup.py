@@ -48,7 +48,7 @@ setup(name='python-sql',
     long_description=read('README'),
     author='B2CK',
     author_email='info@b2ck.com',
-    url='http://code.google.com/p/python-sql/',
+    url='http://python-sql.tryton.org/',
     packages=find_packages(),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
