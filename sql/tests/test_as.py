@@ -31,7 +31,7 @@ import unittest
 from sql import As, Column, Table
 
 
-class TestOrder(unittest.TestCase):
+class TestAs(unittest.TestCase):
     table = Table('t')
     column = Column(table, 'c')
 
