@@ -115,8 +115,9 @@ class TestSelect(unittest.TestCase):
             interesect = Interesect(query1, query2)
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
-            self.assertIn('Interesect query is deprecated, use Intersect',
-                str(w[-1].message))
+            if hasattr(self, 'assertIn'):
+                self.assertIn('Interesect query is deprecated, use Intersect',
+                    str(w[-1].message))
         self.assertTrue(isinstance(interesect, Intersect))
 
     def test_select_except(self):

@@ -325,5 +325,7 @@ class TestOperators(unittest.TestCase):
             FloorDiv(4, 2)
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
-            self.assertIn('FloorDiv operator is deprecated, use Div function',
-                str(w[-1].message))
+            if hasattr(self, 'assertIn'):
+                self.assertIn(
+                    'FloorDiv operator is deprecated, use Div function',
+                    str(w[-1].message))
