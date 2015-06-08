@@ -69,16 +69,18 @@ class Flavor(object):
         max_limit - limit to use if there is no limit but an offset
         paramstyle - state the type of parameter marker formatting
         ilike - support ilike extension
+        no_as - doesn't support AS keyword for column and table
         function_mapping - dictionary with Function to replace
     '''
 
     def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
-            ilike=False, function_mapping=None):
+            ilike=False, no_as=False, function_mapping=None):
         assert limitstyle in ['fetch', 'limit']
         self.limitstyle = limitstyle
         self.max_limit = max_limit
         self.paramstyle = paramstyle
         self.ilike = ilike
+        self.no_as = no_as
         self.function_mapping = function_mapping or {}
 
     @property
@@ -441,7 +443,10 @@ class Select(FromItem, SelectQuery):
     @staticmethod
     def _format_column(column):
         if isinstance(column, As):
-            return '%s AS %s' % (column.expression, column)
+            if Flavor.get().no_as:
+                return '%s %s' % (column.expression, column)
+            else:
+                return '%s AS %s' % (column.expression, column)
         else:
             return str(column)
 
@@ -944,13 +949,17 @@ class From(list):
             # TODO column_alias
             columns_definitions = getattr(from_, 'columns_definitions',
                 None)
+            if Flavor.get().no_as:
+                alias_template = ' "%s"'
+            else:
+                alias_template = ' AS "%s"'
             # XXX find a better test for __getattr__ which returns Column
             if (alias and columns_definitions
                     and not isinstance(columns_definitions, Column)):
-                return (template + ' AS "%s" (%s)') % (from_, alias,
+                return (template + alias_template + ' (%s)') % (from_, alias,
                     columns_definitions)
             elif alias:
-                return (template + ' AS "%s"') % (from_, alias)
+                return (template + alias_template) % (from_, alias)
             else:
                 return template % from_
         return ', '.join(map(format, self))

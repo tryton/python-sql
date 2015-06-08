@@ -1,3 +1,5 @@
+* Add no_as Flavor
+
 Version 0.7 - 2015-05-19
 * Fix WINDOW and HAVING params order in Select
 * Add window functions

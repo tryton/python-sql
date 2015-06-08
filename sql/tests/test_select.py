@@ -321,3 +321,12 @@ class TestSelect(unittest.TestCase):
             order_by=[Literal(6)],
             having=Literal(7))
         self.assertEqual(query.params, (1, 2, 3, 4, 5, 6, 7, 8))
+
+    def test_no_as(self):
+        query = self.table.select(self.table.c)
+        try:
+            Flavor.set(Flavor(no_as=True))
+            self.assertEqual(str(query), 'SELECT "a"."c" FROM "t" "a"')
+            self.assertEqual(query.params, ())
+        finally:
+            Flavor.set(Flavor())
