@@ -183,8 +183,17 @@ Limit style::
     >>> tuple(select)
     ('SELECT "a".* FROM (SELECT "b".*, ROWNUM AS "rnum" FROM (SELECT * FROM "user" AS "c") AS "b" WHERE (ROWNUM <= %s)) AS "a" WHERE ("rnum" > %s)', (30, 20))
 
+qmark style::
     >>> Flavor.set(Flavor(paramstyle='qmark'))
     >>> select = user.select()
     >>> select.where = user.name == 'foo'
     >>> tuple(select)
     ('SELECT * FROM "user" AS "a" WHERE ("a"."name" = ?)', ('foo',))
+
+numeric style::
+
+    >>> Flavor.set(Flavor(paramstyle='format'))
+    >>> select = user.select()
+    >>> select.where = user.name == 'foo'
+    >>> format2numeric(*select)
+    ('SELECT * FROM "user" AS "a" WHERE ("a"."name" = :0)', ('foo',))

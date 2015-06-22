@@ -31,7 +31,7 @@ from __future__ import division
 
 __version__ = '0.8'
 __all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
-    'Asc', 'Desc']
+    'Asc', 'Desc', 'format2numeric']
 
 import string
 import warnings
@@ -162,6 +162,19 @@ class AliasManager(object):
     def alias_factory(cls):
         i = len(cls.local.alias)
         return alias(i)
+
+
+def format2numeric(query, params):
+    '''
+    Convert format paramstyle query to numeric paramstyle
+
+    >>> format2numeric('SELECT * FROM table WHERE col = %s', ('foo',))
+    ('SELECT * FROM table WHERE col = :0', ('foo',))
+    >>> format2numeric('SELECT * FROM table WHERE col1 = %s AND col2 = %s',
+    ...     ('foo', 'bar'))
+    ('SELECT * FROM table WHERE col1 = :0 AND col2 = :1', ('foo', 'bar'))
+    '''
+    return (query % tuple(':%i' % i for i, _ in enumerate(params)), params)
 
 
 class Query(object):
