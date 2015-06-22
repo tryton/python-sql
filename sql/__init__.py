@@ -66,6 +66,7 @@ class Flavor(object):
     Contains the flavor of SQL
 
     Contains:
+        limitstyle - state the type of pagination
         max_limit - limit to use if there is no limit but an offset
         paramstyle - state the type of parameter marker formatting
         ilike - support ilike extension
@@ -75,7 +76,7 @@ class Flavor(object):
 
     def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
             ilike=False, no_as=False, function_mapping=None):
-        assert limitstyle in ['fetch', 'limit']
+        assert limitstyle in ['fetch', 'limit', 'rownum']
         self.limitstyle = limitstyle
         self.max_limit = max_limit
         self.paramstyle = paramstyle
@@ -467,7 +468,48 @@ class Select(FromItem, SelectQuery):
                 windows.add(window_function.window)
                 yield window_function
 
+    def _rownum(self, func):
+        aliases = [c.output_name if isinstance(c, As) else None
+            for c in self.columns]
+
+        def columns(table):
+            if aliases and all(aliases):
+                return [Column(table, alias) for alias in aliases]
+            else:
+                return [Column(table, '*')]
+
+        limitselect = self.select(*columns(self))
+        if self.limit is not None:
+            max_row = self.limit
+            if self.offset is not None:
+                max_row += self.offset
+            limitselect.where = _rownum <= max_row
+        if self.offset is not None:
+            rnum = _rownum.as_('rnum')
+            limitselect.columns += (rnum,)
+            offsetselect = limitselect.select(*columns(limitselect),
+                where=rnum > self.offset)
+            query = offsetselect
+        else:
+            query = limitselect
+
+        self.limit, limit = None, self.limit
+        self.offset, offset = None, self.offset
+        query.for_, self.for_ = self.for_, None
+
+        try:
+            value = func(query)
+        finally:
+            self.limit = limit
+            self.offset = offset
+            self.for_ = query.for_
+        return value
+
     def __str__(self):
+        if (Flavor.get().limitstyle == 'rownum'
+                and (self.limit is not None or self.offset is not None)):
+            return self._rownum(str)
+
         with AliasManager():
             from_ = str(self.from_)
             if self.columns:
@@ -498,6 +540,9 @@ class Select(FromItem, SelectQuery):
 
     @property
     def params(self):
+        if (Flavor.get().limitstyle == 'rownum'
+                and (self.limit is not None or self.offset is not None)):
+            return self._rownum(lambda q: q.params)
         p = []
         p.extend(self._with_params())
         for column in self.columns:
@@ -1151,6 +1196,17 @@ class Literal(Expression):
         return (self._value,)
 
 Null = None
+
+
+class _Rownum(Expression):
+
+    def __str__(self):
+        return 'ROWNUM'
+
+    @property
+    def params(self):
+        return ()
+_rownum = _Rownum()
 
 
 class Column(Expression):

@@ -253,6 +253,83 @@ class TestSelect(unittest.TestCase):
         finally:
             Flavor.set(Flavor())
 
+    def test_select_rownum(self):
+        try:
+            Flavor.set(Flavor(limitstyle='rownum'))
+            query = self.table.select(limit=50, offset=10)
+            self.assertEqual(str(query),
+                'SELECT "a".* FROM ('
+                    'SELECT "b".*, ROWNUM AS "rnum" FROM ('
+                        'SELECT * FROM "t" AS "c") AS "b" '
+                    'WHERE (ROWNUM <= %s)) AS "a" '
+                'WHERE ("rnum" > %s)')
+            self.assertEqual(query.params, (60, 10))
+
+            query = self.table.select(
+                self.table.c1.as_('col1'), self.table.c2.as_('col2'),
+                limit=50, offset=10)
+            self.assertEqual(str(query),
+                'SELECT "a"."col1", "a"."col2" FROM ('
+                    'SELECT "b"."col1", "b"."col2", ROWNUM AS "rnum" FROM ('
+                        'SELECT "c"."c1" AS "col1", "c"."c2" AS "col2" '
+                        'FROM "t" AS "c") AS "b" '
+                    'WHERE (ROWNUM <= %s)) AS "a" '
+                'WHERE ("rnum" > %s)')
+            self.assertEqual(query.params, (60, 10))
+
+            subquery = query.select(query.col1, query.col2)
+            self.assertEqual(str(subquery),
+                'SELECT "a"."col1", "a"."col2" FROM ('
+                    'SELECT "b"."col1", "b"."col2" FROM ('
+                        'SELECT "a"."col1", "a"."col2", ROWNUM AS "rnum" '
+                        'FROM ('
+                            'SELECT "c"."c1" AS "col1", "c"."c2" AS "col2" '
+                            'FROM "t" AS "c") AS "a" '
+                        'WHERE (ROWNUM <= %s)) AS "b" '
+                    'WHERE ("rnum" > %s)) AS "a"')
+            # XXX alias of query is reused but not a problem
+            # as it is hidden in subquery
+            self.assertEqual(query.params, (60, 10))
+
+            query = self.table.select(limit=50, offset=10,
+                order_by=[self.table.c])
+            self.assertEqual(str(query),
+                'SELECT "a".* FROM ('
+                    'SELECT "b".*, ROWNUM AS "rnum" FROM ('
+                        'SELECT * FROM "t" AS "c" ORDER BY "c"."c") AS "b" '
+                    'WHERE (ROWNUM <= %s)) AS "a" '
+                'WHERE ("rnum" > %s)')
+            self.assertEqual(query.params, (60, 10))
+
+            query = self.table.select(limit=50)
+            self.assertEqual(str(query),
+                'SELECT "a".* FROM ('
+                    'SELECT * FROM "t" AS "b") AS "a" '
+                'WHERE (ROWNUM <= %s)')
+            self.assertEqual(query.params, (50,))
+
+            query = self.table.select(offset=10)
+            self.assertEqual(str(query),
+                'SELECT "a".* FROM ('
+                    'SELECT "b".*, ROWNUM AS "rnum" FROM ('
+                        'SELECT * FROM "t" AS "c") AS "b") AS "a" '
+                'WHERE ("rnum" > %s)')
+            self.assertEqual(query.params, (10,))
+
+            query = self.table.select(self.table.c.as_('col'),
+                where=self.table.c >= 20,
+                limit=50, offset=10)
+            self.assertEqual(str(query),
+                'SELECT "a"."col" FROM ('
+                    'SELECT "b"."col", ROWNUM AS "rnum" FROM ('
+                        'SELECT "c"."c" AS "col" FROM "t" AS "c" '
+                        'WHERE ("c"."c" >= %s)) AS "b" '
+                    'WHERE (ROWNUM <= %s)) AS "a" '
+                'WHERE ("rnum" > %s)')
+            self.assertEqual(query.params, (20, 60, 10))
+        finally:
+            Flavor.set(Flavor())
+
     def test_select_for(self):
         c = self.table.c
         query = self.table.select(c, for_=For('UPDATE'))

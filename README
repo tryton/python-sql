@@ -169,6 +169,20 @@ Flavors::
     >>> Flavor.set(Flavor(max_limit=-1))
     >>> tuple(select)
     ('SELECT * FROM "user" AS "a" LIMIT -1 OFFSET 10', ())
+
+Limit style::
+
+    >>> select = user.select(limit=10, offset=20)
+    >>> Flavor.set(Flavor(limitstyle='limit'))
+    >>> tuple(select)
+    ('SELECT * FROM "user" AS "a" LIMIT 10 OFFSET 20', ())
+    >>> Flavor.set(Flavor(limitstyle='fetch'))
+    >>> tuple(select)
+    ('SELECT * FROM "user" AS "a" OFFSET (20) ROWS FETCH FIRST (10) ROWS ONLY', ())
+    >>> Flavor.set(Flavor(limitstyle='rownum'))
+    >>> tuple(select)
+    ('SELECT "a".* FROM (SELECT "b".*, ROWNUM AS "rnum" FROM (SELECT * FROM "user" AS "c") AS "b" WHERE (ROWNUM <= %s)) AS "a" WHERE ("rnum" > %s)', (30, 20))
+
     >>> Flavor.set(Flavor(paramstyle='qmark'))
     >>> select = user.select()
     >>> select.where = user.name == 'foo'
