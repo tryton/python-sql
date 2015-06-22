@@ -28,7 +28,7 @@
 
 import unittest
 
-from sql import Literal
+from sql import Literal, Flavor
 
 
 class TestLiteral(unittest.TestCase):
@@ -37,3 +37,19 @@ class TestLiteral(unittest.TestCase):
         self.assertEqual(str(literal), '%s')
         self.assertEqual(literal.params, (1,))
         self.assertEqual(literal.value, 1)
+
+    def test_no_boolean(self):
+        true = Literal(True)
+        false = Literal(False)
+        self.assertEqual(str(true), '%s')
+        self.assertEqual(true.params, (True,))
+        self.assertEqual(str(false), '%s')
+        self.assertEqual(false.params, (False,))
+        try:
+            Flavor.set(Flavor(no_boolean=True))
+            self.assertEqual(str(true), '(1 = 1)')
+            self.assertEqual(str(false), '(1 != 1)')
+            self.assertEqual(true.params, ())
+            self.assertEqual(false.params, ())
+        finally:
+            Flavor.set(Flavor())

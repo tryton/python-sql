@@ -75,13 +75,14 @@ class Flavor(object):
     '''
 
     def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
-            ilike=False, no_as=False, function_mapping=None):
+            ilike=False, no_as=False, no_boolean=False, function_mapping=None):
         assert limitstyle in ['fetch', 'limit', 'rownum']
         self.limitstyle = limitstyle
         self.max_limit = max_limit
         self.paramstyle = paramstyle
         self.ilike = ilike
         self.no_as = no_as
+        self.no_boolean = no_boolean
         self.function_mapping = function_mapping or {}
 
     @property
@@ -1202,10 +1203,19 @@ class Literal(Expression):
         return self._value
 
     def __str__(self):
-        return Flavor.get().param
+        flavor = Flavor.get()
+        if flavor.no_boolean:
+            if self._value is True:
+                return '(1 = 1)'
+            elif self._value is False:
+                return '(1 != 1)'
+        return flavor.param
 
     @property
     def params(self):
+        if Flavor.get().no_boolean:
+            if self._value is True or self._value is False:
+                return ()
         return (self._value,)
 
 Null = None
