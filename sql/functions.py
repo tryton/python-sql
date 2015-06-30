@@ -396,7 +396,7 @@ class DatePart(Function):
 
 class DateTrunc(Function):
     __slots__ = ()
-    _function = 'DateTrunc'
+    _function = 'DATE_TRUNC'
 
 
 class Extract(FunctionKeyword):
