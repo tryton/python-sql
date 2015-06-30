@@ -1,3 +1,4 @@
+* Add CURRENT_DATE function
 * Fix DateTrunc function name
 * Add no_boolean Flavor
 * Add converter format2numeric

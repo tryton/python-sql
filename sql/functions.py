@@ -37,9 +37,9 @@ __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'BitLength', 'CharLength', 'Overlay', 'Position', 'Substring', 'Trim',
     'Upper',
     'ToChar', 'ToDate', 'ToNumber', 'ToTimestamp',
-    'Age', 'ClockTimestamp', 'CurrentTime', 'CurrentTimestamp', 'DatePart',
-    'DateTrunc', 'Extract', 'Isfinite', 'JustifyDays', 'JustifyHours',
-    'JustifyInterval', 'Localtime', 'Localtimestamp', 'Now',
+    'Age', 'ClockTimestamp', 'CurrentDate', 'CurrentTime', 'CurrentTimestamp',
+    'DatePart', 'DateTrunc', 'Extract', 'Isfinite', 'JustifyDays',
+    'JustifyHours', 'JustifyInterval', 'Localtime', 'Localtimestamp', 'Now',
     'StatementTimestamp', 'Timeofday', 'TransactionTimestamp',
     'AtTimeZone',
     'RowNumber', 'Rank', 'DenseRank', 'PercentRank', 'CumeDist', 'Ntile',
@@ -377,6 +377,11 @@ class Age(Function):
 class ClockTimestamp(Function):
     __slots__ = ()
     _function = 'CLOCK_TIMESTAMP'
+
+
+class CurrentDate(FunctionNotCallable):
+    __slots__ = ()
+    _function = 'CURRENT_DATE'
 
 
 class CurrentTime(FunctionNotCallable):
