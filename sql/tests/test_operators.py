@@ -262,7 +262,7 @@ class TestOperators(unittest.TestCase):
         Flavor.set(flavor)
         try:
             like = ILike(self.table.c1, 'foo')
-            self.assertEqual(str(like), '("c1" LIKE %s)')
+            self.assertEqual(str(like), '(UPPER("c1") LIKE UPPER(%s))')
             self.assertEqual(like.params, ('foo',))
         finally:
             Flavor.set(Flavor())
@@ -282,7 +282,7 @@ class TestOperators(unittest.TestCase):
         Flavor.set(flavor)
         try:
             like = NotILike(self.table.c1, 'foo')
-            self.assertEqual(str(like), '("c1" NOT LIKE %s)')
+            self.assertEqual(str(like), '(UPPER("c1") NOT LIKE UPPER(%s))')
             self.assertEqual(like.params, ('foo',))
         finally:
             Flavor.set(Flavor())

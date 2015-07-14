@@ -128,8 +128,9 @@ class BinaryOperator(Operator):
         return (self.left, self.right)
 
     def __str__(self):
-        return '(%s %s %s)' % (self._format(self.left), self._operator,
-            self._format(self.right))
+        left, right = self._operands
+        return '(%s %s %s)' % (self._format(left), self._operator,
+            self._format(right))
 
     def __invert__(self):
         return _INVERT[self.__class__](self.left, self.right)
@@ -347,8 +348,16 @@ class ILike(BinaryOperator):
         else:
             return 'LIKE'
 
+    @property
+    def _operands(self):
+        operands = super(ILike, self)._operands
+        if not Flavor.get().ilike:
+            from .functions import Upper
+            operands = tuple(Upper(o) for o in operands)
+        return operands
 
-class NotILike(BinaryOperator):
+
+class NotILike(ILike):
     __slots__ = ()
 
     @property
