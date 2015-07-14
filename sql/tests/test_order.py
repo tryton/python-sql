@@ -28,7 +28,8 @@
 
 import unittest
 
-from sql import Asc, Desc, Column, Table
+from sql import Asc, Desc, NullsFirst, NullsLast, Column, Table, Literal
+from sql import Flavor
 
 
 class TestOrder(unittest.TestCase):
@@ -39,3 +40,34 @@ class TestOrder(unittest.TestCase):
 
     def test_desc(self):
         self.assertEqual(str(Desc(self.column)), '"c" DESC')
+
+    def test_nulls_first(self):
+        self.assertEqual(str(NullsFirst(self.column)), '"c" NULLS FIRST')
+        self.assertEqual(str(NullsFirst(Asc(self.column))),
+            '"c" ASC NULLS FIRST')
+
+    def test_nulls_last(self):
+        self.assertEqual(str(NullsLast(self.column)), '"c" NULLS LAST')
+        self.assertEqual(str(NullsLast(Asc(self.column))),
+            '"c" ASC NULLS LAST')
+
+    def test_no_null_ordering(self):
+        try:
+            Flavor.set(Flavor(null_ordering=False))
+
+            exp = NullsFirst(self.column)
+            self.assertEqual(str(exp),
+                'CASE WHEN ("c" IS NULL) THEN %s ELSE %s END ASC, "c"')
+            self.assertEqual(exp.params, (0, 1))
+
+            exp = NullsFirst(Desc(self.column))
+            self.assertEqual(str(exp),
+                'CASE WHEN ("c" IS NULL) THEN %s ELSE %s END ASC, "c" DESC')
+            self.assertEqual(exp.params, (0, 1))
+
+            exp = NullsLast(Literal(2))
+            self.assertEqual(str(exp),
+                'CASE WHEN (%s IS NULL) THEN %s ELSE %s END ASC, %s')
+            self.assertEqual(exp.params, (2, 1, 0, 2))
+        finally:
+            Flavor.set(Flavor())

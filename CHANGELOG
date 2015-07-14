@@ -1,3 +1,4 @@
+* Add NULL ordering
 * Use UPPER to simulate missing ILIKE
 * Add CURRENT_DATE function
 * Fix DateTrunc function name

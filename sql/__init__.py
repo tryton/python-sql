@@ -31,7 +31,7 @@ from __future__ import division
 
 __version__ = '0.8'
 __all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
-    'Asc', 'Desc', 'format2numeric']
+    'Asc', 'Desc', 'NullsFirst', 'NullsLast', 'format2numeric']
 
 import string
 import warnings
@@ -71,11 +71,13 @@ class Flavor(object):
         paramstyle - state the type of parameter marker formatting
         ilike - support ilike extension
         no_as - doesn't support AS keyword for column and table
+        null_ordering - support NULL ordering
         function_mapping - dictionary with Function to replace
     '''
 
     def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
-            ilike=False, no_as=False, no_boolean=False, function_mapping=None):
+            ilike=False, no_as=False, no_boolean=False, null_ordering=True,
+            function_mapping=None):
         assert limitstyle in ['fetch', 'limit', 'rownum']
         self.limitstyle = limitstyle
         self.max_limit = max_limit
@@ -83,6 +85,7 @@ class Flavor(object):
         self.ilike = ilike
         self.no_as = no_as
         self.no_boolean = no_boolean
+        self.null_ordering = null_ordering
         self.function_mapping = function_mapping or {}
 
     @property
@@ -1190,6 +1193,14 @@ class Expression(object):
     def desc(self):
         return Desc(self)
 
+    @property
+    def nulls_first(self):
+        return NullsFirst(self)
+
+    @property
+    def nulls_last(self):
+        return NullsLast(self)
+
 
 class Literal(Expression):
     __slots__ = ('_value')
@@ -1438,6 +1449,58 @@ class Asc(Order):
 class Desc(Order):
     __slots__ = ()
     _sql = 'DESC'
+
+
+class NullOrder(Expression):
+    __slots__ = ('expression')
+    _sql = ''
+
+    def __init__(self, expression):
+        super(NullOrder, self).__init__()
+        self.expression = expression
+
+    def __str__(self):
+        if not Flavor.get().null_ordering:
+            return '%s, %s' % (self._case, self.expression)
+        return '%s NULLS %s' % (self.expression, self._sql)
+
+    @property
+    def params(self):
+        p = []
+        if not Flavor.get().null_ordering:
+            p.extend(self.expression.params)
+            p.extend(self._case_values())
+        p.extend(self.expression.params)
+        return tuple(p)
+
+    @property
+    def _case(self):
+        from .conditionals import Case
+        values = self._case_values()
+        if isinstance(self.expression, Order):
+            expression = self.expression.expression
+        else:
+            expression = self.expression
+        return Asc(Case((expression == Null, values[0]), else_=values[1]))
+
+    def _case_values(self):
+        raise NotImplementedError
+
+
+class NullsFirst(NullOrder):
+    __slots__ = ()
+    _sql = 'FIRST'
+
+    def _case_values(self):
+        return (0, 1)
+
+
+class NullsLast(NullOrder):
+    __slots__ = ()
+    _sql = 'LAST'
+
+    def _case_values(self):
+        return (1, 0)
 
 
 class For(object):
