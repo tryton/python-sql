@@ -71,3 +71,12 @@ class TestOrder(unittest.TestCase):
             self.assertEqual(exp.params, (2, 1, 0, 2))
         finally:
             Flavor.set(Flavor())
+
+    def test_order_query(self):
+        table = Table('t')
+        column = Column(table, 'c')
+        query = table.select(column)
+        self.assertEqual(str(Asc(query)),
+            '(SELECT "a"."c" FROM "t" AS "a") ASC')
+        self.assertEqual(str(Desc(query)),
+            '(SELECT "a"."c" FROM "t" AS "a") DESC')

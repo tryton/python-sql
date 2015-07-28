@@ -1425,15 +1425,27 @@ class Window(object):
 
 
 class Order(Expression):
-    __slots__ = ('expression')
+    __slots__ = ('_expression')
     _sql = ''
 
     def __init__(self, expression):
         super(Order, self).__init__()
+        self._expression = None
         self.expression = expression
         # TODO USING
 
+    @property
+    def expression(self):
+        return self._expression
+
+    @expression.setter
+    def expression(self, value):
+        assert isinstance(value, (Expression, SelectQuery))
+        self._expression = value
+
     def __str__(self):
+        if isinstance(self.expression, SelectQuery):
+            return '(%s) %s' % (self.expression, self._sql)
         return '%s %s' % (self.expression, self._sql)
 
     @property
