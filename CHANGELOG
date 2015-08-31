@@ -1,3 +1,4 @@
+* Add DISTINCT qualifier to aggregate expressions
 * Allow to order on select queries
 * Add NULL ordering
 * Use UPPER to simulate missing ILIKE

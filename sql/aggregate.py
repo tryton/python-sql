@@ -34,16 +34,27 @@ __all__ = ['Avg', 'BitAnd', 'BitOr', 'BoolAnd', 'BoolOr', 'Count', 'Every',
 
 
 class Aggregate(Expression):
-    __slots__ = ('expression', '_within', '_filter', '_window')
+    __slots__ = ('expression', '_distinct', '_within', '_filter', '_window')
     _sql = ''
 
-    def __init__(self, expression, within=None, filter_=None, window=None):
+    def __init__(self, expression, distinct=False, within=None, filter_=None,
+            window=None):
         # TODO order_by
         super(Aggregate, self).__init__()
         self.expression = expression
+        self.distinct = distinct
         self.within = within
         self.filter_ = filter_
         self.window = window
+
+    @property
+    def distinct(self):
+        return self._distinct
+
+    @distinct.setter
+    def distinct(self, value):
+        assert isinstance(value, bool)
+        self._distinct = value
 
     @property
     def within(self):
@@ -79,7 +90,8 @@ class Aggregate(Expression):
         self._window = value
 
     def __str__(self):
-        aggregate = '%s(%s)' % (self._sql, self.expression)
+        quantifier = 'DISTINCT ' if self.distinct else ''
+        aggregate = '%s(%s%s)' % (self._sql, quantifier, self.expression)
         within = ''
         if self.within:
             within = (' WITHIN GROUP (ORDER BY %s)'

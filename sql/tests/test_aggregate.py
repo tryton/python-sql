@@ -57,3 +57,8 @@ class TestAggregate(unittest.TestCase):
         with AliasManager():
             self.assertEqual(str(avg), 'AVG("a"."c") OVER "b"')
         self.assertEqual(avg.params, ())
+
+    def test_distinct(self):
+        avg = Avg(self.table.c, distinct=True)
+        self.assertEqual(str(avg), 'AVG(DISTINCT "c")')
+        self.assertEqual(avg.params, ())
