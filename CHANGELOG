@@ -1,3 +1,4 @@
+Version 0.8 - 2015-09-19
 * Add DISTINCT qualifier to aggregate expressions
 * Allow to order on select queries
 * Add NULL ordering
