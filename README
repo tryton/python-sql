@@ -184,6 +184,7 @@ Limit style::
     ('SELECT "a".* FROM (SELECT "b".*, ROWNUM AS "rnum" FROM (SELECT * FROM "user" AS "c") AS "b" WHERE (ROWNUM <= %s)) AS "a" WHERE ("rnum" > %s)', (30, 20))
 
 qmark style::
+
     >>> Flavor.set(Flavor(paramstyle='qmark'))
     >>> select = user.select()
     >>> select.where = user.name == 'foo'
