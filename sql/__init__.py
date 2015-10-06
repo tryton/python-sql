@@ -293,7 +293,7 @@ class With(FromItem):
         super(With, self).__init__(**kwargs)
 
     def statement(self):
-        columns = ('(%s)' % ', '.join('"%s"' % c for c in self.columns)
+        columns = (' (%s)' % ', '.join('"%s"' % c for c in self.columns)
             if self.columns else '')
         return '"%s"%s AS (%s)' % (self.alias, columns, self.query)
 
