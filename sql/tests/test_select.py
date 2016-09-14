@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2015, Cédric Krier
+# Copyright (c) 2011-2016, Cédric Krier
 # Copyright (c) 2013-2014, Nicolas Évrard
-# Copyright (c) 2011-2015, B2CK
+# Copyright (c) 2011-2016, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,21 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s)')
         self.assertEqual(query.params, ('foo',))
+
+    def test_select_without_from(self):
+        query = Select([Literal(1)])
+        self.assertEqual(str(query), 'SELECT %s')
+        self.assertEqual(query.params, (1,))
+
+    def test_select_select(self):
+        query = Select([Select([Literal(1)])])
+        self.assertEqual(str(query), 'SELECT (SELECT %s)')
+        self.assertEqual(query.params, (1,))
+
+    def test_select_select_as(self):
+        query = Select([Select([Literal(1)]).as_('foo')])
+        self.assertEqual(str(query), 'SELECT (SELECT %s) AS "foo"')
+        self.assertEqual(query.params, (1,))
 
     def test_select_from_list(self):
         t2 = Table('t2')

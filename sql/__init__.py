@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2015, Cédric Krier
+# Copyright (c) 2011-2016, Cédric Krier
 # Copyright (c) 2013-2014, Nicolas Évrard
-# Copyright (c) 2011-2015, B2CK
+# Copyright (c) 2011-2016, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -382,6 +382,9 @@ class SelectQuery(WithQuery):
                 fetch = ' FETCH FIRST (%s) ROWS ONLY' % self.limit
             return offset + fetch
 
+    def as_(self, output_name):
+        return As(self, output_name)
+
 
 class Select(FromItem, SelectQuery):
     __slots__ = ('_columns', '_where', '_group_by', '_having', '_for_',
@@ -409,7 +412,7 @@ class Select(FromItem, SelectQuery):
 
     @columns.setter
     def columns(self, value):
-        assert all(isinstance(col, Expression) for col in value)
+        assert all(isinstance(col, (Expression, SelectQuery)) for col in value)
         self._columns = tuple(value)
 
     @property
@@ -461,12 +464,19 @@ class Select(FromItem, SelectQuery):
     @staticmethod
     def _format_column(column):
         if isinstance(column, As):
-            if Flavor.get().no_as:
-                return '%s %s' % (column.expression, column)
+            if isinstance(column.expression, Select):
+                expression = '(%s)' % column.expression
             else:
-                return '%s AS %s' % (column.expression, column)
+                expression = column.expression
+            if Flavor.get().no_as:
+                return '%s %s' % (expression, column)
+            else:
+                return '%s AS %s' % (expression, column)
         else:
-            return str(column)
+            if isinstance(column, Select):
+                return '(%s)' % column
+            else:
+                return str(column)
 
     def _window_functions(self):
         from sql.functions import WindowFunction
@@ -528,7 +538,10 @@ class Select(FromItem, SelectQuery):
             return self._rownum(str)
 
         with AliasManager():
-            from_ = str(self.from_)
+            if self.from_ is not None:
+                from_ = ' FROM %s' % self.from_
+            else:
+                from_ = ''
             if self.columns:
                 columns = ', '.join(map(self._format_column, self.columns))
             else:
@@ -551,7 +564,7 @@ class Select(FromItem, SelectQuery):
             if self.for_ is not None:
                 for_ = ' ' + ' '.join(map(str, self.for_))
             return (self._with_str()
-                + 'SELECT %s FROM %s' % (columns, from_)
+                + 'SELECT %s%s' % (columns, from_)
                 + where + group_by + having + window + self._order_by_str
                 + self._limit_offset_str + for_)
 
@@ -566,7 +579,8 @@ class Select(FromItem, SelectQuery):
             if isinstance(column, As):
                 p.extend(column.expression.params)
             p.extend(column.params)
-        p.extend(self.from_.params)
+        if self.from_ is not None:
+            p.extend(self.from_.params)
         if self.where:
             p.extend(self.where.params)
         if self.group_by:
