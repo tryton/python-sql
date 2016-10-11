@@ -1,3 +1,4 @@
+* Add distinct_on on Select
 * Allow to use Select as Column of Select query
 * Support Select without from clause
 

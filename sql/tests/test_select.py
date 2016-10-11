@@ -74,6 +74,19 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query), 'SELECT (SELECT %s) AS "foo"')
         self.assertEqual(query.params, (1,))
 
+    def test_select_distinct_on(self):
+        query = self.table.select(self.table.c, distinct_on=self.table.c)
+        self.assertEqual(
+            str(query), 'SELECT DISTINCT ON ("a"."c") "a"."c" FROM "t" AS "a"')
+        self.assertEqual(query.params, ())
+
+        query = self.table.select(
+            self.table.c, distinct_on=[self.table.a, self.table.b])
+        self.assertEqual(
+            str(query),
+            'SELECT DISTINCT ON ("a"."a", "a"."b") "a"."c" FROM "t" AS "a"')
+        self.assertEqual(query.params, ())
+
     def test_select_from_list(self):
         t2 = Table('t2')
         t3 = Table('t3')
