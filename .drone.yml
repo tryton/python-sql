@@ -4,17 +4,26 @@ clone:
 
 pipeline:
     tox:
-        image: python:${PYTHON_VERSION}
+        image: ${IMAGE}
         commands:
             - pip install tox
-            - tox -e "py${PYTHON_VERSION}"
+            - tox -e "${TOXENV}"
         volumes:
              - cache:/root/.cache
 
 matrix:
-    PYTHON_VERSION:
-        - 2.7
-        - 3.3
-        - 3.4
-        - 3.5
-        - 3.6
+    include:
+        - IMAGE: python:2.7
+          TOXENV: py27
+        - IMAGE: python:3.3
+          TOXENV: py33
+        - IMAGE: python:3.4
+          TOXENV: py34
+        - IMAGE: python:3.5
+          TOXENV: py35
+        - IMAGE: python:3.6
+          TOXENV: py36
+        - IMAGE: pypy:2
+          TOXENV: pypy
+        - IMAGE: pypy:3
+          TOXENV: pypy3
