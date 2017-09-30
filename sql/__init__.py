@@ -1329,7 +1329,7 @@ class Cast(Expression):
     __slots__ = ('expression', 'typename')
 
     def __init__(self, expression, typename):
-        super(Expression, self).__init__()
+        super(Cast, self).__init__()
         self.expression = expression
         self.typename = typename
 
