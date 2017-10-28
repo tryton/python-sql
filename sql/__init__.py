@@ -1218,6 +1218,9 @@ class Expression(object):
     def cast(self, typename):
         return Cast(self, typename)
 
+    def collate(self, collation):
+        return Collate(self, collation)
+
     @property
     def asc(self):
         return Asc(self)
@@ -1339,6 +1342,31 @@ class Cast(Expression):
         else:
             value = Flavor.get().param
         return 'CAST(%s AS %s)' % (value, self.typename)
+
+    @property
+    def params(self):
+        if isinstance(self.expression, Expression):
+            return self.expression.params
+        else:
+            return (self.expression,)
+
+
+class Collate(Expression):
+    __slots__ = ('expression', 'collation')
+
+    def __init__(self, expression, collation):
+        super(Collate, self).__init__()
+        self.expression = expression
+        self.collation = collation
+
+    def __str__(self):
+        if isinstance(self.expression, Expression):
+            value = self.expression
+        else:
+            value = Flavor.get().param
+        if '"' in self.collation:
+            raise ValueError("Wrong collation %s" % self.collation)
+        return '%s COLLATE "%s"' % (value, self.collation)
 
     @property
     def params(self):
