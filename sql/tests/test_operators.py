@@ -32,8 +32,9 @@ from array import array
 
 from sql import Table, Literal, Null, Flavor
 from sql.operators import (And, Or, Not, Neg, Pos, Less, Greater, LessEqual,
-    GreaterEqual, Equal, NotEqual, Sub, Mul, Div, Mod, Pow, Abs, LShift,
-    RShift, Like, NotLike, ILike, NotILike, In, NotIn, FloorDiv, Exists)
+    GreaterEqual, Equal, NotEqual, Between, NotBetween, IsDistinct,
+    IsNotDistinct, Is, IsNot, Sub, Mul, Div, Mod, Pow, Abs, LShift, RShift,
+    Like, NotLike, ILike, NotILike, In, NotIn, FloorDiv, Exists)
 
 
 class TestOperators(unittest.TestCase):
@@ -171,6 +172,74 @@ class TestOperators(unittest.TestCase):
         equal = NotEqual(Null, self.table.c1)
         self.assertEqual(str(equal), '("c1" IS NOT NULL)')
         self.assertEqual(equal.params, ())
+
+    def test_between(self):
+        for between in [Between(self.table.c1, 1, 2),
+                ~NotBetween(self.table.c1, 1, 2)]:
+            self.assertEqual(str(between), '("c1" BETWEEN %s AND %s)')
+            self.assertEqual(between.params, (1, 2))
+
+        between = Between(
+            self.table.c1, self.table.c2, self.table.c3, symmetric=True)
+        self.assertEqual(
+            str(between), '("c1" BETWEEN SYMMETRIC "c2" AND "c3")')
+        self.assertEqual(between.params, ())
+
+    def test_not_between(self):
+        for between in [NotBetween(self.table.c1, 1, 2),
+                ~Between(self.table.c1, 1, 2)]:
+            self.assertEqual(str(between), '("c1" NOT BETWEEN %s AND %s)')
+            self.assertEqual(between.params, (1, 2))
+
+        between = NotBetween(
+            self.table.c1, self.table.c2, self.table.c3, symmetric=True)
+        self.assertEqual(
+            str(between), '("c1" NOT BETWEEN SYMMETRIC "c2" AND "c3")')
+        self.assertEqual(between.params, ())
+
+    def test_is_distinct(self):
+        for distinct in [IsDistinct(self.table.c1, self.table.c2),
+                ~IsNotDistinct(self.table.c1, self.table.c2)]:
+            self.assertEqual(str(distinct), '("c1" IS DISTINCT FROM "c2")')
+            self.assertEqual(distinct.params, ())
+
+    def test_is_not_distinct(self):
+        for distinct in [IsNotDistinct(self.table.c1, self.table.c2),
+                ~IsDistinct(self.table.c1, self.table.c2)]:
+            self.assertEqual(str(distinct), '("c1" IS NOT DISTINCT FROM "c2")')
+            self.assertEqual(distinct.params, ())
+
+    def test_is(self):
+        for is_ in [Is(self.table.c1, None),
+                ~IsNot(self.table.c1, None)]:
+            self.assertEqual(str(is_), '("c1" IS UNKNOWN)')
+            self.assertEqual(is_.params, ())
+
+        for is_ in [Is(self.table.c1, True),
+                ~IsNot(self.table.c1, True)]:
+            self.assertEqual(str(is_), '("c1" IS TRUE)')
+            self.assertEqual(is_.params, ())
+
+        for is_ in [Is(self.table.c1, False),
+                ~IsNot(self.table.c1, False)]:
+            self.assertEqual(str(is_), '("c1" IS FALSE)')
+            self.assertEqual(is_.params, ())
+
+    def test_is_not(self):
+        for is_ in [IsNot(self.table.c1, None),
+                ~Is(self.table.c1, None)]:
+            self.assertEqual(str(is_), '("c1" IS NOT UNKNOWN)')
+            self.assertEqual(is_.params, ())
+
+        for is_ in [IsNot(self.table.c1, True),
+                ~Is(self.table.c1, True)]:
+            self.assertEqual(str(is_), '("c1" IS NOT TRUE)')
+            self.assertEqual(is_.params, ())
+
+        for is_ in [IsNot(self.table.c1, False),
+                ~Is(self.table.c1, False)]:
+            self.assertEqual(str(is_), '("c1" IS NOT FALSE)')
+            self.assertEqual(is_.params, ())
 
     def test_sub(self):
         for sub in [Sub(self.table.c1, self.table.c2),

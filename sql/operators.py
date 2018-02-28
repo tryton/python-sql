@@ -31,9 +31,10 @@ from array import array
 from sql import Expression, Select, CombiningQuery, Flavor, Null
 
 __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
-    'Equal', 'NotEqual', 'Add', 'Sub', 'Mul', 'Div', 'FloorDiv', 'Mod', 'Pow',
-    'SquareRoot', 'CubeRoot', 'Factorial', 'Abs', 'BAnd', 'BOr', 'BXor',
-    'BNot', 'LShift', 'RShift', 'Concat', 'Like', 'NotLike', 'ILike',
+    'Equal', 'NotEqual', 'Between', 'NotBetween', 'IsDistinct',
+    'IsNotDistinct', 'Is', 'IsNot', 'Add', 'Sub', 'Mul', 'Div', 'FloorDiv',
+    'Mod', 'Pow', 'SquareRoot', 'CubeRoot', 'Factorial', 'Abs', 'BAnd', 'BOr',
+    'BXor', 'BNot', 'LShift', 'RShift', 'Concat', 'Like', 'NotLike', 'ILike',
     'NotILike', 'In', 'NotIn', 'Exists', 'Any', 'Some', 'All']
 
 
@@ -225,6 +226,75 @@ class NotEqual(Equal):
         return super(Equal, self).__str__()
 
 
+class Between(Operator):
+    __slots__ = ('operand', 'left', 'right', 'symmetric')
+    _operator = 'BETWEEN'
+
+    def __init__(self, operand, left, right, symmetric=False):
+        self.operand = operand
+        self.left = left
+        self.right = right
+        self.symmetric = symmetric
+
+    @property
+    def _operands(self):
+        return (self.operand, self.left, self.right)
+
+    def __str__(self):
+        operator = self._operator
+        if self.symmetric:
+            operator += ' SYMMETRIC'
+        return '(%s %s %s AND %s)' % (
+            self._format(self.operand), operator,
+            self._format(self.left), self._format(self.right))
+
+    def __invert__(self):
+        return _INVERT[self.__class__](
+            self.operand, self.left, self.right, self.symmetric)
+
+
+class NotBetween(Between):
+    __slots__ = ()
+    _operator = 'NOT BETWEEN'
+
+
+class IsDistinct(BinaryOperator):
+    __slots__ = ()
+    _operator = 'IS DISTINCT FROM'
+
+
+class IsNotDistinct(IsDistinct):
+    __slots__ = ()
+    _operator = 'IS NOT DISTINCT FROM'
+
+
+class Is(BinaryOperator):
+    __slots__ = ()
+    _operator = 'IS'
+
+    def __init__(self, left, right):
+        assert right in [None, True, False]
+        super(Is, self).__init__(left, right)
+
+    @property
+    def _operands(self):
+        return (self.left,)
+
+    def __str__(self):
+        if self.right is None:
+            return '(%s %s UNKNOWN)' % (
+                self._format(self.left), self._operator)
+        elif self.right is True:
+            return '(%s %s TRUE)' % (self._format(self.left), self._operator)
+        elif self.right is False:
+            return '(%s %s FALSE)' % (self._format(self.left), self._operator)
+
+
+class IsNot(Is):
+    __slots__ = ()
+    _operator = 'IS NOT'
+
+
 class Add(BinaryOperator):
     __slots__ = ()
     _operator = '+'
@@ -404,6 +474,12 @@ _INVERT = {
     GreaterEqual: Less,
     Equal: NotEqual,
     NotEqual: Equal,
+    Between: NotBetween,
+    NotBetween: Between,
+    IsDistinct: IsNotDistinct,
+    IsNotDistinct: IsDistinct,
+    Is: IsNot,
+    IsNot: Is,
     Like: NotLike,
     NotLike: Like,
     ILike: NotILike,
