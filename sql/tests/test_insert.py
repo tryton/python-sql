@@ -76,7 +76,19 @@ class TestInsert(unittest.TestCase):
             [['foo', 'bar']], returning=[self.table.c1, self.table.c2])
         self.assertEqual(str(query),
             'INSERT INTO "t" ("c1", "c2") VALUES (%s, %s) '
-            'RETURNING "c1", "c2"')
+            'RETURNING "t"."c1", "t"."c2"')
+        self.assertEqual(query.params, ('foo', 'bar'))
+
+    def test_insert_returning_select(self):
+        t1 = Table('t1')
+        t2 = Table('t2')
+        query = t1.insert([t1.c], [['foo']],
+            returning=[
+                t2.select(t2.c, where=(t2.c1 == t1.c) & (t2.c2 == 'bar'))])
+        self.assertEqual(str(query),
+            'INSERT INTO "t1" ("c") VALUES (%s) '
+            'RETURNING (SELECT "b"."c" FROM "t2" AS "b" '
+            'WHERE (("b"."c1" = "t1"."c") AND ("b"."c2" = %s)))')
         self.assertEqual(query.params, ('foo', 'bar'))
 
     def test_with(self):
@@ -88,6 +100,6 @@ class TestInsert(unittest.TestCase):
             with_=[w],
             values=w.select())
         self.assertEqual(str(query),
-            'WITH "a" AS (SELECT * FROM "t1" AS "b") '
+            'WITH "b" AS (SELECT * FROM "t1" AS "c") '
             'INSERT INTO "t" ("c1") SELECT * FROM "a" AS "a"')
         self.assertEqual(query.params, ())

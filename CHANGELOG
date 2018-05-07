@@ -1,3 +1,4 @@
+* Fix Select query in returning
 * Add comparison predicates
 * Add COLLATE
 

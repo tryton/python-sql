@@ -693,10 +693,13 @@ class Insert(WithQuery):
             # TODO manage DEFAULT
         elif self.values is None:
             values = ' DEFAULT VALUES'
-        returning = ''
-        if self.returning:
-            returning = ' RETURNING ' + ', '.join(map(str, self.returning))
         with AliasManager():
+            table = self.table
+            AliasManager.set(table, str(table)[1:-1])
+            returning = ''
+            if self.returning:
+                returning = ' RETURNING ' + ', '.join(
+                    map(self._format, self.returning))
             return (self._with_str()
                 + 'INSERT INTO %s' % self.table + columns
                 + values + returning)
@@ -766,7 +769,8 @@ class Update(Insert):
                 where = ' WHERE ' + str(self.where)
             returning = ''
             if self.returning:
-                returning = ' RETURNING ' + ', '.join(map(str, self.returning))
+                returning = ' RETURNING ' + ', '.join(
+                    map(self._format, self.returning))
             return (self._with_str()
                 + 'UPDATE %s SET ' % table + values + from_
                 + where + returning)
