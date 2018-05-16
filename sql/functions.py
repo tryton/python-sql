@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2015, Cédric Krier
-# Copyright (c) 2011-2015, B2CK
+# Copyright (c) 2011-2018, Cédric Krier
+# Copyright (c) 2011-2018, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -472,15 +472,21 @@ class AtTimeZone(Function):
         Mapping = flavor.function_mapping.get(self.__class__)
         if Mapping:
             return str(Mapping(self.field, self.zone))
-        param = flavor.param
-        return '%s AT TIME ZONE %s' % (str(self.field), param)
+        if isinstance(self.zone, Expression):
+            zone = str(self.zone)
+        else:
+            zone = flavor.param
+        return '%s AT TIME ZONE %s' % (str(self.field), zone)
 
     @property
     def params(self):
         Mapping = Flavor.get().function_mapping.get(self.__class__)
         if Mapping:
             return Mapping(self.field, self.zone).params
-        return self.field.params + (self.zone,)
+        if isinstance(self.zone, Expression):
+            return self.field.params + self.zone.params
+        else:
+            return self.field.params + (self.zone,)
 
 
 class WindowFunction(Function):

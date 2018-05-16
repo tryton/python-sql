@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2015, Cédric Krier
-# Copyright (c) 2011-2015, B2CK
+# Copyright (c) 2011-2018, Cédric Krier
+# Copyright (c) 2011-2018, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -109,6 +109,11 @@ class TestFunctions(unittest.TestCase):
         time_zone = AtTimeZone(self.table.c1, 'UTC')
         self.assertEqual(str(time_zone), '"c1" AT TIME ZONE %s')
         self.assertEqual(time_zone.params, ('UTC',))
+
+    def test_at_time_zone_expression(self):
+        time_zone = AtTimeZone(self.table.c1, self.table.zone)
+        self.assertEqual(str(time_zone), '"c1" AT TIME ZONE "zone"')
+        self.assertEqual(time_zone.params, ())
 
     def test_at_time_zone_mapping(self):
         class MyAtTimeZone(Function):
