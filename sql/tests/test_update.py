@@ -96,3 +96,21 @@ class TestUpdate(unittest.TestCase):
             'UPDATE "t" SET "c2" = (SELECT "b"."c3" FROM "b" AS "b" '
             'WHERE ("b"."c4" = %s))')
         self.assertEqual(query.params, (2,))
+
+    def test_schema(self):
+        t1 = Table('t1', 'default')
+        query = t1.update([t1.c1], ['foo'])
+
+        self.assertEqual(str(query), 'UPDATE "default"."t1" SET "c1" = %s')
+        self.assertEqual(query.params, ('foo',))
+
+    def test_schema_subselect(self):
+        t1 = Table('t1', 'default')
+        t2 = Table('t2', 'default')
+        query = t1.update([t1.c1], t2.select(t2.c, where=t2.i == t1.i))
+
+        self.assertEqual(str(query),
+            'UPDATE "default"."t1" SET "c1" = ('
+            'SELECT "b"."c" FROM "default"."t2" AS "b" '
+            'WHERE ("b"."i" = "default"."t1"."i"))')
+        self.assertEqual(query.params, ())

@@ -103,3 +103,11 @@ class TestInsert(unittest.TestCase):
             'WITH "b" AS (SELECT * FROM "t1" AS "c") '
             'INSERT INTO "t" ("c1") SELECT * FROM "a" AS "a"')
         self.assertEqual(query.params, ())
+
+    def test_schema(self):
+        t1 = Table('t1', 'default')
+        query = t1.insert([t1.c1], [['foo']])
+
+        self.assertEqual(str(query),
+            'INSERT INTO "default"."t1" ("c1") VALUES (%s)')
+        self.assertEqual(query.params, ('foo',))
