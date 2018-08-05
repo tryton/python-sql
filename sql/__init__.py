@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2016, Cédric Krier
+# Copyright (c) 2011-2018, Cédric Krier
 # Copyright (c) 2013-2014, Nicolas Évrard
-# Copyright (c) 2011-2016, B2CK
+# Copyright (c) 2011-2018, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,7 @@ class Flavor(object):
 
     def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
             ilike=False, no_as=False, no_boolean=False, null_ordering=True,
-            function_mapping=None):
+            function_mapping=None, filter_=False):
         assert limitstyle in ['fetch', 'limit', 'rownum']
         self.limitstyle = limitstyle
         self.max_limit = max_limit
@@ -88,6 +88,7 @@ class Flavor(object):
         self.no_boolean = no_boolean
         self.null_ordering = null_ordering
         self.function_mapping = function_mapping or {}
+        self.filter_ = filter_
 
     @property
     def param(self):

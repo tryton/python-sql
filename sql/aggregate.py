@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2011-2015, Cédric Krier
-# Copyright (c) 2011-2015, B2CK
+# Copyright (c) 2011-2018, Cédric Krier
+# Copyright (c) 2011-2018, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-from sql import Expression, Window
+from sql import Expression, Window, Flavor, Literal
 
 __all__ = ['Avg', 'BitAnd', 'BitOr', 'BoolAnd', 'BoolOr', 'Count', 'Every',
     'Max', 'Min', 'Stddev', 'Sum', 'Variance']
@@ -89,15 +89,24 @@ class Aggregate(Expression):
             assert isinstance(value, Window)
         self._window = value
 
+    @property
+    def _case_expression(self):
+        return self.expression
+
     def __str__(self):
         quantifier = 'DISTINCT ' if self.distinct else ''
-        aggregate = '%s(%s%s)' % (self._sql, quantifier, self.expression)
+        has_filter = Flavor.get().filter_
+        expression = self.expression
+        if self.filter_ and not has_filter:
+            from sql.conditionals import Case
+            expression = Case((self.filter_, self._case_expression))
+        aggregate = '%s(%s%s)' % (self._sql, quantifier, expression)
         within = ''
         if self.within:
             within = (' WITHIN GROUP (ORDER BY %s)'
                 % ', '.join(map(str, self.within)))
         filter_ = ''
-        if self.filter_:
+        if self.filter_ and has_filter:
             filter_ = ' FILTER (WHERE %s)' % self.filter_
         window = ''
         if self.window:
@@ -106,11 +115,17 @@ class Aggregate(Expression):
 
     @property
     def params(self):
-        p = list(self.expression.params)
+        has_filter = Flavor.get().filter_
+        p = []
+        if self.filter_ and not has_filter:
+            p.extend(self.filter_.params)
+            p.extend(self._case_expression.params)
+        else:
+            p.extend(self.expression.params)
         if self.within:
             for expression in self.within:
                 p.extend(expression.params)
-        if self.filter_:
+        if self.filter_ and has_filter:
             p.extend(self.filter_.params)
         return tuple(p)
 
@@ -143,6 +158,14 @@ class BoolOr(Aggregate):
 class Count(Aggregate):
     __slots__ = ()
     _sql = 'COUNT'
+
+    @property
+    def _case_expression(self):
+        expression = super(Count, self)._case_expression
+        if (isinstance(self.expression, Literal)
+                and expression.value == '*'):
+            expression = Literal(1)
+        return expression
 
 
 class Every(Aggregate):
