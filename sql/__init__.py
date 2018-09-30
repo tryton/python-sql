@@ -1270,6 +1270,7 @@ class Literal(Expression):
                 return ()
         return (self._value,)
 
+
 Null = None
 
 
@@ -1281,6 +1282,8 @@ class _Rownum(Expression):
     @property
     def params(self):
         return ()
+
+
 _rownum = _Rownum()
 
 

@@ -42,6 +42,7 @@ def get_version():
     init = read(os.path.join('sql', '__init__.py'))
     return re.search("__version__ = '([0-9.]*)'", init).group(1)
 
+
 setup(name='python-sql',
     version=get_version(),
     description='Library to write SQL queries',

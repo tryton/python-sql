@@ -459,6 +459,7 @@ class Any(UnaryOperator):
     __slots__ = ()
     _operator = 'ANY'
 
+
 Some = Any
 
 
