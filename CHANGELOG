@@ -1,3 +1,4 @@
+Version 1.0.0 - 2018-09-30
 * Add Flavor filter_ to fallback to case expression
 * Allow to use expression in AtTimeZone
 * Fix Select query in returning
