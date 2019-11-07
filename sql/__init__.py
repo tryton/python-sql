@@ -390,17 +390,20 @@ class SelectQuery(WithQuery):
 
 class Select(FromItem, SelectQuery):
     __slots__ = ('_columns', '_where', '_group_by', '_having', '_for_',
-        'from_', '_distinct_on')
+        'from_', '_distinct', '_distinct_on')
 
     def __init__(self, columns, from_=None, where=None, group_by=None,
-            having=None, for_=None, distinct_on=None, **kwargs):
-        self._distinct_on = None
+            having=None, for_=None, distinct=False, distinct_on=None,
+            **kwargs):
+        self._distinct = False
+        self._distinct_on = []
         self._columns = None
         self._where = None
         self._group_by = None
         self._having = None
         self._for_ = None
         super(Select, self).__init__(**kwargs)
+        self.distinct = distinct
         self.distinct_on = distinct_on
         self.columns = columns
         self.from_ = from_
@@ -408,6 +411,14 @@ class Select(FromItem, SelectQuery):
         self.group_by = group_by
         self.having = having
         self.for_ = for_
+
+    @property
+    def distinct(self):
+        return bool(self._distinct or self._distinct_on)
+
+    @distinct.setter
+    def distinct(self, value):
+        self._distinct = bool(value)
 
     @property
     def distinct_on(self):
@@ -557,11 +568,13 @@ class Select(FromItem, SelectQuery):
                 from_ = ' FROM %s' % self.from_
             else:
                 from_ = ''
-            if self.distinct_on is not None:
-                distinct_on = ('DISTINCT ON (%s) '
-                    % ', '.join(map(str, self.distinct_on)))
+            if self.distinct:
+                distinct = 'DISTINCT '
+                if self.distinct_on:
+                    distinct += ('ON (%s) '
+                        % ', '.join(map(str, self.distinct_on)))
             else:
-                distinct_on = ''
+                distinct = ''
             if self.columns:
                 columns = ', '.join(map(self._format_column, self.columns))
             else:
@@ -584,7 +597,7 @@ class Select(FromItem, SelectQuery):
             if self.for_ is not None:
                 for_ = ' ' + ' '.join(map(str, self.for_))
             return (self._with_str()
-                + 'SELECT %s%s%s' % (distinct_on, columns, from_)
+                + 'SELECT %s%s%s' % (distinct, columns, from_)
                 + where + group_by + having + window + self._order_by_str
                 + self._limit_offset_str + for_)
 
