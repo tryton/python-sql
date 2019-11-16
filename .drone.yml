@@ -1,6 +1,10 @@
 clone:
     hg:
         image: plugins/hg
+        environment:
+            - HG_SHARE_POOL=/root/.cache/hg
+        volumes:
+            - cache:/root/.cache
 
 pipeline:
     tox:
@@ -9,7 +13,7 @@ pipeline:
             - pip install tox
             - tox -e "${TOXENV}"
         volumes:
-             - cache:/root/.cache
+            - cache:/root/.cache
 
 matrix:
     include:
