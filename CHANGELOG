@@ -1,3 +1,4 @@
+* Add ORDER BY clause to aggregate functions
 * Add support for Python 3.8
 * Add distinct on Select
 

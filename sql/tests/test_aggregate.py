@@ -42,6 +42,17 @@ class TestAggregate(unittest.TestCase):
         avg = Avg(self.table.a + self.table.b)
         self.assertEqual(str(avg), 'AVG(("a" + "b"))')
 
+    def test_order_by_one_column(self):
+        avg = Avg(self.table.a, order_by=self.table.b)
+        self.assertEqual(str(avg), 'AVG("a" ORDER BY "b")')
+        self.assertEqual(avg.params, ())
+
+    def test_order_by_multiple_columns(self):
+        avg = Avg(
+            self.table.a, order_by=[self.table.b.asc, self.table.c.desc])
+        self.assertEqual(str(avg), 'AVG("a" ORDER BY "b" ASC, "c" DESC)')
+        self.assertEqual(avg.params, ())
+
     def test_within(self):
         avg = Avg(self.table.a, within=self.table.b)
         self.assertEqual(str(avg), 'AVG("a") WITHIN GROUP (ORDER BY "b")')

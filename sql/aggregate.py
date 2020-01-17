@@ -34,15 +34,16 @@ __all__ = ['Avg', 'BitAnd', 'BitOr', 'BoolAnd', 'BoolOr', 'Count', 'Every',
 
 
 class Aggregate(Expression):
-    __slots__ = ('expression', '_distinct', '_within', '_filter', '_window')
+    __slots__ = ('expression', '_distinct', '_order_by', '_within',
+        '_filter', '_window')
     _sql = ''
 
-    def __init__(self, expression, distinct=False, within=None, filter_=None,
-            window=None):
-        # TODO order_by
+    def __init__(self, expression, distinct=False, order_by=None, within=None,
+            filter_=None, window=None):
         super(Aggregate, self).__init__()
         self.expression = expression
         self.distinct = distinct
+        self.order_by = order_by
         self.within = within
         self.filter_ = filter_
         self.window = window
@@ -55,6 +56,18 @@ class Aggregate(Expression):
     def distinct(self, value):
         assert isinstance(value, bool)
         self._distinct = value
+
+    @property
+    def order_by(self):
+        return self._order_by
+
+    @order_by.setter
+    def order_by(self, value):
+        if value is not None:
+            if isinstance(value, Expression):
+                value = [value]
+            assert all(isinstance(col, Expression) for col in value)
+        self._order_by = value
 
     @property
     def within(self):
@@ -100,7 +113,11 @@ class Aggregate(Expression):
         if self.filter_ and not has_filter:
             from sql.conditionals import Case
             expression = Case((self.filter_, self._case_expression))
-        aggregate = '%s(%s%s)' % (self._sql, quantifier, expression)
+        order_by = ''
+        if self.order_by:
+            order_by = ' ORDER BY %s' % ', '.join(map(str, self.order_by))
+        aggregate = '%s(%s%s%s)' % (
+            self._sql, quantifier, expression, order_by)
         within = ''
         if self.within:
             within = (' WITHIN GROUP (ORDER BY %s)'
@@ -122,6 +139,9 @@ class Aggregate(Expression):
             p.extend(self._case_expression.params)
         else:
             p.extend(self.expression.params)
+        if self.order_by:
+            for expression in self.order_by:
+                p.extend(expression.params)
         if self.within:
             for expression in self.within:
                 p.extend(expression.params)
