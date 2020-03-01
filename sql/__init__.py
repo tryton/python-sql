@@ -30,6 +30,7 @@
 from __future__ import division
 
 import string
+import numbers
 import warnings
 from threading import local, currentThread
 from collections import defaultdict
@@ -348,7 +349,7 @@ class SelectQuery(WithQuery):
     @limit.setter
     def limit(self, value):
         if value is not None:
-            assert isinstance(value, (int, long))
+            assert isinstance(value, numbers.Integral)
         self._limit = value
 
     @property
@@ -358,7 +359,7 @@ class SelectQuery(WithQuery):
     @offset.setter
     def offset(self, value):
         if value is not None:
-            assert isinstance(value, (int, long))
+            assert isinstance(value, numbers.Integral)
         self._offset = value
 
     @property
@@ -1452,7 +1453,7 @@ class Window(object):
     @start.setter
     def start(self, value):
         if value:
-            assert isinstance(value, (int, long))
+            assert isinstance(value, numbers.Integral)
         self._start = value
 
     @property
@@ -1462,7 +1463,7 @@ class Window(object):
     @end.setter
     def end(self, value):
         if value:
-            assert isinstance(value, (int, long))
+            assert isinstance(value, numbers.Integral)
         self._end = value
 
     @property

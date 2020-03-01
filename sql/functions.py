@@ -30,6 +30,11 @@ from itertools import chain
 
 from sql import Expression, Flavor, FromItem, Window
 
+try:
+    basestring
+except NameError:
+    basestring = str
+
 __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'Log', 'Mod', 'Pi', 'Power', 'Radians', 'Random', 'Round', 'SetSeed',
     'Sign', 'Sqrt', 'Trunc', 'WidthBucket',

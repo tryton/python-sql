@@ -86,7 +86,7 @@ class Operator(Expression):
             return param
 
     def __str__(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def __and__(self, other):
         if isinstance(other, And):
