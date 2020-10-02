@@ -127,7 +127,10 @@ class Aggregate(Expression):
             filter_ = ' FILTER (WHERE %s)' % self.filter_
         window = ''
         if self.window:
-            window = ' OVER "%s"' % self.window.alias
+            if self.window.has_alias:
+                window = ' OVER "%s"' % self.window.alias
+            else:
+                window = ' OVER (%s)' % self.window
         return aggregate + within + filter_ + window
 
     @property
@@ -147,6 +150,8 @@ class Aggregate(Expression):
                 p.extend(expression.params)
         if self.filter_ and has_filter:
             p.extend(self.filter_.params)
+        if self.window and not self.window.has_alias:
+            p.extend(self.window.params)
         return tuple(p)
 
 

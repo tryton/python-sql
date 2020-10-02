@@ -149,7 +149,7 @@ class TestWindowFunction(unittest.TestCase):
         function = Rank(t.c, window=Window([]))
 
         with AliasManager():
-            self.assertEqual(str(function), 'RANK("a"."c") OVER "b"')
+            self.assertEqual(str(function), 'RANK("a"."c") OVER ()')
         self.assertEqual(function.params, ())
 
     def test_filter(self):
@@ -158,5 +158,5 @@ class TestWindowFunction(unittest.TestCase):
 
         with AliasManager():
             self.assertEqual(str(function),
-                'RANK("a"."c") FILTER (WHERE ("a"."c" > %s)) OVER "b"')
+                'RANK("a"."c") FILTER (WHERE ("a"."c" > %s)) OVER ()')
         self.assertEqual(function.params, (0,))

@@ -33,7 +33,7 @@ from copy import deepcopy
 
 from sql import Table, Join, Union, Literal, Flavor, For, With, Window, Select
 from sql.functions import Now, Function, Rank, DatePart
-from sql.aggregate import Min
+from sql.aggregate import Min, Max
 
 
 class TestSelect(unittest.TestCase):
@@ -419,6 +419,39 @@ class TestSelect(unittest.TestCase):
             'SELECT MIN("a"."c1") OVER "b" FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY DATE_PART(%s, "a"."date_col"))')
         self.assertEqual(query.params, ('year',))
+
+        window = Window([self.table.c2])
+        query = self.table.select(
+            Max(self.table.c1, window=window)
+            / Min(self.table.c1, window=window))
+        self.assertEqual(str(query),
+            'SELECT (MAX("a"."c1") OVER (PARTITION BY "a"."c2") '
+            '/ MIN("a"."c1") OVER (PARTITION BY "a"."c2")) '
+            'FROM "t" AS "a"')
+        self.assertEqual(query.params, ())
+
+        window = Window([Literal(1)])
+        query = self.table.select(
+            Max(self.table.c1, window=window)
+            / Min(self.table.c1, window=window))
+        self.assertEqual(str(query),
+            'SELECT (MAX("a"."c1") OVER (PARTITION BY %s) '
+            '/ MIN("a"."c1") OVER (PARTITION BY %s)) '
+            'FROM "t" AS "a"')
+        self.assertEqual(query.params, (1, 1))
+
+        window1 = Window([self.table.c2])
+        window2 = Window([Literal(1)])
+        query = self.table.select(
+            Max(self.table.c1, window=window1)
+            / Min(self.table.c1, window=window2),
+            windows=[window1])
+        self.assertEqual(str(query),
+            'SELECT (MAX("a"."c1") OVER "b" '
+            '/ MIN("a"."c1") OVER (PARTITION BY %s)) '
+            'FROM "t" AS "a" '
+            'WINDOW "b" AS (PARTITION BY "a"."c2")')
+        self.assertEqual(query.params, (1,))
 
     def test_order_params(self):
         with_ = With(query=self.table.select(self.table.c,

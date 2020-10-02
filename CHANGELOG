@@ -1,3 +1,6 @@
+* Add explicit Windows to Select
+* Fix missing Windows definitions in nested expressions
+
 Version 1.1.0 - 2020-01-25
 * Add ORDER BY clause to aggregate functions
 * Add support for Python 3.8

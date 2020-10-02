@@ -528,7 +528,10 @@ class WindowFunction(Function):
         filter_ = ''
         if self.filter_:
             filter_ = ' FILTER (WHERE %s)' % self.filter_
-        over = ' OVER "%s"' % self.window.alias
+        if self.window.has_alias:
+            over = ' OVER "%s"' % self.window.alias
+        else:
+            over = ' OVER (%s)' % self.window
         return function + filter_ + over
 
     @property
@@ -536,6 +539,8 @@ class WindowFunction(Function):
         p = list(super(WindowFunction, self).params)
         if self.filter_:
             p.extend(self.filter_.params)
+        if not self.window.has_alias:
+            p.extend(self.window.params)
         return tuple(p)
 
 

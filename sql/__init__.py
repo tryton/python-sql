@@ -161,6 +161,14 @@ class AliasManager(object):
         return cls.local.alias[id(from_)]
 
     @classmethod
+    def contains(cls, from_):
+        if getattr(cls.local, 'alias', None) is None:
+            return False
+        if from_ in cls.local.exclude:
+            return False
+        return id(from_) in cls.local.alias
+
+    @classmethod
     def set(cls, from_, alias):
         assert cls.local.alias.get(from_) is None
         cls.local.alias[id(from_)] = alias
@@ -250,6 +258,10 @@ class FromItem(object):
     @property
     def alias(self):
         return AliasManager.get(self)
+
+    @property
+    def has_alias(self):
+        return AliasManager.contains(self)
 
     def __getattr__(self, name):
         if name.startswith('__'):
@@ -391,11 +403,11 @@ class SelectQuery(WithQuery):
 
 class Select(FromItem, SelectQuery):
     __slots__ = ('_columns', '_where', '_group_by', '_having', '_for_',
-        'from_', '_distinct', '_distinct_on')
+        'from_', '_distinct', '_distinct_on', '_windows')
 
     def __init__(self, columns, from_=None, where=None, group_by=None,
             having=None, for_=None, distinct=False, distinct_on=None,
-            **kwargs):
+            windows=None, **kwargs):
         self._distinct = False
         self._distinct_on = []
         self._columns = None
@@ -403,6 +415,7 @@ class Select(FromItem, SelectQuery):
         self._group_by = None
         self._having = None
         self._for_ = None
+        self._windows = []
         super(Select, self).__init__(**kwargs)
         self.distinct = distinct
         self.distinct_on = distinct_on
@@ -412,6 +425,7 @@ class Select(FromItem, SelectQuery):
         self.group_by = group_by
         self.having = having
         self.for_ = for_
+        self.windows = windows
 
     @property
     def distinct(self):
@@ -488,6 +502,34 @@ class Select(FromItem, SelectQuery):
             assert all(isinstance(f, For) for f in value)
         self._for_ = value
 
+    @property
+    def windows(self):
+        from sql.functions import WindowFunction
+        from sql.aggregate import Aggregate
+        windows = set()
+        if self._windows is not None:
+            for window in self._windows:
+                windows.add(window)
+                yield window
+        for column in self.columns:
+            window_function = None
+            if isinstance(column, (WindowFunction, Aggregate)):
+                window_function = column
+            elif (isinstance(column, As)
+                    and isinstance(column.expression,
+                        (WindowFunction, Aggregate))):
+                window_function = column.expression
+            if (window_function and window_function.window
+                    and window_function.window not in windows):
+                windows.add(window_function.window)
+                yield window_function.window
+
+    @windows.setter
+    def windows(self, value):
+        if value is not None:
+            assert all(isinstance(w, Window) for w in value)
+        self._windows = value
+
     @staticmethod
     def _format_column(column):
         if isinstance(column, As):
@@ -504,23 +546,6 @@ class Select(FromItem, SelectQuery):
                 return '(%s)' % column
             else:
                 return str(column)
-
-    def _window_functions(self):
-        from sql.functions import WindowFunction
-        from sql.aggregate import Aggregate
-        windows = set()
-        for column in self.columns:
-            window_function = None
-            if isinstance(column, (WindowFunction, Aggregate)):
-                window_function = column
-            elif (isinstance(column, As)
-                    and isinstance(column.expression,
-                        (WindowFunction, Aggregate))):
-                window_function = column.expression
-            if (window_function and window_function.window
-                    and window_function.window not in windows):
-                windows.add(window_function.window)
-                yield window_function
 
     def _rownum(self, func):
         aliases = [c.output_name if isinstance(c, As) else None
@@ -569,6 +594,13 @@ class Select(FromItem, SelectQuery):
                 from_ = ' FROM %s' % self.from_
             else:
                 from_ = ''
+
+            # format window before expressions to set alias
+            window = ', '.join(
+                '"%s" AS (%s)' % (w.alias, w) for w in self.windows)
+            if window:
+                window = ' WINDOW ' + window
+
             if self.distinct:
                 distinct = 'DISTINCT '
                 if self.distinct_on:
@@ -589,11 +621,6 @@ class Select(FromItem, SelectQuery):
             having = ''
             if self.having:
                 having = ' HAVING ' + str(self.having)
-            window = ''
-            windows = [f.window for f in self._window_functions()]
-            if windows:
-                window = ' WINDOW ' + ', '.join(
-                    '"%s" AS (%s)' % (w.alias, w) for w in windows)
             for_ = ''
             if self.for_ is not None:
                 for_ = ' ' + ' '.join(map(str, self.for_))
@@ -608,25 +635,30 @@ class Select(FromItem, SelectQuery):
                 and (self.limit is not None or self.offset is not None)):
             return self._rownum(lambda q: q.params)
         p = []
-        p.extend(self._with_params())
-        for column in chain(self.distinct_on or (), self.columns):
-            if isinstance(column, As):
-                p.extend(column.expression.params)
-            p.extend(column.params)
-        if self.from_ is not None:
-            p.extend(self.from_.params)
-        if self.where:
-            p.extend(self.where.params)
-        if self.group_by:
-            for expression in self.group_by:
-                p.extend(expression.params)
-        if self.order_by:
-            for expression in self.order_by:
-                p.extend(expression.params)
-        if self.having:
-            p.extend(self.having.params)
-        for window_function in self._window_functions():
-            p.extend(window_function.window.params)
+        with AliasManager():
+            # Set alias to window function to skip their params
+            for window_function in self.windows:
+                window_function.alias
+
+            p.extend(self._with_params())
+            for column in chain(self.distinct_on or (), self.columns):
+                if isinstance(column, As):
+                    p.extend(column.expression.params)
+                p.extend(column.params)
+            if self.from_ is not None:
+                p.extend(self.from_.params)
+            if self.where:
+                p.extend(self.where.params)
+            if self.group_by:
+                for expression in self.group_by:
+                    p.extend(expression.params)
+            if self.order_by:
+                for expression in self.order_by:
+                    p.extend(expression.params)
+            if self.having:
+                p.extend(self.having.params)
+            for window_function in self.windows:
+                p.extend(window_function.window.params)
         return tuple(p)
 
 
@@ -1039,6 +1071,10 @@ class Join(FromItem):
 
     @property
     def alias(self):
+        raise AttributeError
+
+    @property
+    def has_alias(self):
         raise AttributeError
 
     def __getattr__(self, name):
@@ -1469,6 +1505,10 @@ class Window(object):
     @property
     def alias(self):
         return AliasManager.get(self)
+
+    @property
+    def has_alias(self):
+        return AliasManager.contains(self)
 
     def __str__(self):
         partition = ''

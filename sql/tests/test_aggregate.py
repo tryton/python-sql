@@ -84,7 +84,7 @@ class TestAggregate(unittest.TestCase):
     def test_window(self):
         avg = Avg(self.table.c, window=Window([]))
         with AliasManager():
-            self.assertEqual(str(avg), 'AVG("a"."c") OVER "b"')
+            self.assertEqual(str(avg), 'AVG("a"."c") OVER ()')
         self.assertEqual(avg.params, ())
 
     def test_distinct(self):
