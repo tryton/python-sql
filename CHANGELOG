@@ -1,3 +1,4 @@
+Version 1.2.0 - 2020-10-05
 * Add explicit Windows to Select
 * Fix missing Windows definitions in nested expressions
 
