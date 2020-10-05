@@ -36,7 +36,7 @@ from threading import local, currentThread
 from collections import defaultdict
 from itertools import chain
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 __all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
     'Asc', 'Desc', 'NullsFirst', 'NullsLast', 'format2numeric']
 
