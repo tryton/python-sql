@@ -41,13 +41,13 @@ class TestAs(unittest.TestCase):
     def test_as_select(self):
         query = self.table.select(self.column.as_('foo'))
         self.assertEqual(str(query), 'SELECT "a"."c" AS "foo" FROM "t" AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_no_as(self):
         query = self.table.select(self.column.as_('foo'))
         try:
             Flavor.set(Flavor(no_as=True))
             self.assertEqual(str(query), 'SELECT "a"."c" "foo" FROM "t" "a"')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
         finally:
             Flavor.set(Flavor())

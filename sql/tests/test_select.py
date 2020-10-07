@@ -42,12 +42,12 @@ class TestSelect(unittest.TestCase):
     def test_select1(self):
         query = self.table.select()
         self.assertEqual(str(query), 'SELECT * FROM "t" AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_select2(self):
         query = self.table.select(self.table.c)
         self.assertEqual(str(query), 'SELECT "a"."c" FROM "t" AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
         query.columns += (self.table.c2,)
         self.assertEqual(str(query),
@@ -57,41 +57,41 @@ class TestSelect(unittest.TestCase):
         query = self.table.select(where=(self.table.c == 'foo'))
         self.assertEqual(str(query),
             'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s)')
-        self.assertEqual(query.params, ('foo',))
+        self.assertEqual(tuple(query.params), ('foo',))
 
     def test_select_without_from(self):
         query = Select([Literal(1)])
         self.assertEqual(str(query), 'SELECT %s')
-        self.assertEqual(query.params, (1,))
+        self.assertEqual(tuple(query.params), (1,))
 
     def test_select_select(self):
         query = Select([Select([Literal(1)])])
         self.assertEqual(str(query), 'SELECT (SELECT %s)')
-        self.assertEqual(query.params, (1,))
+        self.assertEqual(tuple(query.params), (1,))
 
     def test_select_select_as(self):
         query = Select([Select([Literal(1)]).as_('foo')])
         self.assertEqual(str(query), 'SELECT (SELECT %s) AS "foo"')
-        self.assertEqual(query.params, (1,))
+        self.assertEqual(tuple(query.params), (1,))
 
     def test_select_distinct(self):
         query = self.table.select(self.table.c, distinct=True)
         self.assertEqual(
             str(query), 'SELECT DISTINCT "a"."c" FROM "t" AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_select_distinct_on(self):
         query = self.table.select(self.table.c, distinct_on=self.table.c)
         self.assertEqual(
             str(query), 'SELECT DISTINCT ON ("a"."c") "a"."c" FROM "t" AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
         query = self.table.select(
             self.table.c, distinct_on=[self.table.a, self.table.b])
         self.assertEqual(
             str(query),
             'SELECT DISTINCT ON ("a"."a", "a"."b") "a"."c" FROM "t" AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_select_from_list(self):
         t2 = Table('t2')
@@ -99,7 +99,7 @@ class TestSelect(unittest.TestCase):
         query = (self.table + t2 + t3).select(self.table.c, getattr(t2, '*'))
         self.assertEqual(str(query),
             'SELECT "a"."c", "b".* FROM "t" AS "a", "t2" AS "b", "t3" AS "c"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_select_union(self):
         query1 = self.table.select()
@@ -119,11 +119,11 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(union),
             'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s) UNION ALL '
             'SELECT * FROM "t2" AS "b"')
-        self.assertEqual(union.params, ('foo',))
+        self.assertEqual(tuple(union.params), ('foo',))
 
         union = Union(query1)
         self.assertEqual(str(union), str(query1))
-        self.assertEqual(union.params, query1.params)
+        self.assertEqual(tuple(union.params), tuple(query1.params))
 
     def test_select_union_order(self):
         query1 = self.table.select()
@@ -134,7 +134,7 @@ class TestSelect(unittest.TestCase):
             'SELECT * FROM "t" AS "a" UNION '
             'SELECT * FROM "t2" AS "b" '
             'ORDER BY %s')
-        self.assertEqual(union.params, (1,))
+        self.assertEqual(tuple(union.params), (1,))
 
     def test_select_intersect(self):
         query1 = self.table.select()
@@ -176,12 +176,12 @@ class TestSelect(unittest.TestCase):
         select = t1.select()
         self.assertEqual(str(select.select()),
             'SELECT * FROM (SELECT * FROM "t1" AS "b") AS "a"')
-        self.assertEqual(select.params, ())
+        self.assertEqual(tuple(select.params), ())
 
     def test_select_function(self):
         query = Now().select()
         self.assertEqual(str(query), 'SELECT * FROM NOW() AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_select_function_columns_definitions(self):
         class Crosstab(Function):
@@ -192,25 +192,25 @@ class TestSelect(unittest.TestCase):
                 ('c1', 'INT'), ('c2', 'CHAR'), ('c3', 'BOOL')]).select()
         self.assertEqual(str(query), 'SELECT * FROM CROSSTAB(%s, %s) '
             'AS "a" ("c1" INT, "c2" CHAR, "c3" BOOL)')
-        self.assertEqual(query.params, ('query1', 'query2'))
+        self.assertEqual(tuple(query.params), ('query1', 'query2'))
 
     def test_select_group_by(self):
         column = self.table.c
         query = self.table.select(column, group_by=column)
         self.assertEqual(str(query),
             'SELECT "a"."c" FROM "t" AS "a" GROUP BY "a"."c"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
         output = column.as_('c1')
         query = self.table.select(output, group_by=output)
         self.assertEqual(str(query),
             'SELECT "a"."c" AS "c1" FROM "t" AS "a" GROUP BY "c1"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
         query = self.table.select(Literal('foo'), group_by=Literal('foo'))
         self.assertEqual(str(query),
             'SELECT %s FROM "t" AS "a" GROUP BY %s')
-        self.assertEqual(query.params, ('foo', 'foo'))
+        self.assertEqual(tuple(query.params), ('foo', 'foo'))
 
     def test_select_having(self):
         col1 = self.table.col1
@@ -220,14 +220,14 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT "a"."col1", MIN("a"."col2") FROM "t" AS "a" '
             'HAVING (MIN("a"."col2") > %s)')
-        self.assertEqual(query.params, (3,))
+        self.assertEqual(tuple(query.params), (3,))
 
     def test_select_order(self):
         c = self.table.c
         query = self.table.select(c, order_by=Literal(1))
         self.assertEqual(str(query),
             'SELECT "a"."c" FROM "t" AS "a" ORDER BY %s')
-        self.assertEqual(query.params, (1,))
+        self.assertEqual(tuple(query.params), (1,))
 
     def test_select_limit_offset(self):
         try:
@@ -235,34 +235,34 @@ class TestSelect(unittest.TestCase):
             query = self.table.select(limit=50, offset=10)
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a" LIMIT 50 OFFSET 10')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
 
             query.limit = None
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a" OFFSET 10')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
 
             query.offset = 0
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a"')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
 
             Flavor.set(Flavor(limitstyle='limit', max_limit=-1))
 
             query.offset = None
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a"')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
 
             query.offset = 0
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a"')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
 
             query.offset = 10
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a" LIMIT -1 OFFSET 10')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
         finally:
             Flavor.set(Flavor())
 
@@ -273,17 +273,17 @@ class TestSelect(unittest.TestCase):
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a" '
                 'OFFSET (10) ROWS FETCH FIRST (50) ROWS ONLY')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
 
             query.limit = None
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a" OFFSET (10) ROWS')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
 
             query.offset = 0
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a"')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
         finally:
             Flavor.set(Flavor())
 
@@ -297,7 +297,7 @@ class TestSelect(unittest.TestCase):
                         'SELECT * FROM "t" AS "c") AS "b" '
                     'WHERE (ROWNUM <= %s)) AS "a" '
                 'WHERE ("rnum" > %s)')
-            self.assertEqual(query.params, (60, 10))
+            self.assertEqual(tuple(query.params), (60, 10))
 
             query = self.table.select(
                 self.table.c1.as_('col1'), self.table.c2.as_('col2'),
@@ -309,7 +309,7 @@ class TestSelect(unittest.TestCase):
                         'FROM "t" AS "c") AS "b" '
                     'WHERE (ROWNUM <= %s)) AS "a" '
                 'WHERE ("rnum" > %s)')
-            self.assertEqual(query.params, (60, 10))
+            self.assertEqual(tuple(query.params), (60, 10))
 
             subquery = query.select(query.col1, query.col2)
             self.assertEqual(str(subquery),
@@ -323,7 +323,7 @@ class TestSelect(unittest.TestCase):
                     'WHERE ("rnum" > %s)) AS "a"')
             # XXX alias of query is reused but not a problem
             # as it is hidden in subquery
-            self.assertEqual(query.params, (60, 10))
+            self.assertEqual(tuple(query.params), (60, 10))
 
             query = self.table.select(limit=50, offset=10,
                 order_by=[self.table.c])
@@ -333,14 +333,14 @@ class TestSelect(unittest.TestCase):
                         'SELECT * FROM "t" AS "c" ORDER BY "c"."c") AS "b" '
                     'WHERE (ROWNUM <= %s)) AS "a" '
                 'WHERE ("rnum" > %s)')
-            self.assertEqual(query.params, (60, 10))
+            self.assertEqual(tuple(query.params), (60, 10))
 
             query = self.table.select(limit=50)
             self.assertEqual(str(query),
                 'SELECT "a".* FROM ('
                     'SELECT * FROM "t" AS "b") AS "a" '
                 'WHERE (ROWNUM <= %s)')
-            self.assertEqual(query.params, (50,))
+            self.assertEqual(tuple(query.params), (50,))
 
             query = self.table.select(offset=10)
             self.assertEqual(str(query),
@@ -348,7 +348,7 @@ class TestSelect(unittest.TestCase):
                     'SELECT "b".*, ROWNUM AS "rnum" FROM ('
                         'SELECT * FROM "t" AS "c") AS "b") AS "a" '
                 'WHERE ("rnum" > %s)')
-            self.assertEqual(query.params, (10,))
+            self.assertEqual(tuple(query.params), (10,))
 
             query = self.table.select(self.table.c.as_('col'),
                 where=self.table.c >= 20,
@@ -360,7 +360,7 @@ class TestSelect(unittest.TestCase):
                         'WHERE ("c"."c" >= %s)) AS "b" '
                     'WHERE (ROWNUM <= %s)) AS "a" '
                 'WHERE ("rnum" > %s)')
-            self.assertEqual(query.params, (20, 60, 10))
+            self.assertEqual(tuple(query.params), (20, 60, 10))
         finally:
             Flavor.set(Flavor())
 
@@ -369,14 +369,14 @@ class TestSelect(unittest.TestCase):
         query = self.table.select(c, for_=For('UPDATE'))
         self.assertEqual(str(query),
             'SELECT "a"."c" FROM "t" AS "a" FOR UPDATE')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_copy(self):
         query = self.table.select()
         copy_query = deepcopy(query)
         self.assertNotEqual(query, copy_query)
         self.assertEqual(str(copy_query), 'SELECT * FROM "t" AS "a"')
-        self.assertEqual(copy_query.params, ())
+        self.assertEqual(tuple(copy_query.params), ())
 
     def test_with(self):
         w = With(query=self.table.select(self.table.c1))
@@ -385,7 +385,7 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'WITH "a" AS (SELECT "b"."c1" FROM "t" AS "b") '
             'SELECT * FROM "a" AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_window(self):
         query = self.table.select(Min(self.table.c1,
@@ -394,13 +394,13 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT MIN("a"."c1") OVER "b" FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY "a"."c2")')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
         query = self.table.select(Rank(window=Window([])))
         self.assertEqual(str(query),
             'SELECT RANK() OVER "b" FROM "t" AS "a" '
             'WINDOW "b" AS ()')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
         window = Window([self.table.c1])
         query = self.table.select(
@@ -410,7 +410,7 @@ class TestSelect(unittest.TestCase):
             'SELECT RANK() FILTER (WHERE ("a"."c1" > %s)) OVER "b", '
             'MIN("a"."c1") OVER "b" FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY "a"."c1")')
-        self.assertEqual(query.params, (0,))
+        self.assertEqual(tuple(query.params), (0,))
 
         window = Window([DatePart('year', self.table.date_col)])
         query = self.table.select(
@@ -418,7 +418,7 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT MIN("a"."c1") OVER "b" FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY DATE_PART(%s, "a"."date_col"))')
-        self.assertEqual(query.params, ('year',))
+        self.assertEqual(tuple(query.params), ('year',))
 
         window = Window([self.table.c2])
         query = self.table.select(
@@ -428,7 +428,7 @@ class TestSelect(unittest.TestCase):
             'SELECT (MAX("a"."c1") OVER (PARTITION BY "a"."c2") '
             '/ MIN("a"."c1") OVER (PARTITION BY "a"."c2")) '
             'FROM "t" AS "a"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
         window = Window([Literal(1)])
         query = self.table.select(
@@ -438,7 +438,7 @@ class TestSelect(unittest.TestCase):
             'SELECT (MAX("a"."c1") OVER (PARTITION BY %s) '
             '/ MIN("a"."c1") OVER (PARTITION BY %s)) '
             'FROM "t" AS "a"')
-        self.assertEqual(query.params, (1, 1))
+        self.assertEqual(tuple(query.params), (1, 1))
 
         window1 = Window([self.table.c2])
         window2 = Window([Literal(1)])
@@ -451,7 +451,7 @@ class TestSelect(unittest.TestCase):
             '/ MIN("a"."c1") OVER (PARTITION BY %s)) '
             'FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY "a"."c2")')
-        self.assertEqual(query.params, (1,))
+        self.assertEqual(tuple(query.params), (1,))
 
     def test_order_params(self):
         with_ = With(query=self.table.select(self.table.c,
@@ -464,13 +464,13 @@ class TestSelect(unittest.TestCase):
             group_by=[Literal(5)],
             order_by=[Literal(6)],
             having=Literal(7))
-        self.assertEqual(query.params, (1, 2, 3, 4, 5, 6, 7, 8))
+        self.assertEqual(tuple(query.params), (1, 2, 3, 4, 5, 6, 7, 8))
 
     def test_no_as(self):
         query = self.table.select(self.table.c)
         try:
             Flavor.set(Flavor(no_as=True))
             self.assertEqual(str(query), 'SELECT "a"."c" FROM "t" "a"')
-            self.assertEqual(query.params, ())
+            self.assertEqual(tuple(query.params), ())
         finally:
             Flavor.set(Flavor())

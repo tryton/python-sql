@@ -39,7 +39,7 @@ class TestJoin(unittest.TestCase):
         join = Join(t1, t2)
         with AliasManager():
             self.assertEqual(str(join), '"t1" AS "a" INNER JOIN "t2" AS "b"')
-            self.assertEqual(join.params, ())
+            self.assertEqual(tuple(join.params), ())
 
         join.condition = t1.c == t2.c
         with AliasManager():
@@ -56,11 +56,11 @@ class TestJoin(unittest.TestCase):
             self.assertEqual(str(join),
                 '"t1" AS "a" INNER JOIN (SELECT * FROM "t2" AS "c") AS "b" '
                 'ON ("a"."c" = "b"."c")')
-            self.assertEqual(join.params, ())
+            self.assertEqual(tuple(join.params), ())
 
     def test_join_function(self):
         t1 = Table('t1')
         join = Join(t1, Now())
         with AliasManager():
             self.assertEqual(str(join), '"t1" AS "a" INNER JOIN NOW() AS "b"')
-            self.assertEqual(join.params, ())
+            self.assertEqual(tuple(join.params), ())

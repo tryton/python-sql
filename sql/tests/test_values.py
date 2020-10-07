@@ -47,7 +47,7 @@ class TestValues(unittest.TestCase):
         query = values.select()
         self.assertEqual(str(query),
             'SELECT * FROM (VALUES (%s), (%s), (%s)) AS "a"')
-        self.assertEqual(query.params, (1, 2, 3))
+        self.assertEqual(tuple(query.params), (1, 2, 3))
 
     def test_union(self):
         values = Values([[1]])

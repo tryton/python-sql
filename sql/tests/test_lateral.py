@@ -43,7 +43,7 @@ class TestLateral(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT * FROM "t1" AS "a", LATERAL '
             '(SELECT * FROM "t2" AS "c" WHERE ("c"."id" = "a"."t2")) AS "b"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
 
     def test_lateral_function(self):
 
@@ -56,4 +56,4 @@ class TestLateral(unittest.TestCase):
 
         self.assertEqual(str(query),
             'SELECT * FROM "t" AS "a", LATERAL FUNC("a"."a") AS "b"')
-        self.assertEqual(query.params, ())
+        self.assertEqual(tuple(query.params), ())
