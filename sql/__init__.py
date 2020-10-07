@@ -637,8 +637,8 @@ class Select(FromItem, SelectQuery):
         p = []
         with AliasManager():
             # Set alias to window function to skip their params
-            for window_function in self.windows:
-                window_function.alias
+            for window in self.windows:
+                window.alias
 
             p.extend(self._with_params())
             for column in chain(self.distinct_on or (), self.columns):
@@ -657,8 +657,8 @@ class Select(FromItem, SelectQuery):
                     p.extend(expression.params)
             if self.having:
                 p.extend(self.having.params)
-            for window_function in self.windows:
-                p.extend(window_function.window.params)
+            for window in self.windows:
+                p.extend(window.params)
         return tuple(p)
 
 
