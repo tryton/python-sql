@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2014, Nicolas Évrard
-# Copyright (c) 2014, B2CK
+# Copyright (c) 2014-2020, B2CK
+# Copyright (c) 2020, Cédric Krier
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

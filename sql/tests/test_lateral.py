@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2015, Cédric Krier
-# Copyright (c) 2015, B2CK
+# Copyright (c) 2015-2020, Cédric Krier
+# Copyright (c) 2015-2020, B2CK
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
