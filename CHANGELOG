@@ -1,3 +1,5 @@
+* Add support for Python 3.9
+
 Version 1.2.1 - 2020-10-08
 * Fix AttributeError in Select.params with windows
 
