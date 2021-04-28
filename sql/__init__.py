@@ -735,21 +735,19 @@ class Insert(WithQuery):
         if self.columns:
             assert all(col.table == self.table for col in self.columns)
             columns = ' (' + ', '.join(map(str, self.columns)) + ')'
-        if isinstance(self.values, Query):
-            values = ' %s' % str(self.values)
-            # TODO manage DEFAULT
-        elif self.values is None:
-            values = ' DEFAULT VALUES'
         with AliasManager():
-            table = self.table
-            AliasManager.set(table, str(table)[1:-1])
+            if isinstance(self.values, Query):
+                values = ' %s' % str(self.values)
+                # TODO manage DEFAULT
+            elif self.values is None:
+                values = ' DEFAULT VALUES'
             returning = ''
             if self.returning:
                 returning = ' RETURNING ' + ', '.join(
                     map(self._format, self.returning))
             return (self._with_str()
-                + 'INSERT INTO %s' % self.table + columns
-                + values + returning)
+                + 'INSERT INTO %s AS "%s"' % (self.table, self.table.alias)
+                + columns + values + returning)
 
     @property
     def params(self):
@@ -804,11 +802,7 @@ class Update(Insert):
         with AliasManager():
             from_ = ''
             if self.from_:
-                table = From([self.table])
                 from_ = ' FROM %s' % str(self.from_)
-            else:
-                table = self.table
-                AliasManager.set(table, str(table)[1:-1])
             values = ', '.join('%s = %s' % (c, self._format(v))
                 for c, v in zip(columns, self.values))
             where = ''
@@ -819,8 +813,8 @@ class Update(Insert):
                 returning = ' RETURNING ' + ', '.join(
                     map(self._format, self.returning))
             return (self._with_str()
-                + 'UPDATE %s SET ' % table + values + from_
-                + where + returning)
+                + 'UPDATE %s AS "%s" SET ' % (self.table, self.table.alias)
+                + values + from_ + where + returning)
 
     @property
     def params(self):
