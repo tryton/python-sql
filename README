@@ -106,36 +106,36 @@ Select on other schema::
 Insert query with default values::
 
     >>> tuple(user.insert())
-    ('INSERT INTO "user" DEFAULT VALUES', ())
+    ('INSERT INTO "user" AS "a" DEFAULT VALUES', ())
 
 Insert query with values::
 
     >>> tuple(user.insert(columns=[user.name, user.login],
     ...         values=[['Foo', 'foo']]))
-    ('INSERT INTO "user" ("name", "login") VALUES (%s, %s)', ('Foo', 'foo'))
+    ('INSERT INTO "user" AS "a" ("name", "login") VALUES (%s, %s)', ('Foo', 'foo'))
     >>> tuple(user.insert(columns=[user.name, user.login],
     ...         values=[['Foo', 'foo'], ['Bar', 'bar']]))
-    ('INSERT INTO "user" ("name", "login") VALUES (%s, %s), (%s, %s)', ('Foo', 'foo', 'Bar', 'bar'))
+    ('INSERT INTO "user" AS "a" ("name", "login") VALUES (%s, %s), (%s, %s)', ('Foo', 'foo', 'Bar', 'bar'))
 
 Insert query with query::
 
     >>> passwd = Table('passwd')
     >>> select = passwd.select(passwd.login, passwd.passwd)
     >>> tuple(user.insert(values=select))
-    ('INSERT INTO "user" SELECT "a"."login", "a"."passwd" FROM "passwd" AS "a"', ())
+    ('INSERT INTO "user" AS "b" SELECT "a"."login", "a"."passwd" FROM "passwd" AS "a"', ())
 
 Update query with values::
 
     >>> tuple(user.update(columns=[user.active], values=[True]))
-    ('UPDATE "user" SET "active" = %s', (True,))
+    ('UPDATE "user" AS "a" SET "active" = %s', (True,))
     >>> tuple(invoice.update(columns=[invoice.total], values=[invoice.amount + invoice.tax]))
-    ('UPDATE "invoice" SET "total" = ("invoice"."amount" + "invoice"."tax")', ())
+    ('UPDATE "invoice" AS "a" SET "total" = ("a"."amount" + "a"."tax")', ())
 
 Update query with where condition::
 
     >>> tuple(user.update(columns=[user.active], values=[True],
     ...          where=user.active == False))
-    ('UPDATE "user" SET "active" = %s WHERE ("user"."active" = %s)', (True, False))
+    ('UPDATE "user" AS "a" SET "active" = %s WHERE ("a"."active" = %s)', (True, False))
 
 Update query with from list::
 
