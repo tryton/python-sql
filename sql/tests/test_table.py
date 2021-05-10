@@ -38,6 +38,10 @@ class TestTable(unittest.TestCase):
         t = Table('mytable')
         self.assertEqual(str(t), '"mytable"')
 
+    def test_quoted_name(self):
+        t = Table('my "quoted" name')
+        self.assertEqual(str(t), '"my ""quoted"" name"')
+
     def test_schema(self):
         t = Table('mytable', schema='myschema')
         self.assertEqual(str(t), '"myschema"."mytable"')

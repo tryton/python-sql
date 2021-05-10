@@ -39,3 +39,11 @@ class TestColumn(unittest.TestCase):
 
         with AliasManager():
             self.assertEqual(str(column), '"a"."c"')
+
+    def test_quote_in_column(self):
+        column = Column(Table('t'), 'b "c"')
+        self.assertEqual(str(column), '"b ""c"""')
+        self.assertEqual(column.name, 'b "c"')
+
+        with AliasManager():
+            self.assertEqual(str(column), '"a"."b ""c"""')

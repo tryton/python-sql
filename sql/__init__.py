@@ -41,6 +41,10 @@ __all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
     'Asc', 'Desc', 'NullsFirst', 'NullsLast', 'format2numeric']
 
 
+def _escape_identifier(name):
+    return '"%s"' % name.replace('"', '""')
+
+
 def alias(i, letters=string.ascii_lowercase):
     '''
     Generate a unique alias based on integer
@@ -964,13 +968,8 @@ class Table(FromItem):
         self._database = database
 
     def __str__(self):
-        if self._database:
-            return '"%s"."%s"."%s"' % (
-                self._database, self._schema, self._name)
-        elif self._schema:
-            return '"%s"."%s"' % (self._schema, self._name)
-        else:
-            return '"%s"' % self._name
+        return '.'.join(map(_escape_identifier, filter(None,
+                    (self._database, self._schema, self._name))))
 
     @property
     def params(self):
@@ -1348,16 +1347,13 @@ class Column(Expression):
         return self._name
 
     def __str__(self):
-        if self._name == '*':
-            t = '%s'
-        else:
-            t = '"%s"'
+        name = (self._name if self._name == '*'
+            else _escape_identifier(self._name))
         alias = self._from.alias
         if alias:
-            t = '"%s".' + t
-            return t % (alias, self._name)
+            return '%s.%s' % (_escape_identifier(alias), name)
         else:
-            return t % self._name
+            return name
 
     @property
     def params(self):
@@ -1373,7 +1369,7 @@ class As(Expression):
         self.output_name = output_name
 
     def __str__(self):
-        return '"%s"' % self.output_name
+        return '%s' % _escape_identifier(self.output_name)
 
     @property
     def params(self):
