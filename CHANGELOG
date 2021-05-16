@@ -1,3 +1,4 @@
+Version 1.2.2 - 2021-05-16
 * Escape table and column names containing double quote
 * Use alias on the main table used in UPDATE and INSERT
 * Add support for Python 3.9
