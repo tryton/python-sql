@@ -28,7 +28,7 @@
 
 from itertools import chain
 
-from sql import Expression, Flavor, FromItem, Window
+from sql import Expression, Select, CombiningQuery, Flavor, FromItem, Window
 
 try:
     basestring
@@ -77,6 +77,8 @@ class Function(Expression, FromItem):
     def _format(value):
         if isinstance(value, Expression):
             return str(value)
+        elif isinstance(value, (Select, CombiningQuery)):
+            return '(%s)' % value
         else:
             return Flavor().get().param
 
@@ -94,7 +96,7 @@ class Function(Expression, FromItem):
             return Mapping(*self.args).params
         p = []
         for arg in self.args:
-            if isinstance(arg, Expression):
+            if isinstance(arg, (Expression, Select, CombiningQuery)):
                 p.extend(arg.params)
             else:
                 p.append(arg)
@@ -479,6 +481,8 @@ class AtTimeZone(Function):
             return str(Mapping(self.field, self.zone))
         if isinstance(self.zone, Expression):
             zone = str(self.zone)
+        elif isinstance(self.zone, (Select, CombiningQuery)):
+            zone = '(%s)' % self.zone
         else:
             zone = flavor.param
         return '%s AT TIME ZONE %s' % (str(self.field), zone)
@@ -488,7 +492,7 @@ class AtTimeZone(Function):
         Mapping = Flavor.get().function_mapping.get(self.__class__)
         if Mapping:
             return Mapping(self.field, self.zone).params
-        if isinstance(self.zone, Expression):
+        if isinstance(self.zone, (Expression, Select, CombiningQuery)):
             return self.field.params + self.zone.params
         else:
             return self.field.params + (self.zone,)

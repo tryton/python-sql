@@ -26,7 +26,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from sql import Expression, Flavor
+from sql import Expression, Select, CombiningQuery, Flavor
 
 __all__ = ['Case', 'Coalesce', 'NullIf', 'Greatest', 'Least']
 
@@ -41,6 +41,8 @@ class Conditional(Expression):
     def _format(value):
         if isinstance(value, Expression):
             return str(value)
+        elif isinstance(value, (Select, CombiningQuery)):
+            return '(%s)' % value
         else:
             return Flavor().get().param
 
@@ -66,16 +68,16 @@ class Case(Conditional):
     def params(self):
         p = []
         for cond, result in self.whens:
-            if isinstance(cond, Expression):
+            if isinstance(cond, (Expression, Select, CombiningQuery)):
                 p.extend(cond.params)
             else:
                 p.append(cond)
-            if isinstance(result, Expression):
+            if isinstance(result, (Expression, Select, CombiningQuery)):
                 p.extend(result.params)
             else:
                 p.append(result)
         if self.else_ is not None:
-            if isinstance(self.else_, Expression):
+            if isinstance(self.else_, (Expression, Select, CombiningQuery)):
                 p.extend(self.else_.params)
             else:
                 p.append(self.else_)
@@ -97,7 +99,7 @@ class Coalesce(Conditional):
     def params(self):
         p = []
         for value in self.values:
-            if isinstance(value, Expression):
+            if isinstance(value, (Expression, Select, CombiningQuery)):
                 p.extend(value.params)
             else:
                 p.append(value)

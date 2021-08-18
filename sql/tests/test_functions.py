@@ -87,6 +87,13 @@ class TestFunctions(unittest.TestCase):
         finally:
             Flavor.set(Flavor())
 
+    def test_sql(self):
+        abs_ = Abs(self.table.select(self.table.c1,
+                where=self.table.c2 == 'foo'))
+        self.assertEqual(str(abs_),
+            'ABS((SELECT "a"."c1" FROM "t" AS "a" WHERE ("a"."c2" = %s)))')
+        self.assertEqual(abs_.params, ('foo',))
+
     def test_overlay(self):
         overlay = Overlay(self.table.c1, 'test', 3)
         self.assertEqual(str(overlay), 'OVERLAY("c1" PLACING %s FROM %s)')
@@ -114,6 +121,14 @@ class TestFunctions(unittest.TestCase):
         time_zone = AtTimeZone(self.table.c1, self.table.zone)
         self.assertEqual(str(time_zone), '"c1" AT TIME ZONE "zone"')
         self.assertEqual(time_zone.params, ())
+
+    def test_at_time_zone_sql(self):
+        time_zone = AtTimeZone(self.table.c1,
+            self.table.select(self.table.tz, where=self.table.c1 == 'foo'))
+        self.assertEqual(str(time_zone),
+            '"c1" AT TIME ZONE '
+            '(SELECT "a"."tz" FROM "t" AS "a" WHERE ("a"."c1" = %s))')
+        self.assertEqual(time_zone.params, ('foo',))
 
     def test_at_time_zone_mapping(self):
         class MyAtTimeZone(Function):

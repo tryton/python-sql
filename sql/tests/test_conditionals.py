@@ -54,10 +54,32 @@ class TestConditionals(unittest.TestCase):
             'ELSE %s END')
         self.assertEqual(case.params, (True, False, False))
 
+    def test_case_sql(self):
+        case = Case(
+            (self.table.select(self.table.bool,
+                    where=self.table.c2 == 'bar'), self.table.c1),
+            else_=self.table.select(self.table.c1,
+                where=self.table.c2 == 'foo'))
+        self.assertEqual(str(case),
+            'CASE WHEN '
+            '(SELECT "a"."bool" FROM "t" AS "a" WHERE ("a"."c2" = %s)) '
+            'THEN "c1" '
+            'ELSE (SELECT "a"."c1" FROM "t" AS "a" WHERE ("a"."c2" = %s)) END')
+        self.assertEqual(case.params, ('bar', 'foo'))
+
     def test_coalesce(self):
         coalesce = Coalesce(self.table.c1, self.table.c2, 'foo')
         self.assertEqual(str(coalesce), 'COALESCE("c1", "c2", %s)')
         self.assertEqual(coalesce.params, ('foo',))
+
+    def test_coalesce_sql(self):
+        coalesce = Coalesce(
+            self.table.select(self.table.c1, where=self.table.c2 == 'bar'),
+            self.table.c2)
+        self.assertEqual(str(coalesce),
+            'COALESCE('
+            '(SELECT "a"."c1" FROM "t" AS "a" WHERE ("a"."c2" = %s)), "c2")')
+        self.assertEqual(coalesce.params, ('bar',))
 
     def test_nullif(self):
         nullif = NullIf(self.table.c1, 'foo')
