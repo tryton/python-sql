@@ -76,6 +76,14 @@ class TestWindow(unittest.TestCase):
             'BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING')
         self.assertEqual(window.params, ())
 
+    def test_window_exclude(self):
+        t = Table('t')
+        window = Window([t.c], exclude='TIES')
+
+        self.assertEqual(str(window),
+            'PARTITION BY "c" EXCLUDE TIES')
+        self.assertEqual(window.params, ())
+
     def test_window_rows(self):
         t = Table('t')
         window = Window([t.c], frame='ROWS')

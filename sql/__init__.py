@@ -1446,10 +1446,11 @@ class Collate(Expression):
 
 
 class Window(object):
-    __slots__ = ('_partition', '_order_by', '_frame', '_start', '_end')
+    __slots__ = (
+        '_partition', '_order_by', '_frame', '_start', '_end', '_exclude')
 
     def __init__(self, partition, order_by=None,
-            frame=None, start=None, end=0):
+            frame=None, start=None, end=0, exclude=None):
         super(Window, self).__init__()
         self._partition = None
         self._order_by = None
@@ -1461,6 +1462,7 @@ class Window(object):
         self.frame = frame
         self.start = start
         self.end = end
+        self.exclude = exclude
 
     @property
     def partition(self):
@@ -1514,6 +1516,16 @@ class Window(object):
         self._end = value
 
     @property
+    def exclude(self):
+        return self._exclude
+
+    @exclude.setter
+    def exclude(self, value):
+        if value:
+            assert value in ['CURRENT ROW', 'GROUP', 'TIES']
+        self._exclude = value
+
+    @property
     def alias(self):
         return AliasManager.get(self)
 
@@ -1544,7 +1556,10 @@ class Window(object):
             start = format(self.start, 'PRECEDING')
             end = format(self.end, 'FOLLOWING')
             frame = ' %s BETWEEN %s AND %s' % (self.frame, start, end)
-        return partition + order_by + frame
+        exclude = ''
+        if self.exclude:
+            exclude = ' EXCLUDE %s' % self.exclude
+        return partition + order_by + frame + exclude
 
     @property
     def params(self):
