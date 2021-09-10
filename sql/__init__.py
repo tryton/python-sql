@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import division
+
 
 import string
 import numbers
@@ -801,7 +801,7 @@ class Update(Insert):
     def __str__(self):
         assert all(col.table == self.table for col in self.columns)
         # Get columns without alias
-        columns = map(str, self.columns)
+        columns = list(map(str, self.columns))
 
         with AliasManager():
             from_ = ''

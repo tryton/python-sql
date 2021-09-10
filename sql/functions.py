@@ -30,11 +30,6 @@ from itertools import chain
 
 from sql import Expression, Select, CombiningQuery, Flavor, FromItem, Window
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
 __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'Log', 'Mod', 'Pi', 'Power', 'Radians', 'Random', 'Round', 'SetSeed',
     'Sign', 'Sqrt', 'Trunc', 'WidthBucket',
@@ -330,7 +325,7 @@ class Trim(Function):
         param = flavor.param
 
         def format(arg):
-            if isinstance(arg, basestring):
+            if isinstance(arg, str):
                 return param
             else:
                 return str(arg)
@@ -344,7 +339,7 @@ class Trim(Function):
             return Mapping(self.string, self.position, self.characters).params
         p = []
         for arg in (self.characters, self.string):
-            if isinstance(arg, basestring):
+            if isinstance(arg, str):
                 p.append(arg)
             elif hasattr(arg, 'params'):
                 p.extend(arg.params)
