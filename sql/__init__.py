@@ -1492,7 +1492,7 @@ class Window(object):
     @frame.setter
     def frame(self, value):
         if value:
-            assert value in ['RANGE', 'ROWS']
+            assert value in ['RANGE', 'ROWS', 'GROUPS']
         self._frame = value
 
     @property

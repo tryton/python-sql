@@ -1,3 +1,4 @@
+* Add GROUPS frame to Window
 * Add exclude to Window
 * Add method for each type of join
 * Remove support for Python older than 3.5

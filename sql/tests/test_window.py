@@ -92,3 +92,12 @@ class TestWindow(unittest.TestCase):
             'PARTITION BY "c" ROWS '
             'BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW')
         self.assertEqual(window.params, ())
+
+    def test_window_groups(self):
+        t = Table('t')
+        window = Window([t.c], frame='GROUPS')
+
+        self.assertEqual(str(window),
+            'PARTITION BY "c" GROUPS '
+            'BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW')
+        self.assertEqual(window.params, ())
