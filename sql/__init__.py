@@ -282,6 +282,27 @@ class FromItem(object):
     def join(self, right, type_='INNER', condition=None):
         return Join(self, right, type_=type_, condition=condition)
 
+    def left_join(self, right, condition=None):
+        return self.join(right, type_='LEFT', condition=condition)
+
+    def left_outer_join(self, right, condition=None):
+        return self.join(right, type_='LEFT OUTER', condition=condition)
+
+    def right_join(self, right, condition=None):
+        return self.join(right, type_='RIGHT', condition=condition)
+
+    def right_outer_join(self, right, condition=None):
+        return self.join(right, type_='RIGHT OUTER', condition=condition)
+
+    def full_join(self, right, condition=None):
+        return self.join(right, type_='FULL', condition=condition)
+
+    def full_outer_join(self, right, condition=None):
+        return self.join(right, type_='FULL OUTER', condition=condition)
+
+    def cross_join(self, right, condition=None):
+        return self.join(right, type_='CROSS', condition=condition)
+
     def lateral(self):
         return Lateral(self)
 

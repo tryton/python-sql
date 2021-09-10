@@ -1,3 +1,4 @@
+* Add method for each type of join
 * Remove support for Python older than 3.5
 * Support Select queries in conditionals and functions
 

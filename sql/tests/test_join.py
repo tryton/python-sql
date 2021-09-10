@@ -64,3 +64,15 @@ class TestJoin(unittest.TestCase):
         with AliasManager():
             self.assertEqual(str(join), '"t1" AS "a" INNER JOIN NOW() AS "b"')
             self.assertEqual(tuple(join.params), ())
+
+    def test_join_methods(self):
+        t1 = Table('t1')
+        t2 = Table('t2')
+        for method in [
+                'left_join', 'left_outer_join',
+                'right_join', 'right_outer_join',
+                'full_join', 'full_outer_join', 'cross_join']:
+            with self.subTest(method=method):
+                join = getattr(t1, method)(t2)
+                type_ = method[:-len('_join')].replace('_', ' ').upper()
+                self.assertEqual(join.type_, type_)
