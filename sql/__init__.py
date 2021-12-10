@@ -48,8 +48,10 @@ class Flavor(object):
         paramstyle - state the type of parameter marker formatting
         ilike - support ilike extension
         no_as - doesn't support AS keyword for column and table
+        no_boolean - doesn't support boolean type
         null_ordering - support NULL ordering
         function_mapping - dictionary with Function to replace
+        filter_ - support filter on aggregate functions
     '''
 
     def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
