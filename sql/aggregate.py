@@ -1,6 +1,6 @@
 # This file is part of python-sql.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
-from sql import Expression, Window, Flavor, Literal
+from sql import Expression, Flavor, Literal, Window
 
 __all__ = ['Avg', 'BitAnd', 'BitOr', 'BoolAnd', 'BoolOr', 'Count', 'Every',
     'Max', 'Min', 'Stddev', 'Sum', 'Variance']

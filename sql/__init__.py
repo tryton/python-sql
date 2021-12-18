@@ -1,11 +1,11 @@
 # This file is part of python-sql.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
-import string
 import numbers
+import string
 import warnings
-from threading import local, currentThread
 from collections import defaultdict
 from itertools import chain
+from threading import currentThread, local
 
 __version__ = '1.3.1'
 __all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
@@ -502,8 +502,8 @@ class Select(FromItem, SelectQuery):
 
     @property
     def windows(self):
-        from sql.functions import WindowFunction
         from sql.aggregate import Aggregate
+        from sql.functions import WindowFunction
         windows = set()
         if self._windows is not None:
             for window in self._windows:

@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Join, Table, AliasManager
+from sql import AliasManager, Join, Table
 from sql.functions import Now
 
 

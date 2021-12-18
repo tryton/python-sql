@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Window, Table
+from sql import Table, Window
 
 
 class TestWindow(unittest.TestCase):

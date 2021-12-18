@@ -4,9 +4,9 @@ import unittest
 import warnings
 from copy import deepcopy
 
-from sql import Table, Join, Union, Literal, Flavor, For, With, Window, Select
-from sql.functions import Now, Function, Rank, DatePart
-from sql.aggregate import Min, Max
+from sql import Flavor, For, Join, Literal, Select, Table, Union, Window, With
+from sql.aggregate import Max, Min
+from sql.functions import DatePart, Function, Now, Rank
 
 
 class TestSelect(unittest.TestCase):
@@ -116,7 +116,7 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(intersect),
             'SELECT * FROM "t" AS "a" INTERSECT SELECT * FROM "t2" AS "b"')
 
-        from sql import Intersect, Interesect
+        from sql import Interesect, Intersect
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             interesect = Interesect(query1, query2)

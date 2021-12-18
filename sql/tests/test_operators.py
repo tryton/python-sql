@@ -4,11 +4,12 @@ import unittest
 import warnings
 from array import array
 
-from sql import Table, Literal, Null, Flavor
-from sql.operators import (And, Or, Not, Neg, Pos, Less, Greater, LessEqual,
-    GreaterEqual, Equal, NotEqual, Between, NotBetween, IsDistinct,
-    IsNotDistinct, Is, IsNot, Sub, Mul, Div, Mod, Pow, Abs, LShift, RShift,
-    Like, NotLike, ILike, NotILike, In, NotIn, FloorDiv, Exists)
+from sql import Flavor, Literal, Null, Table
+from sql.operators import (
+    Abs, And, Between, Div, Equal, Exists, FloorDiv, Greater, GreaterEqual,
+    ILike, In, Is, IsDistinct, IsNot, IsNotDistinct, Less, LessEqual, Like,
+    LShift, Mod, Mul, Neg, Not, NotBetween, NotEqual, NotILike, NotIn, NotLike,
+    Or, Pos, Pow, RShift, Sub)
 
 
 class TestOperators(unittest.TestCase):

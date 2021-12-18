@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, Window, AliasManager, Flavor, Literal
+from sql import AliasManager, Flavor, Literal, Table, Window
 from sql.aggregate import Avg, Count
 
 

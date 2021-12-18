@@ -3,7 +3,7 @@
 import warnings
 from array import array
 
-from sql import Expression, Select, CombiningQuery, Flavor, Null
+from sql import CombiningQuery, Expression, Flavor, Null, Select
 
 __all__ = ['And', 'Or', 'Not', 'Less', 'Greater', 'LessEqual', 'GreaterEqual',
     'Equal', 'NotEqual', 'Between', 'NotBetween', 'IsDistinct',

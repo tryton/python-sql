@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Column, Table, AliasManager
+from sql import AliasManager, Column, Table
 
 
 class TestColumn(unittest.TestCase):

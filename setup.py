@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # This file is part of python-sql.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
-from setuptools import setup, find_packages
+import codecs
 import os
 import re
-import codecs
+
+from setuptools import find_packages, setup
 
 
 def read(fname):

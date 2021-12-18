@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import AliasManager, Table, Literal, Values, With, WithQuery
+from sql import AliasManager, Literal, Table, Values, With, WithQuery
 
 
 class TestWith(unittest.TestCase):

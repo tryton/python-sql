@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 from itertools import chain
 
-from sql import Expression, Select, CombiningQuery, Flavor, FromItem, Window
+from sql import CombiningQuery, Expression, Flavor, FromItem, Select, Window
 
 __all__ = ['Abs', 'Cbrt', 'Ceil', 'Degrees', 'Div', 'Exp', 'Floor', 'Ln',
     'Log', 'Mod', 'Pi', 'Power', 'Radians', 'Random', 'Round', 'SetSeed',

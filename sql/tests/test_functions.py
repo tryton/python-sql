@@ -2,9 +2,10 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, Flavor, Window, AliasManager
-from sql.functions import (Function, FunctionKeyword, FunctionNotCallable, Abs,
-    Overlay, Trim, AtTimeZone, Div, CurrentTime, Rank)
+from sql import AliasManager, Flavor, Table, Window
+from sql.functions import (
+    Abs, AtTimeZone, CurrentTime, Div, Function, FunctionKeyword,
+    FunctionNotCallable, Overlay, Rank, Trim)
 
 
 class TestFunctions(unittest.TestCase):

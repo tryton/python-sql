@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import As, Column, Table, Flavor
+from sql import As, Column, Flavor, Table
 
 
 class TestAs(unittest.TestCase):

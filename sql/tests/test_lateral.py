@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, Lateral, From
+from sql import From, Lateral, Table
 from sql.functions import Function
 
 

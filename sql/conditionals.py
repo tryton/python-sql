@@ -1,6 +1,6 @@
 # This file is part of python-sql.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
-from sql import Expression, Select, CombiningQuery, Flavor
+from sql import CombiningQuery, Expression, Flavor, Select
 
 __all__ = ['Case', 'Coalesce', 'NullIf', 'Greatest', 'Least']
 

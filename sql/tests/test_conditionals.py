@@ -3,7 +3,7 @@
 import unittest
 
 from sql import Table
-from sql.conditionals import Case, Coalesce, NullIf, Greatest, Least
+from sql.conditionals import Case, Coalesce, Greatest, Least, NullIf
 
 
 class TestConditionals(unittest.TestCase):

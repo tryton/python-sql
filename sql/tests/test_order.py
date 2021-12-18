@@ -2,8 +2,8 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Asc, Desc, NullsFirst, NullsLast, Column, Table, Literal
-from sql import Flavor
+from sql import (
+    Asc, Column, Desc, Flavor, Literal, NullsFirst, NullsLast, Table)
 
 
 class TestOrder(unittest.TestCase):
