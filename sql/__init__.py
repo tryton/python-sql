@@ -5,7 +5,7 @@ import string
 import warnings
 from collections import defaultdict
 from itertools import chain
-from threading import currentThread, local
+from threading import current_thread, local
 
 __version__ = '1.3.1'
 __all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
@@ -78,7 +78,7 @@ class Flavor(object):
     @staticmethod
     def set(flavor):
         '''Set this thread's flavor to flavor.'''
-        currentThread().__sql_flavor__ = flavor
+        current_thread().__sql_flavor__ = flavor
 
     @staticmethod
     def get():
@@ -89,10 +89,10 @@ class Flavor(object):
         sets this thread's flavor.
         '''
         try:
-            return currentThread().__sql_flavor__
+            return current_thread().__sql_flavor__
         except AttributeError:
             flavor = Flavor()
-            currentThread().__sql_flavor__ = flavor
+            current_thread().__sql_flavor__ = flavor
             return flavor
 
 
