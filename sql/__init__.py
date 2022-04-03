@@ -52,11 +52,12 @@ class Flavor(object):
         null_ordering - support NULL ordering
         function_mapping - dictionary with Function to replace
         filter_ - support filter on aggregate functions
+        escape_empty - support empty escape
     '''
 
     def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
             ilike=False, no_as=False, no_boolean=False, null_ordering=True,
-            function_mapping=None, filter_=False):
+            function_mapping=None, filter_=False, escape_empty=False):
         assert limitstyle in ['fetch', 'limit', 'rownum']
         self.limitstyle = limitstyle
         self.max_limit = max_limit
@@ -67,6 +68,7 @@ class Flavor(object):
         self.null_ordering = null_ordering
         self.function_mapping = function_mapping or {}
         self.filter_ = filter_
+        self.escape_empty = escape_empty
 
     @property
     def param(self):

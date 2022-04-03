@@ -374,16 +374,41 @@ class Concat(BinaryOperator):
 
 
 class Like(BinaryOperator):
-    __slots__ = ()
+    __slots__ = 'escape'
     _operator = 'LIKE'
 
+    def __init__(self, left, right, escape='\\'):
+        super().__init__(left, right)
+        assert not escape or len(escape) == 1
+        self.escape = escape
 
-class NotLike(BinaryOperator):
+    @property
+    def params(self):
+        params = super().params
+        if self.escape or Flavor().get().escape_empty:
+            params += (self.escape,)
+        return params
+
+    def __str__(self):
+        left, right = self._operands
+        if self.escape or Flavor().get().escape_empty:
+            return '(%s %s %s ESCAPE %s)' % (
+                self._format(left), self._operator, self._format(right),
+                self._format(self.escape or ''))
+        else:
+            return '(%s %s %s)' % (
+                self._format(left), self._operator, self._format(right))
+
+    def __invert__(self):
+        return _INVERT[self.__class__](self.left, self.right, self.escape)
+
+
+class NotLike(Like):
     __slots__ = ()
     _operator = 'NOT LIKE'
 
 
-class ILike(BinaryOperator):
+class ILike(Like):
     __slots__ = ()
 
     @property
