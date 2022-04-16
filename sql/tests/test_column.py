@@ -10,6 +10,7 @@ class TestColumn(unittest.TestCase):
         column = Column(Table('t'), 'c')
         self.assertEqual(str(column), '"c"')
         self.assertEqual(column.name, 'c')
+        self.assertEqual(column.column_name, '"c"')
 
         with AliasManager():
             self.assertEqual(str(column), '"a"."c"')
@@ -18,6 +19,7 @@ class TestColumn(unittest.TestCase):
         column = Column(Table('t'), 'b "c"')
         self.assertEqual(str(column), '"b ""c"""')
         self.assertEqual(column.name, 'b "c"')
+        self.assertEqual(column.column_name, '"b ""c"""')
 
         with AliasManager():
             self.assertEqual(str(column), '"a"."b ""c"""')

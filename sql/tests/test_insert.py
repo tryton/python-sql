@@ -77,6 +77,25 @@ class TestInsert(unittest.TestCase):
             'INSERT INTO "t" AS "c" ("c1") SELECT * FROM "a" AS "a"')
         self.assertEqual(tuple(query.params), ())
 
+    def test_insert_in_with(self):
+        t1 = Table('t1')
+
+        w = With(query=self.table.insert(
+                [self.table.c1],
+                values=[['foo']],
+                returning=[self.table.id]))
+        query = t1.update(
+            [t1.c],
+            [w.id],
+            from_=[w],
+            with_=[w])
+        self.assertEqual(str(query),
+            'WITH "a" AS ('
+                'INSERT INTO "t" AS "b" ("c1") VALUES (%s) '
+                'RETURNING "b"."id") '
+            'UPDATE "t1" AS "c" SET "c" = "a"."id" FROM "a" AS "a"')
+        self.assertEqual(tuple(query.params), ('foo',))
+
     def test_schema(self):
         t1 = Table('t1', 'default')
         query = t1.insert([t1.c1], [['foo']])

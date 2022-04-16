@@ -734,7 +734,9 @@ class Insert(WithQuery):
         columns = ''
         if self.columns:
             assert all(col.table == self.table for col in self.columns)
-            columns = ' (' + ', '.join(map(str, self.columns)) + ')'
+            # Get columns without alias
+            columns = ', '.join(c.column_name for c in self.columns)
+            columns = ' (' + columns + ')'
         with AliasManager():
             if isinstance(self.values, Query):
                 values = ' %s' % str(self.values)
@@ -797,7 +799,7 @@ class Update(Insert):
     def __str__(self):
         assert all(col.table == self.table for col in self.columns)
         # Get columns without alias
-        columns = list(map(str, self.columns))
+        columns = [c.column_name for c in self.columns]
 
         with AliasManager():
             from_ = ''
@@ -1342,14 +1344,18 @@ class Column(Expression):
     def name(self):
         return self._name
 
-    def __str__(self):
-        name = (self._name if self._name == '*'
+    @property
+    def column_name(self):
+        return (
+            self._name if self._name == '*'
             else _escape_identifier(self._name))
+
+    def __str__(self):
         alias = self._from.alias
         if alias:
-            return '%s.%s' % (_escape_identifier(alias), name)
+            return '%s.%s' % (_escape_identifier(alias), self.column_name)
         else:
-            return name
+            return self.column_name
 
     @property
     def params(self):

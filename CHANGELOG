@@ -1,3 +1,4 @@
+* Use only column name for INSERT and UPDATE
 * Add escape to Like operators
 * Add default literal '*' expression to Count
 * Add support for Python 3.10
