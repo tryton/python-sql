@@ -49,5 +49,4 @@ setup(name='python-sql',
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],
     license='BSD',
-    test_suite='sql.tests',
     )

@@ -2,8 +2,6 @@
 # this repository contains the full copyright notices and license terms.
 import doctest
 import os
-import sys
-import unittest
 
 import sql
 
@@ -11,35 +9,12 @@ here = os.path.dirname(__file__)
 readme = os.path.normpath(os.path.join(here, '..', '..', 'README'))
 
 
-def test_suite():
-    suite = additional_tests()
-    loader = unittest.TestLoader()
-    for fn in os.listdir(here):
-        if fn.startswith('test') and fn.endswith('.py'):
-            modname = 'sql.tests.' + fn[:-3]
-            __import__(modname)
-            module = sys.modules[modname]
-            suite.addTests(loader.loadTestsFromModule(module))
-    return suite
-
-
-def additional_tests():
-    suite = unittest.TestSuite()
+def load_tests(loader, tests, pattern):
+    tests.addTests(loader.discover(start_dir=here, pattern=pattern))
     for mod in (sql,):
-        suite.addTest(doctest.DocTestSuite(mod))
+        tests.addTest(doctest.DocTestSuite(mod))
     if os.path.isfile(readme):
-        suite.addTest(doctest.DocFileSuite(readme, module_relative=False,
+        tests.addTest(doctest.DocFileSuite(
+                readme, module_relative=False,
                 tearDown=lambda t: sql.Flavor.set(sql.Flavor())))
-    return suite
-
-
-def main():
-    suite = test_suite()
-    runner = unittest.TextTestRunner()
-    return runner.run(suite)
-
-
-if __name__ == '__main__':
-    sys.path.insert(0, os.path.dirname(os.path.dirname(
-                os.path.dirname(os.path.abspath(__file__)))))
-    sys.exit(not main().wasSuccessful())
+    return tests
