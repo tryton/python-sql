@@ -29,7 +29,7 @@ setup(name='python-sql',
     project_urls={
         "Bug Tracker": 'https://python-sql.tryton.org/',
         "Forum": 'https://discuss.tryton.org/tags/python-sql',
-        "Source Code": 'https://hg.tryton.org/python-sql/',
+        "Source Code": 'https://foss.heptapod.net/tryton/python-sql',
         },
     keywords='SQL database query',
     packages=find_packages(),
