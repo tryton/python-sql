@@ -42,6 +42,11 @@ check-dist:
 
 .test-tox:
   extends: .test
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  cache:
+    paths:
+      - .cache/pip
   before_script:
     - pip install tox
 
