@@ -42,7 +42,7 @@ class TestUpdate(unittest.TestCase):
         query = self.table.update([self.table.c], ['foo'],
             returning=[self.table.c])
         self.assertEqual(str(query),
-            'UPDATE "t" AS "a" SET "c" = %s RETURNING "a"."c"')
+            'UPDATE "t" AS "a" SET "c" = %s RETURNING "c"')
         self.assertEqual(query.params, ('foo',))
 
     def test_update_returning_select(self):
@@ -52,7 +52,7 @@ class TestUpdate(unittest.TestCase):
             returning=[
                 t2.select(t2.c, where=(t2.c1 == t1.c) & (t2.c2 == 'bar'))])
         self.assertEqual(str(query),
-            'UPDATE "t1" AS "b" SET "c" = %s '
+            'UPDATE "t1" AS "a" SET "c" = %s '
             'RETURNING (SELECT "a"."c" FROM "t2" AS "a" '
             'WHERE (("a"."c1" = "b"."c") AND ("a"."c2" = %s)))')
         self.assertEqual(query.params, ('foo', 'bar'))

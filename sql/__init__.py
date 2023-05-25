@@ -719,14 +719,16 @@ class Insert(WithQuery):
             assert isinstance(value, list)
         self._returning = value
 
-    @staticmethod
-    def _format(value, param=None):
+    def _format(self, value, param=None):
         if param is None:
             param = Flavor.get().param
-        if isinstance(value, Expression):
+        if isinstance(value, Column) and value.table == self.table:
+            return value.column_name
+        elif isinstance(value, Expression):
             return str(value)
         elif isinstance(value, Select):
-            return '(%s)' % value
+            with AliasManager():
+                return '(%s)' % value
         else:
             return param
 
@@ -737,16 +739,16 @@ class Insert(WithQuery):
             # Get columns without alias
             columns = ', '.join(c.column_name for c in self.columns)
             columns = ' (' + columns + ')'
+        returning = ''
+        if self.returning:
+            returning = ' RETURNING ' + ', '.join(
+                map(self._format, self.returning))
         with AliasManager():
             if isinstance(self.values, Query):
                 values = ' %s' % str(self.values)
                 # TODO manage DEFAULT
             elif self.values is None:
                 values = ' DEFAULT VALUES'
-            returning = ''
-            if self.returning:
-                returning = ' RETURNING ' + ', '.join(
-                    map(self._format, self.returning))
             return (self._with_str()
                 + 'INSERT INTO %s AS "%s"' % (self.table, self.table.alias)
                 + columns + values + returning)
@@ -800,7 +802,10 @@ class Update(Insert):
         assert all(col.table == self.table for col in self.columns)
         # Get columns without alias
         columns = [c.column_name for c in self.columns]
-
+        returning = ''
+        if self.returning:
+            returning = ' RETURNING ' + ', '.join(
+                map(self._format, self.returning))
         with AliasManager():
             from_ = ''
             if self.from_:
@@ -810,10 +815,6 @@ class Update(Insert):
             where = ''
             if self.where:
                 where = ' WHERE ' + str(self.where)
-            returning = ''
-            if self.returning:
-                returning = ' RETURNING ' + ', '.join(
-                    map(self._format, self.returning))
             return (self._with_str()
                 + 'UPDATE %s AS "%s" SET ' % (self.table, self.table.alias)
                 + values + from_ + where + returning)
