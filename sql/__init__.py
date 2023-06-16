@@ -7,7 +7,7 @@ from collections import defaultdict
 from itertools import chain
 from threading import current_thread, local
 
-__version__ = '1.4.1'
+__version__ = '1.4.2'
 __all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
     'Asc', 'Desc', 'NullsFirst', 'NullsLast', 'format2numeric']
 
