@@ -882,6 +882,17 @@ class Delete(WithQuery):
             assert isinstance(value, list)
         self._returning = value
 
+    @staticmethod
+    def _format(value, param=None):
+        if param is None:
+            param = Flavor.get().param
+        if isinstance(value, Expression):
+            return str(value)
+        elif isinstance(value, Select):
+            return '(%s)' % value
+        else:
+            return param
+
     def __str__(self):
         with AliasManager(exclude=[self.table]):
             only = ' ONLY' if self.only else ''
@@ -890,7 +901,8 @@ class Delete(WithQuery):
                 where = ' WHERE ' + str(self.where)
             returning = ''
             if self.returning:
-                returning = ' RETURNING ' + ', '.join(map(str, self.returning))
+                returning = ' RETURNING ' + ', '.join(
+                    map(self._format, self.returning))
             return (self._with_str()
                 + 'DELETE FROM%s %s' % (only, self.table)
                 + where + returning)
