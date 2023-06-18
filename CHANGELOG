@@ -1,3 +1,5 @@
+* Restore usage of alias in returning expression
+
 Version 1.4.1 - 2023-06-16
 * Do not use alias in returning expression
 
