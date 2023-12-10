@@ -932,17 +932,21 @@ class CombiningQuery(FromItem, SelectQuery):
     def __str__(self):
         with AliasManager():
             operator = ' %s %s' % (self._operator, 'ALL ' if self.all_ else '')
-            return (operator.join(map(str, self.queries)) + self._order_by_str
+            return (
+                self._with_str()
+                + operator.join(map(str, self.queries)) + self._order_by_str
                 + self._limit_offset_str)
 
     @property
     def params(self):
         p = []
-        for q in self.queries:
-            p.extend(q.params)
-        if self.order_by:
-            for expression in self.order_by:
-                p.extend(expression.params)
+        with AliasManager():
+            p.extend(self._with_params())
+            for q in self.queries:
+                p.extend(q.params)
+            if self.order_by:
+                for expression in self.order_by:
+                    p.extend(expression.params)
         return tuple(p)
 
 
