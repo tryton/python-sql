@@ -287,8 +287,8 @@ class TestOperators(unittest.TestCase):
                 self.table.c1.like('foo'),
                 ~NotLike(self.table.c1, 'foo'),
                 ~~Like(self.table.c1, 'foo')]:
-            self.assertEqual(str(like), '("c1" LIKE %s ESCAPE %s)')
-            self.assertEqual(like.params, ('foo', '\\'))
+            self.assertEqual(str(like), '("c1" LIKE %s)')
+            self.assertEqual(like.params, ('foo',))
 
     def test_like_escape(self):
         like = Like(self.table.c1, 'foo', escape='$')
@@ -299,7 +299,7 @@ class TestOperators(unittest.TestCase):
         flavor = Flavor(escape_empty=False)
         Flavor.set(flavor)
         try:
-            like = Like(self.table.c1, 'foo', escape='')
+            like = Like(self.table.c1, 'foo')
             self.assertEqual(str(like), '("c1" LIKE %s)')
             self.assertEqual(like.params, ('foo',))
         finally:
@@ -309,7 +309,7 @@ class TestOperators(unittest.TestCase):
         flavor = Flavor(escape_empty=True)
         Flavor.set(flavor)
         try:
-            like = Like(self.table.c1, 'foo', escape='')
+            like = Like(self.table.c1, 'foo')
             self.assertEqual(str(like), '("c1" LIKE %s ESCAPE %s)')
             self.assertEqual(like.params, ('foo', ''))
         finally:
@@ -322,8 +322,8 @@ class TestOperators(unittest.TestCase):
             for like in [ILike(self.table.c1, 'foo'),
                     self.table.c1.ilike('foo'),
                     ~NotILike(self.table.c1, 'foo')]:
-                self.assertEqual(str(like), '("c1" ILIKE %s ESCAPE %s)')
-                self.assertEqual(like.params, ('foo', '\\'))
+                self.assertEqual(str(like), '("c1" ILIKE %s)')
+                self.assertEqual(like.params, ('foo',))
         finally:
             Flavor.set(Flavor())
 
@@ -332,8 +332,8 @@ class TestOperators(unittest.TestCase):
         try:
             like = ILike(self.table.c1, 'foo')
             self.assertEqual(
-                str(like), '(UPPER("c1") LIKE UPPER(%s) ESCAPE %s)')
-            self.assertEqual(like.params, ('foo', '\\'))
+                str(like), '(UPPER("c1") LIKE UPPER(%s))')
+            self.assertEqual(like.params, ('foo',))
         finally:
             Flavor.set(Flavor())
 
@@ -343,8 +343,8 @@ class TestOperators(unittest.TestCase):
         try:
             for like in [NotILike(self.table.c1, 'foo'),
                     ~self.table.c1.ilike('foo')]:
-                self.assertEqual(str(like), '("c1" NOT ILIKE %s ESCAPE %s)')
-                self.assertEqual(like.params, ('foo', '\\'))
+                self.assertEqual(str(like), '("c1" NOT ILIKE %s)')
+                self.assertEqual(like.params, ('foo',))
         finally:
             Flavor.set(Flavor())
 
@@ -353,8 +353,8 @@ class TestOperators(unittest.TestCase):
         try:
             like = NotILike(self.table.c1, 'foo')
             self.assertEqual(
-                str(like), '(UPPER("c1") NOT LIKE UPPER(%s) ESCAPE %s)')
-            self.assertEqual(like.params, ('foo', '\\'))
+                str(like), '(UPPER("c1") NOT LIKE UPPER(%s))')
+            self.assertEqual(like.params, ('foo',))
         finally:
             Flavor.set(Flavor())
 

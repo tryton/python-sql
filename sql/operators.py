@@ -377,7 +377,7 @@ class Like(BinaryOperator):
     __slots__ = 'escape'
     _operator = 'LIKE'
 
-    def __init__(self, left, right, escape='\\'):
+    def __init__(self, left, right, escape=None):
         super().__init__(left, right)
         assert not escape or len(escape) == 1
         self.escape = escape
@@ -386,7 +386,7 @@ class Like(BinaryOperator):
     def params(self):
         params = super().params
         if self.escape or Flavor().get().escape_empty:
-            params += (self.escape,)
+            params += (self.escape or '',)
         return params
 
     def __str__(self):
