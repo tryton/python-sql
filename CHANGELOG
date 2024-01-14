@@ -1,3 +1,5 @@
+* Add GROUPING SETS, CUBE, and ROLLUP
+
 Version 1.4.3 - 2023-12-30
 * Render common table expression in combining query
 * Add support for Python 3.12

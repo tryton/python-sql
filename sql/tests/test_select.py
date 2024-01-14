@@ -4,7 +4,9 @@ import unittest
 import warnings
 from copy import deepcopy
 
-from sql import Flavor, For, Join, Literal, Select, Table, Union, Window, With
+from sql import (
+    Cube, Flavor, For, Grouping, Join, Literal, Rollup, Select, Table, Union,
+    Window, With)
 from sql.aggregate import Max, Min
 from sql.functions import DatePart, Function, Now, Rank
 
@@ -184,6 +186,50 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query),
             'SELECT %s FROM "t" AS "a" GROUP BY %s')
         self.assertEqual(tuple(query.params), ('foo', 'foo'))
+
+    def test_select_group_by_grouping_sets(self):
+        query = self.table.select(
+            Literal('*'),
+            group_by=Grouping((self.table.a, self.table.b), (Literal('foo'),)))
+        self.assertEqual(str(query),
+            'SELECT %s FROM "t" AS "a" '
+            'GROUP BY GROUPING SETS (("a"."a", "a"."b"), (%s))')
+        self.assertEqual(tuple(query.params), ('*', 'foo',))
+
+        query = self.table.select(
+            Literal('*'),
+            group_by=[
+                self.table.a, Grouping((self.table.b,), (self.table.c,))])
+        self.assertEqual(str(query),
+            'SELECT %s FROM "t" AS "a" '
+            'GROUP BY "a"."a", GROUPING SETS (("a"."b"), ("a"."c"))')
+        self.assertEqual(tuple(query.params), ('*',))
+
+    def test_select_group_by_rollup(self):
+        query = self.table.select(
+            Literal('*'),
+            group_by=Rollup(self.table.a, self.table.b, Literal('foo')))
+        self.assertEqual(str(query),
+            'SELECT %s FROM "t" AS "a" '
+            'GROUP BY ROLLUP ("a"."a", "a"."b", %s)')
+        self.assertEqual(tuple(query.params), ('*', 'foo'))
+
+        query = self.table.select(
+            Literal('*'),
+            group_by=Rollup((self.table.a, self.table.b), self.table.c))
+        self.assertEqual(str(query),
+            'SELECT %s FROM "t" AS "a" '
+            'GROUP BY ROLLUP (("a"."a", "a"."b"), "a"."c")')
+        self.assertEqual(tuple(query.params), ('*',))
+
+    def test_select_group_by_cube(self):
+        query = self.table.select(
+            Literal('*'),
+            group_by=Cube(self.table.a, self.table.b))
+        self.assertEqual(str(query),
+            'SELECT %s FROM "t" AS "a" '
+            'GROUP BY CUBE ("a"."a", "a"."b")')
+        self.assertEqual(tuple(query.params), ('*',))
 
     def test_select_having(self):
         col1 = self.table.col1

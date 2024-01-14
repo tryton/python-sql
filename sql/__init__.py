@@ -8,8 +8,9 @@ from itertools import chain
 from threading import current_thread, local
 
 __version__ = '1.4.4'
-__all__ = ['Flavor', 'Table', 'Values', 'Literal', 'Column', 'Join',
-    'Asc', 'Desc', 'NullsFirst', 'NullsLast', 'format2numeric']
+__all__ = [
+    'Flavor', 'Table', 'Values', 'Literal', 'Column', 'Grouping', 'Rollup',
+    'Cube', 'Join', 'Asc', 'Desc', 'NullsFirst', 'NullsLast', 'format2numeric']
 
 
 def _escape_identifier(name):
@@ -1440,6 +1441,79 @@ class Collate(Expression):
             return self.expression.params
         else:
             return (self.expression,)
+
+
+class Grouping(Expression):
+    __slots__ = ('_sets',)
+
+    def __init__(self, *sets):
+        super().__init__()
+        self.sets = sets
+
+    @property
+    def sets(self):
+        return self._sets
+
+    @sets.setter
+    def sets(self, value):
+        assert all(
+            isinstance(col, Expression) for cols in value for col in cols)
+        self._sets = tuple(tuple(cols) for cols in value)
+
+    def __str__(self):
+        return 'GROUPING SETS (%s)' % (
+            ', '.join(
+                '(%s)' % ', '.join(str(col) for col in cols)
+                for cols in self.sets))
+
+    @property
+    def params(self):
+        return sum((col.params for cols in self.sets for col in cols), ())
+
+
+class Rollup(Expression):
+    __slots__ = ('_expressions',)
+
+    def __init__(self, *expressions):
+        super().__init__()
+        self.expressions = expressions
+
+    @property
+    def expressions(self):
+        return self._expressions
+
+    @expressions.setter
+    def expressions(self, value):
+        assert all(
+            isinstance(col, Expression)
+            or all(isinstance(c, Expression) for c in col)
+            for col in value)
+        self._expressions = tuple(value)
+
+    def __str__(self):
+        def format(col):
+            if isinstance(col, Expression):
+                return str(col)
+            else:
+                return '(%s)' % ', '.join(str(c) for c in col)
+        return '%s (%s)' % (
+            self.__class__.__name__.upper(),
+            ', '.join(format(col) for col in self.expressions))
+
+    @property
+    def params(self):
+        p = []
+        for col in self.expressions:
+            if isinstance(col, Expression):
+                p.extend(col.params)
+            else:
+                for c in col:
+                    p.extend(c.params)
+        return tuple(p)
+
+
+class Cube(Rollup):
+    pass
 
 
 class Window(object):
