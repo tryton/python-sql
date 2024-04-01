@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, With
+from sql import Conflict, Excluded, Table, With
 from sql.functions import Abs
 
 
@@ -103,3 +103,96 @@ class TestInsert(unittest.TestCase):
         self.assertEqual(str(query),
             'INSERT INTO "default"."t1" AS "a" ("c1") VALUES (%s)')
         self.assertEqual(tuple(query.params), ('foo',))
+
+    def test_upsert_nothing(self):
+        query = self.table.insert(
+            [self.table.c1], [['foo']],
+            on_conflict=Conflict(self.table))
+
+        self.assertEqual(str(query),
+            'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
+            'ON CONFLICT DO NOTHING')
+        self.assertEqual(tuple(query.params), ('foo',))
+
+    def test_upsert_indexed_column(self):
+        query = self.table.insert(
+            [self.table.c1], [['foo']],
+            on_conflict=Conflict(
+                self.table,
+                indexed_columns=[self.table.c1, self.table.c2]))
+
+        self.assertEqual(str(query),
+            'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
+            'ON CONFLICT ("c1", "c2") DO NOTHING')
+        self.assertEqual(tuple(query.params), ('foo',))
+
+    def test_upsert_indexed_column_index_where(self):
+        query = self.table.insert(
+            [self.table.c1], [['foo']],
+            on_conflict=Conflict(
+                self.table,
+                indexed_columns=[self.table.c1],
+                index_where=self.table.c2 == 'bar'))
+
+        self.assertEqual(str(query),
+            'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
+            'ON CONFLICT ("c1") WHERE ("a"."c2" = %s) DO NOTHING')
+        self.assertEqual(tuple(query.params), ('foo', 'bar'))
+
+    def test_upsert_update(self):
+        query = self.table.insert(
+            [self.table.c1], [['baz']],
+            on_conflict=Conflict(
+                self.table,
+                columns=[self.table.c1, self.table.c2],
+                values=['foo', 'bar']))
+
+        self.assertEqual(str(query),
+            'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
+            'ON CONFLICT DO UPDATE SET ("c1", "c2") = (%s, %s)')
+        self.assertEqual(tuple(query.params), ('baz', 'foo', 'bar'))
+
+    def test_upsert_update_where(self):
+        query = self.table.insert(
+            [self.table.c1], [['baz']],
+            on_conflict=Conflict(
+                self.table,
+                columns=[self.table.c1],
+                values=['foo'],
+                where=self.table.c2 == 'bar'))
+
+        self.assertEqual(str(query),
+            'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
+            'ON CONFLICT DO UPDATE SET "c1" = (%s) '
+            'WHERE ("a"."c2" = %s)')
+        self.assertEqual(tuple(query.params), ('baz', 'foo', 'bar'))
+
+    def test_upsert_update_subquery(self):
+        t1 = Table('t1')
+        t2 = Table('t2')
+        subquery = t2.select(t2.c1, t2.c2)
+        query = t1.insert(
+            [t1.c1], [['baz']],
+            on_conflict=Conflict(
+                t1,
+                columns=[t1.c1, t1.c2],
+                values=subquery))
+
+        self.assertEqual(str(query),
+            'INSERT INTO "t1" AS "b" ("c1") VALUES (%s) '
+            'ON CONFLICT DO UPDATE SET ("c1", "c2") = '
+            '(SELECT "a"."c1", "a"."c2" FROM "t2" AS "a")')
+        self.assertEqual(tuple(query.params), ('baz',))
+
+    def test_upsert_update_excluded(self):
+        query = self.table.insert(
+            [self.table.c1], [[1]],
+            on_conflict=Conflict(
+                self.table,
+                columns=[self.table.c1],
+                values=[Excluded.c1 + 2]))
+
+        self.assertEqual(str(query),
+            'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
+            'ON CONFLICT DO UPDATE SET "c1" = (("EXCLUDED"."c1" + %s))')
+        self.assertEqual(tuple(query.params), (1, 2))

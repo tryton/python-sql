@@ -9,8 +9,9 @@ from threading import current_thread, local
 
 __version__ = '1.4.4'
 __all__ = [
-    'Flavor', 'Table', 'Values', 'Literal', 'Column', 'Grouping', 'Rollup',
-    'Cube', 'Join', 'Asc', 'Desc', 'NullsFirst', 'NullsLast', 'format2numeric']
+    'Flavor', 'Table', 'Values', 'Literal', 'Column', 'Grouping', 'Conflict',
+    'Rollup', 'Cube', 'Excluded', 'Join', 'Asc', 'Desc', 'NullsFirst',
+    'NullsLast', 'format2numeric']
 
 
 def _escape_identifier(name):
@@ -664,17 +665,20 @@ class Select(FromItem, SelectQuery):
 
 
 class Insert(WithQuery):
-    __slots__ = ('_table', '_columns', '_values', '_returning')
+    __slots__ = ('_table', '_columns', '_values', '_on_conflict', '_returning')
 
-    def __init__(self, table, columns=None, values=None, returning=None,
-            **kwargs):
+    def __init__(
+            self, table, columns=None, values=None, returning=None,
+            on_conflict=None, **kwargs):
         self._table = None
         self._columns = None
         self._values = None
+        self._on_conflict = None
         self._returning = None
         self.table = table
         self.columns = columns
         self.values = values
+        self.on_conflict = on_conflict
         self.returning = returning
         super(Insert, self).__init__(**kwargs)
 
@@ -711,6 +715,17 @@ class Insert(WithQuery):
         self._values = value
 
     @property
+    def on_conflict(self):
+        return self._on_conflict
+
+    @on_conflict.setter
+    def on_conflict(self, value):
+        if value is not None:
+            assert isinstance(value, Conflict)
+            assert value.table == self.table
+        self._on_conflict = value
+
+    @property
     def returning(self):
         return self._returning
 
@@ -744,13 +759,16 @@ class Insert(WithQuery):
                 # TODO manage DEFAULT
             elif self.values is None:
                 values = ' DEFAULT VALUES'
+            on_conflict = ''
+            if self.on_conflict:
+                on_conflict = ' %s' % self.on_conflict
             returning = ''
             if self.returning:
                 returning = ' RETURNING ' + ', '.join(
                     map(self._format, self.returning))
             return (self._with_str()
                 + 'INSERT INTO %s AS "%s"' % (self.table, self.table.alias)
-                + columns + values + returning)
+                + columns + values + on_conflict + returning)
 
     @property
     def params(self):
@@ -758,10 +776,147 @@ class Insert(WithQuery):
         p.extend(self._with_params())
         if isinstance(self.values, Query):
             p.extend(self.values.params)
+        if self.on_conflict:
+            p.extend(self.on_conflict.params)
         if self.returning:
             for exp in self.returning:
                 p.extend(exp.params)
         return tuple(p)
+
+
+class Conflict(object):
+    __slots__ = (
+        '_table', '_indexed_columns', '_index_where', '_columns', '_values',
+        '_where')
+
+    def __init__(
+            self, table, indexed_columns=None, index_where=None,
+            columns=None, values=None, where=None):
+        self._table = None
+        self._indexed_columns = None
+        self._index_where = None
+        self._columns = None
+        self._values = None
+        self._where = None
+        self.table = table
+        self.indexed_columns = indexed_columns
+        self.index_where = index_where
+        self.columns = columns
+        self.values = values
+        self.where = where
+
+    @property
+    def table(self):
+        return self._table
+
+    @table.setter
+    def table(self, value):
+        assert isinstance(value, Table)
+        self._table = value
+
+    @property
+    def indexed_columns(self):
+        return self._indexed_columns
+
+    @indexed_columns.setter
+    def indexed_columns(self, value):
+        if value is not None:
+            assert all(isinstance(col, Column) for col in value)
+            assert all(col.table == self.table for col in value)
+        self._indexed_columns = value
+
+    @property
+    def index_where(self):
+        return self._index_where
+
+    @index_where.setter
+    def index_where(self, value):
+        from sql.operators import And, Or
+        if value is not None:
+            assert isinstance(value, (Expression, And, Or))
+        self._index_where = value
+
+    @property
+    def columns(self):
+        return self._columns
+
+    @columns.setter
+    def columns(self, value):
+        if value is not None:
+            assert all(isinstance(col, Column) for col in value)
+            assert all(col.table == self.table for col in value)
+        self._columns = value
+
+    @property
+    def values(self):
+        return self._values
+
+    @values.setter
+    def values(self, value):
+        if value is not None:
+            assert isinstance(value, (list, Select))
+        if isinstance(value, list):
+            value = Values([value])
+        self._values = value
+
+    @property
+    def where(self):
+        return self._where
+
+    @where.setter
+    def where(self, value):
+        from sql.operators import And, Or
+        if value is not None:
+            assert isinstance(value, (Expression, And, Or))
+        self._where = value
+
+    def __str__(self):
+        indexed_columns = ''
+        if self.indexed_columns:
+            assert all(c.table == self.table for c in self.indexed_columns)
+            # Get columns without alias
+            indexed_columns = ', '.join(
+                c.column_name for c in self.indexed_columns)
+            indexed_columns = ' (' + indexed_columns + ')'
+            if self.index_where:
+                indexed_columns += ' WHERE ' + str(self.index_where)
+        else:
+            assert not self.index_where
+        do = ''
+        if not self.columns:
+            assert not self.values
+            assert not self.where
+            do = 'NOTHING'
+        else:
+            assert all(c.table == self.table for c in self.columns)
+            # Get columns without alias
+            do = ', '.join(c.column_name for c in self.columns)
+            # TODO manage DEFAULT
+            values = str(self.values)
+            if values.startswith('VALUES'):
+                values = values[len('VALUES'):]
+            else:
+                values = ' (' + values + ')'
+            if len(self.columns) == 1:
+                # PostgreSQL would require ROW expression
+                # with single column with parenthesis
+                do = 'UPDATE SET ' + do + ' =' + values
+            else:
+                do = 'UPDATE SET (' + do + ') =' + values
+            if self.where:
+                do += ' WHERE %s' % self.where
+        return 'ON CONFLICT' + indexed_columns + ' DO ' + do
+
+    @property
+    def params(self):
+        p = []
+        if self.index_where:
+            p.extend(self.index_where.params)
+        if self.values:
+            p.extend(self.values.params)
+        if self.where:
+            p.extend(self.where.params)
+        return p
 
 
 class Update(Insert):
@@ -990,9 +1145,11 @@ class Table(FromItem):
     def params(self):
         return ()
 
-    def insert(self, columns=None, values=None, returning=None, with_=None):
+    def insert(
+            self, columns=None, values=None, returning=None, with_=None,
+            on_conflict=None):
         return Insert(self, columns=columns, values=values,
-            returning=returning, with_=with_)
+            on_conflict=on_conflict, returning=returning, with_=with_)
 
     def update(self, columns, values, from_=None, where=None, returning=None,
             with_=None):
@@ -1003,6 +1160,22 @@ class Table(FromItem):
             with_=None):
         return Delete(self, only=only, using=using, where=where,
             returning=returning, with_=with_)
+
+
+class _Excluded(Table):
+    def __init__(self):
+        super().__init__('EXCLUDED')
+
+    @property
+    def alias(self):
+        return 'EXCLUDED'
+
+    @property
+    def has_alias(self):
+        return False
+
+
+Excluded = _Excluded()
 
 
 class Join(FromItem):

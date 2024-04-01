@@ -1,3 +1,4 @@
+* Support UPSERT
 * Remove default escape char on LIKE and ILIKE
 * Add GROUPING SETS, CUBE, and ROLLUP
 
