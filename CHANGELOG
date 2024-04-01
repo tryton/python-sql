@@ -1,5 +1,4 @@
 * Remove default escape char on LIKE and ILIKE
-
 * Add GROUPING SETS, CUBE, and ROLLUP
 
 Version 1.4.3 - 2023-12-30
