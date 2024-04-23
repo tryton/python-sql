@@ -315,8 +315,11 @@ class Trim(Function):
         for arg in (self.characters, self.string):
             if isinstance(arg, str):
                 p.append(arg)
-            elif hasattr(arg, 'params'):
-                p.extend(arg.params)
+            else:
+                try:
+                    p.extend(arg.params)
+                except AttributeError:
+                    pass
         return tuple(p)
 
 

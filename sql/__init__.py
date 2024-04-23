@@ -1071,10 +1071,14 @@ class Join(FromItem):
     def params(self):
         p = []
         for item in (self.left, self.right):
-            if hasattr(item, 'params'):
+            try:
                 p.extend(item.params)
-        if hasattr(self.condition, 'params'):
+            except AttributeError:
+                pass
+        try:
             p.extend(self.condition.params)
+        except AttributeError:
+            pass
         return tuple(p)
 
     @property
