@@ -10,6 +10,8 @@ from threading import current_thread, local
 __version__ = '1.4.4'
 __all__ = [
     'Flavor', 'Table', 'Values', 'Literal', 'Column', 'Grouping', 'Conflict',
+    'Matched', 'MatchedUpdate', 'MatchedDelete',
+    'NotMatched', 'NotMatchedInsert',
     'Rollup', 'Cube', 'Excluded', 'Join', 'Asc', 'Desc', 'NullsFirst',
     'NullsLast', 'format2numeric']
 
@@ -1075,6 +1077,207 @@ class Delete(WithQuery):
         return tuple(p)
 
 
+class Merge(WithQuery):
+    __slots__ = ('_target', '_source', '_condition', '_whens')
+
+    def __init__(self, target, source, condition, *whens, **kwargs):
+        self._target = None
+        self._source = None
+        self._condition = None
+        self._whens = None
+        self.target = target
+        self.source = source
+        self.condition = condition
+        self.whens = whens
+        super().__init__(**kwargs)
+
+    @property
+    def target(self):
+        return self._target
+
+    @target.setter
+    def target(self, value):
+        assert isinstance(value, Table)
+        self._target = value
+
+    @property
+    def source(self):
+        return self._source
+
+    @source.setter
+    def source(self, value):
+        assert isinstance(value, (Table, SelectQuery, Values))
+        self._source = value
+
+    @property
+    def condition(self):
+        return self._condition
+
+    @condition.setter
+    def condition(self, value):
+        assert isinstance(value, Expression)
+        self._condition = value
+
+    @property
+    def whens(self):
+        return self._whens
+
+    @whens.setter
+    def whens(self, value):
+        assert all(isinstance(w, Matched) for w in value)
+        self._whens = tuple(value)
+
+    def __str__(self):
+        with AliasManager():
+            if isinstance(self.source, (Select, Values)):
+                source = '(%s)' % self.source
+            else:
+                source = self.source
+            if self.condition:
+                condition = 'ON %s' % self.condition
+            else:
+                condition = ''
+            return (self._with_str()
+                + 'MERGE INTO %s AS "%s" ' % (self.target, self.target.alias)
+                + 'USING %s AS "%s" ' % (source, self.source.alias)
+                + condition + ' ' + ' '.join(map(str, self.whens)))
+
+    @property
+    def params(self):
+        p = []
+        p.extend(self._with_params())
+        if isinstance(self.source, (SelectQuery, Values)):
+            p.extend(self.source.params)
+        if self.condition:
+            p.extend(self.condition.params)
+        for match in self.whens:
+            p.extend(match.params)
+        return tuple(p)
+
+
+class Matched(object):
+    __slots__ = ('_condition',)
+    _when = 'MATCHED'
+
+    def __init__(self, condition=None):
+        self._condition = None
+        self.condition = condition
+
+    @property
+    def condition(self):
+        return self._condition
+
+    @condition.setter
+    def condition(self, value):
+        if value is not None:
+            assert isinstance(value, Expression)
+        self._condition = value
+
+    def _then_str(self):
+        return 'DO NOTHING'
+
+    def __str__(self):
+        if self.condition is not None:
+            condition = ' AND ' + str(self.condition)
+        else:
+            condition = ''
+        return 'WHEN ' + self._when + condition + ' THEN ' + self._then_str()
+
+    @property
+    def params(self):
+        p = []
+        if self.condition:
+            p.extend(self.condition.params)
+        return tuple(p)
+
+
+class _MatchedValues(Matched):
+    __slots__ = ('_columns', '_values')
+
+    def __init__(self, columns, values, **kwargs):
+        self._columns = columns
+        self._values = values
+        self.columns = columns
+        self.values = values
+        super().__init__(**kwargs)
+
+    @property
+    def columns(self):
+        return self._columns
+
+    @columns.setter
+    def columns(self, value):
+        assert all(isinstance(col, Column) for col in value)
+        self._columns = value
+
+
+class MatchedUpdate(_MatchedValues, Matched):
+    __slots__ = ()
+
+    @property
+    def values(self):
+        return self._values
+
+    @values.setter
+    def values(self, value):
+        self._values = value
+
+    def _then_str(self):
+        columns = [c.column_name for c in self.columns]
+        return 'UPDATE SET ' + ', '.join(
+            '%s = %s' % (c, Update._format(v))
+            for c, v in zip(columns, self.values))
+
+    @property
+    def params(self):
+        p = list(super().params)
+        for value in self.values:
+            if isinstance(value, (Expression, Select)):
+                p.extend(value.params)
+            else:
+                p.append(value)
+        return tuple(p)
+
+
+class MatchedDelete(Matched):
+    __slots__ = ()
+
+    def _then_str(self):
+        return 'DELETE'
+
+
+class NotMatched(Matched):
+    __slots__ = ()
+    _when = 'NOT MATCHED'
+
+
+class NotMatchedInsert(_MatchedValues, NotMatched):
+    __slots__ = ()
+
+    @property
+    def values(self):
+        return self._values
+
+    @values.setter
+    def values(self, value):
+        self._values = Values([value])
+
+    def _then_str(self):
+        columns = ', '.join(c.column_name for c in self.columns)
+        columns = '(' + columns + ')'
+        if self.values is None:
+            values = ' DEFAULT VALUES '
+        else:
+            values = ' ' + str(self.values)
+        return 'INSERT ' + columns + values
+
+    @property
+    def params(self):
+        p = list(super().params)
+        p.extend(self.values.params)
+        return tuple(p)
+
+
 class CombiningQuery(FromItem, SelectQuery):
     __slots__ = ('queries', 'all_')
     _operator = ''
@@ -1160,6 +1363,9 @@ class Table(FromItem):
             with_=None):
         return Delete(self, only=only, using=using, where=where,
             returning=returning, with_=with_)
+
+    def merge(self, source, condition, *whens, with_=None):
+        return Merge(self, source, condition, *whens, with_=with_)
 
 
 class _Excluded(Table):
