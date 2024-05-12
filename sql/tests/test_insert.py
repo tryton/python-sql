@@ -11,21 +11,21 @@ class TestInsert(unittest.TestCase):
 
     def test_insert_default(self):
         query = self.table.insert()
-        self.assertEqual(str(query), 'INSERT INTO "t" AS "a" DEFAULT VALUES')
+        self.assertEqual(str(query), 'INSERT INTO "t" DEFAULT VALUES')
         self.assertEqual(tuple(query.params), ())
 
     def test_insert_values(self):
         query = self.table.insert([self.table.c1, self.table.c2],
             [['foo', 'bar']])
         self.assertEqual(str(query),
-            'INSERT INTO "t" AS "a" ("c1", "c2") VALUES (%s, %s)')
+            'INSERT INTO "t" ("c1", "c2") VALUES (%s, %s)')
         self.assertEqual(tuple(query.params), ('foo', 'bar'))
 
     def test_insert_many_values(self):
         query = self.table.insert([self.table.c1, self.table.c2],
             [['foo', 'bar'], ['spam', 'eggs']])
         self.assertEqual(str(query),
-            'INSERT INTO "t" AS "a" ("c1", "c2") VALUES (%s, %s), (%s, %s)')
+            'INSERT INTO "t" ("c1", "c2") VALUES (%s, %s), (%s, %s)')
         self.assertEqual(tuple(query.params), ('foo', 'bar', 'spam', 'eggs'))
 
     def test_insert_subselect(self):
@@ -34,14 +34,14 @@ class TestInsert(unittest.TestCase):
         subquery = t2.select(t2.c1, t2.c2)
         query = t1.insert([t1.c1, t1.c2], subquery)
         self.assertEqual(str(query),
-            'INSERT INTO "t1" AS "b" ("c1", "c2") '
+            'INSERT INTO "t1" ("c1", "c2") '
             'SELECT "a"."c1", "a"."c2" FROM "t2" AS "a"')
         self.assertEqual(tuple(query.params), ())
 
     def test_insert_function(self):
         query = self.table.insert([self.table.c], [[Abs(-1)]])
         self.assertEqual(str(query),
-            'INSERT INTO "t" AS "a" ("c") VALUES (ABS(%s))')
+            'INSERT INTO "t" ("c") VALUES (ABS(%s))')
         self.assertEqual(tuple(query.params), (-1,))
 
     def test_insert_returning(self):
@@ -74,7 +74,7 @@ class TestInsert(unittest.TestCase):
             values=w.select())
         self.assertEqual(str(query),
             'WITH "a" AS (SELECT * FROM "t1" AS "b") '
-            'INSERT INTO "t" AS "c" ("c1") SELECT * FROM "a" AS "a"')
+            'INSERT INTO "t" ("c1") SELECT * FROM "a" AS "a"')
         self.assertEqual(tuple(query.params), ())
 
     def test_insert_in_with(self):
@@ -101,7 +101,7 @@ class TestInsert(unittest.TestCase):
         query = t1.insert([t1.c1], [['foo']])
 
         self.assertEqual(str(query),
-            'INSERT INTO "default"."t1" AS "a" ("c1") VALUES (%s)')
+            'INSERT INTO "default"."t1" ("c1") VALUES (%s)')
         self.assertEqual(tuple(query.params), ('foo',))
 
     def test_upsert_nothing(self):

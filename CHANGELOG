@@ -1,3 +1,4 @@
+* Skip alias on INSERT without ON CONFLICT or RETURNING
 * Add MERGE
 * Support UPSERT
 * Remove default escape char on LIKE and ILIKE

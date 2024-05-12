@@ -768,8 +768,12 @@ class Insert(WithQuery):
             if self.returning:
                 returning = ' RETURNING ' + ', '.join(
                     map(self._format, self.returning))
+            if on_conflict or returning:
+                table = '%s AS "%s"' % (self.table, self.table.alias)
+            else:
+                table = str(self.table)
             return (self._with_str()
-                + 'INSERT INTO %s AS "%s"' % (self.table, self.table.alias)
+                + 'INSERT INTO %s' % table
                 + columns + values + on_conflict + returning)
 
     @property
