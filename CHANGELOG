@@ -1,3 +1,4 @@
+Version 1.5.0 - 2024-05-13
 * Skip alias on INSERT without ON CONFLICT or RETURNING
 * Add MERGE
 * Support UPSERT
