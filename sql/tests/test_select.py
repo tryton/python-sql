@@ -253,13 +253,13 @@ class TestSelect(unittest.TestCase):
             Flavor.set(Flavor(limitstyle='limit'))
             query = self.table.select(limit=50, offset=10)
             self.assertEqual(str(query),
-                'SELECT * FROM "t" AS "a" LIMIT 50 OFFSET 10')
-            self.assertEqual(tuple(query.params), ())
+                'SELECT * FROM "t" AS "a" LIMIT %s OFFSET %s')
+            self.assertEqual(tuple(query.params), (50, 10))
 
             query.limit = None
             self.assertEqual(str(query),
-                'SELECT * FROM "t" AS "a" OFFSET 10')
-            self.assertEqual(tuple(query.params), ())
+                'SELECT * FROM "t" AS "a" OFFSET %s')
+            self.assertEqual(tuple(query.params), (10,))
 
             query.offset = 0
             self.assertEqual(str(query),
@@ -280,8 +280,8 @@ class TestSelect(unittest.TestCase):
 
             query.offset = 10
             self.assertEqual(str(query),
-                'SELECT * FROM "t" AS "a" LIMIT -1 OFFSET 10')
-            self.assertEqual(tuple(query.params), ())
+                'SELECT * FROM "t" AS "a" LIMIT -1 OFFSET %s')
+            self.assertEqual(tuple(query.params), (10,))
         finally:
             Flavor.set(Flavor())
 
@@ -291,13 +291,13 @@ class TestSelect(unittest.TestCase):
             query = self.table.select(limit=50, offset=10)
             self.assertEqual(str(query),
                 'SELECT * FROM "t" AS "a" '
-                'OFFSET (10) ROWS FETCH FIRST (50) ROWS ONLY')
-            self.assertEqual(tuple(query.params), ())
+                'OFFSET (%s) ROWS FETCH FIRST (%s) ROWS ONLY')
+            self.assertEqual(tuple(query.params), (10, 50))
 
             query.limit = None
             self.assertEqual(str(query),
-                'SELECT * FROM "t" AS "a" OFFSET (10) ROWS')
-            self.assertEqual(tuple(query.params), ())
+                'SELECT * FROM "t" AS "a" OFFSET (%s) ROWS')
+            self.assertEqual(tuple(query.params), (10,))
 
             query.offset = 0
             self.assertEqual(str(query),

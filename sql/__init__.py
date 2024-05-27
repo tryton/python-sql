@@ -380,13 +380,14 @@ class SelectQuery(WithQuery):
 
     @property
     def _limit_offset_str(self):
+        param = Flavor.get().param
         if Flavor.get().limitstyle == 'limit':
             offset = ''
             if self.offset:
-                offset = ' OFFSET %s' % self.offset
+                offset = ' OFFSET %s' % param
             limit = ''
             if self.limit is not None:
-                limit = ' LIMIT %s' % self.limit
+                limit = ' LIMIT %s' % param
             elif self.offset:
                 max_limit = Flavor.get().max_limit
                 if max_limit:
@@ -395,11 +396,26 @@ class SelectQuery(WithQuery):
         else:
             offset = ''
             if self.offset:
-                offset = ' OFFSET (%s) ROWS' % self.offset
+                offset = ' OFFSET (%s) ROWS' % param
             fetch = ''
             if self.limit is not None:
-                fetch = ' FETCH FIRST (%s) ROWS ONLY' % self.limit
+                fetch = ' FETCH FIRST (%s) ROWS ONLY' % param
             return offset + fetch
+
+    @property
+    def _limit_offset_params(self):
+        p = []
+        if Flavor.get().limitstyle == 'limit':
+            if self.limit is not None:
+                p.append(self.limit)
+            if self.offset:
+                p.append(self.offset)
+        else:
+            if self.offset:
+                p.append(self.offset)
+            if self.limit is not None:
+                p.append(self.limit)
+        return tuple(p)
 
     def as_(self, output_name):
         return As(self, output_name)
@@ -663,6 +679,7 @@ class Select(FromItem, SelectQuery):
                 p.extend(self.having.params)
             for window in self.windows:
                 p.extend(window.params)
+            p.extend(self._limit_offset_params)
         return tuple(p)
 
 
