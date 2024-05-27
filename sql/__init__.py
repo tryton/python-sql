@@ -2009,6 +2009,7 @@ class Window(object):
         return AliasManager.contains(self)
 
     def __str__(self):
+        param = Flavor.get().param
         partition = ''
         if self.partition:
             partition = 'PARTITION BY ' + ', '.join(map(str, self.partition))
@@ -2022,9 +2023,9 @@ class Window(object):
             elif not frame:
                 return 'CURRENT ROW'
             elif frame < 0:
-                return '%s PRECEDING' % -frame
+                return '%s PRECEDING' % param
             elif frame > 0:
-                return '%s FOLLOWING' % frame
+                return '%s FOLLOWING' % param
 
         frame = ''
         if self.frame:
@@ -2045,6 +2046,11 @@ class Window(object):
         if self.order_by:
             for expression in self.order_by:
                 p.extend(expression.params)
+        if self.frame:
+            if self.start:
+                p.append(abs(self.start))
+            if self.end:
+                p.append(abs(self.end))
         return tuple(p)
 
 

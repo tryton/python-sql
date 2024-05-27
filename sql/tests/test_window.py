@@ -33,22 +33,22 @@ class TestWindow(unittest.TestCase):
         window.start = -1
         self.assertEqual(str(window),
             'PARTITION BY "c" RANGE '
-            'BETWEEN 1 PRECEDING AND CURRENT ROW')
-        self.assertEqual(window.params, ())
+            'BETWEEN %s PRECEDING AND CURRENT ROW')
+        self.assertEqual(window.params, (1,))
 
         window.start = 0
         window.end = 1
         self.assertEqual(str(window),
             'PARTITION BY "c" RANGE '
-            'BETWEEN CURRENT ROW AND 1 FOLLOWING')
-        self.assertEqual(window.params, ())
+            'BETWEEN CURRENT ROW AND %s FOLLOWING')
+        self.assertEqual(window.params, (1,))
 
         window.start = 1
         window.end = None
         self.assertEqual(str(window),
             'PARTITION BY "c" RANGE '
-            'BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING')
-        self.assertEqual(window.params, ())
+            'BETWEEN %s FOLLOWING AND UNBOUNDED FOLLOWING')
+        self.assertEqual(window.params, (1,))
 
     def test_window_exclude(self):
         t = Table('t')
