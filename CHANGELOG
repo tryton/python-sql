@@ -1,3 +1,4 @@
+* Support default values when inserting not matched merge
 * Replace assert by ValueError
 
 Version 1.5.1 - 2024-05-28

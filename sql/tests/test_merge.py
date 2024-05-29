@@ -110,6 +110,18 @@ class TestMerge(unittest.TestCase):
             'INSERT ("c1", "c2") VALUES ("b"."c3", "b"."c4")')
         self.assertEqual(query.params, ())
 
+    def test_not_matched_insert_default(self):
+        query = self.target.merge(
+            self.source, self.target.c1 == self.source.c2,
+            NotMatchedInsert([self.target.c1, self.target.c2], None))
+        self.assertEqual(
+            str(query),
+            'MERGE INTO "t" AS "a" USING "s" AS "b" '
+            'ON ("a"."c1" = "b"."c2") '
+            'WHEN NOT MATCHED THEN '
+            'INSERT ("c1", "c2") DEFAULT VALUES')
+        self.assertEqual(query.params, ())
+
     def test_matched_invalid_condition(self):
         with self.assertRaises(ValueError):
             Matched('foo')

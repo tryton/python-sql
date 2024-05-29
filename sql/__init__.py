@@ -1324,13 +1324,15 @@ class NotMatchedInsert(_MatchedValues, NotMatched):
 
     @values.setter
     def values(self, value):
-        self._values = Values([value])
+        if value is not None:
+            value = Values([value])
+        self._values = value
 
     def _then_str(self):
         columns = ', '.join(c.column_name for c in self.columns)
         columns = '(' + columns + ')'
         if self.values is None:
-            values = ' DEFAULT VALUES '
+            values = ' DEFAULT VALUES'
         else:
             values = ' ' + str(self.values)
         return 'INSERT ' + columns + values
