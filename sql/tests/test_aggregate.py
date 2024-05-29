@@ -3,11 +3,35 @@
 import unittest
 
 from sql import AliasManager, Flavor, Literal, Table, Window
-from sql.aggregate import Avg, Count
+from sql.aggregate import Aggregate, Avg, Count
 
 
 class TestAggregate(unittest.TestCase):
     table = Table('t')
+
+    def test_invalid_expression(self):
+        with self.assertRaises(ValueError):
+            Aggregate('foo')
+
+    def test_invalid_distinct(self):
+        with self.assertRaises(ValueError):
+            Aggregate(self.table.c, distinct='foo')
+
+    def test_invalid_order(self):
+        with self.assertRaises(ValueError):
+            Aggregate(self.table.c, order_by=['foo'])
+
+    def test_invalid_within(self):
+        with self.assertRaises(ValueError):
+            Aggregate(self.table.c, within=['foo'])
+
+    def test_invalid_filter(self):
+        with self.assertRaises(ValueError):
+            Aggregate(self.table.c, filter_='foo')
+
+    def test_invalid_window(self):
+        with self.assertRaises(ValueError):
+            Aggregate(self.table.c, window='foo')
 
     def test_avg(self):
         avg = Avg(self.table.c)

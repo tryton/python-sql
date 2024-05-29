@@ -20,6 +20,22 @@ class TestJoin(unittest.TestCase):
             self.assertEqual(str(join),
                 '"t1" AS "a" INNER JOIN "t2" AS "b" ON ("a"."c" = "b"."c")')
 
+    def test_join_invalid_left(self):
+        with self.assertRaises(ValueError):
+            Join('foo', Table('t1'))
+
+    def test_join_invalid_right(self):
+        with self.assertRaises(ValueError):
+            Join(Table('t1'), 'foo')
+
+    def test_join_invalid_condition(self):
+        with self.assertRaises(ValueError):
+            Join(Table('t1'), Table('t2'), condition='foo')
+
+    def test_join_invalid_type(self):
+        with self.assertRaises(ValueError):
+            Join(Table('t1'), Table('t2'), type_='foo')
+
     def test_join_subselect(self):
         t1 = Table('t1')
         t2 = Table('t2')

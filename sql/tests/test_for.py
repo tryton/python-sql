@@ -14,3 +14,7 @@ class TestFor(unittest.TestCase):
         for_ = For('UPDATE')
         for_.tables = Table('t1')
         self.assertEqual(str(for_), 'FOR UPDATE OF "t1"')
+
+    def test_invalid_type(self):
+        with self.assertRaises(ValueError):
+            For('foo')

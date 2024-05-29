@@ -27,6 +27,14 @@ class TestUpdate(unittest.TestCase):
             'WHERE ("b"."c" = "a"."c")')
         self.assertEqual(query.params, ('foo',))
 
+    def test_update_invalid_values(self):
+        with self.assertRaises(ValueError):
+            self.table.update([self.table.c], 'foo')
+
+    def test_update_invalid_where(self):
+        with self.assertRaises(ValueError):
+            self.table.update([self.table.c], ['foo'], where='foo')
+
     def test_update_subselect(self):
         t1 = Table('t1')
         t2 = Table('t2')

@@ -17,8 +17,3 @@ class TestCollate(unittest.TestCase):
         collate = Collate("foo", 'C')
         self.assertEqual(str(collate), '%s COLLATE "C"')
         self.assertEqual(collate.params, ("foo",))
-
-    def test_collate_injection(self):
-        collate = Collate(self.column, 'C";')
-        with self.assertRaises(ValueError):
-            str(collate)

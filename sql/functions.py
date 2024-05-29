@@ -39,7 +39,8 @@ class Function(Expression, FromItem):
 
     @columns_definitions.setter
     def columns_definitions(self, value):
-        assert isinstance(value, list)
+        if not isinstance(value, list):
+            raise ValueError("invalid columns definitions: %r" % value)
         self._columns_definitions = value
 
     @staticmethod
@@ -286,7 +287,8 @@ class Trim(Function):
     _function = 'TRIM'
 
     def __init__(self, string, position='BOTH', characters=' '):
-        assert position.upper() in ('LEADING', 'TRAILING', 'BOTH')
+        if position.upper() not in {'LEADING', 'TRAILING', 'BOTH'}:
+            raise ValueError("invalid position: %r" % position)
         self.position = position.upper()
         self.characters = characters
         self.string = string
@@ -486,7 +488,8 @@ class WindowFunction(Function):
     def filter_(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid filter: %r" % value)
         self._filter = value
 
     @property
@@ -496,7 +499,8 @@ class WindowFunction(Function):
     @window.setter
     def window(self, value):
         if value:
-            assert isinstance(value, Window)
+            if not isinstance(value, Window):
+                raise ValueError("invalid window: %r" % value)
         self._window = value
 
     def __str__(self):

@@ -8,7 +8,7 @@ _sentinel = object()
 
 
 class Aggregate(Expression):
-    __slots__ = ('expression', '_distinct', '_order_by', '_within',
+    __slots__ = ('_expression', '_distinct', '_order_by', '_within',
         '_filter', '_window')
     _sql = ''
 
@@ -23,12 +23,23 @@ class Aggregate(Expression):
         self.window = window
 
     @property
+    def expression(self):
+        return self._expression
+
+    @expression.setter
+    def expression(self, value):
+        if not isinstance(value, Expression):
+            raise ValueError("invalid expression: %r" % value)
+        self._expression = value
+
+    @property
     def distinct(self):
         return self._distinct
 
     @distinct.setter
     def distinct(self, value):
-        assert isinstance(value, bool)
+        if not isinstance(value, bool):
+            raise ValueError("invalid distinct: %r" % value)
         self._distinct = value
 
     @property
@@ -40,7 +51,8 @@ class Aggregate(Expression):
         if value is not None:
             if isinstance(value, Expression):
                 value = [value]
-            assert all(isinstance(col, Expression) for col in value)
+            if any(not isinstance(col, Expression) for col in value):
+                raise ValueError("invalid order by: %r" % value)
         self._order_by = value
 
     @property
@@ -52,7 +64,8 @@ class Aggregate(Expression):
         if value is not None:
             if isinstance(value, Expression):
                 value = [value]
-            assert all(isinstance(col, Expression) for col in value)
+            if any(not isinstance(col, Expression) for col in value):
+                raise ValueError("invalid within: %r" % value)
         self._within = value
 
     @property
@@ -63,7 +76,8 @@ class Aggregate(Expression):
     def filter_(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid filter: %r" % value)
         self._filter = value
 
     @property
@@ -73,7 +87,8 @@ class Aggregate(Expression):
     @window.setter
     def window(self, value):
         if value:
-            assert isinstance(value, Window)
+            if not isinstance(value, Window):
+                raise ValueError("invalid window: %r" % value)
         self._window = value
 
     @property

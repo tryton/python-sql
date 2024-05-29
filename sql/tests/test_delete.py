@@ -2,7 +2,7 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, With
+from sql import Delete, Table, With
 
 
 class TestDelete(unittest.TestCase):
@@ -27,10 +27,22 @@ class TestDelete(unittest.TestCase):
             'SELECT "a"."c" FROM "t2" AS "a"))')
         self.assertEqual(query.params, ())
 
+    def test_delete_invalid_table(self):
+        with self.assertRaises(ValueError):
+            Delete('foo')
+
+    def test_delete_invalid_where(self):
+        with self.assertRaises(ValueError):
+            self.table.delete(where='foo')
+
     def test_delete_returning(self):
         query = self.table.delete(returning=[self.table.c])
         self.assertEqual(str(query), 'DELETE FROM "t" RETURNING "c"')
         self.assertEqual(query.params, ())
+
+    def test_delete_invalid_returning(self):
+        with self.assertRaises(ValueError):
+            self.table.delete(returning='foo')
 
     def test_with(self):
         t1 = Table('t1')

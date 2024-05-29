@@ -5,11 +5,15 @@ import unittest
 from sql import AliasManager, Flavor, Table, Window
 from sql.functions import (
     Abs, AtTimeZone, CurrentTime, Div, Function, FunctionKeyword,
-    FunctionNotCallable, Overlay, Rank, Trim)
+    FunctionNotCallable, Overlay, Rank, Trim, WindowFunction)
 
 
 class TestFunctions(unittest.TestCase):
     table = Table('t')
+
+    def test_invalid_columns_definitions(self):
+        with self.assertRaises(ValueError):
+            Function(columns_definitions='foo')
 
     def test_abs(self):
         abs_ = Abs(self.table.c1)
@@ -87,6 +91,10 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(str(trim), 'TRIM(BOTH %s FROM "c1")')
         self.assertEqual(trim.params, (' ',))
 
+    def test_trim_invalid_position(self):
+        with self.assertRaises(ValueError):
+            Trim('test', 'foo')
+
     def test_at_time_zone(self):
         time_zone = AtTimeZone(self.table.c1, 'UTC')
         self.assertEqual(str(time_zone), '"c1" AT TIME ZONE %s')
@@ -142,6 +150,10 @@ class TestWindowFunction(unittest.TestCase):
             self.assertEqual(str(function), 'RANK("a"."c") OVER ()')
         self.assertEqual(function.params, ())
 
+    def test_invalid_window(self):
+        with self.assertRaises(ValueError):
+            WindowFunction(window='foo')
+
     def test_filter(self):
         t = Table('t')
         function = Rank(t.c, filter_=t.c > 0, window=Window([]))
@@ -150,3 +162,7 @@ class TestWindowFunction(unittest.TestCase):
             self.assertEqual(str(function),
                 'RANK("a"."c") FILTER (WHERE ("a"."c" > %s)) OVER ()')
         self.assertEqual(function.params, (0,))
+
+    def test_invalid_filter(self):
+        with self.assertRaises(ValueError):
+            WindowFunction(filter_='foo', window=Window([]))

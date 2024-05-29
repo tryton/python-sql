@@ -2,12 +2,24 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Conflict, Excluded, Table, With
+from sql import Conflict, Excluded, Insert, Table, With
 from sql.functions import Abs
 
 
 class TestInsert(unittest.TestCase):
     table = Table('t')
+
+    def test_insert_invalid_table(self):
+        with self.assertRaises(ValueError):
+            Insert('foo')
+
+    def test_insert_invalid_columns(self):
+        with self.assertRaises(ValueError):
+            self.table.insert(['foo'], [['foo']])
+
+    def test_insert_invalid_values(self):
+        with self.assertRaises(ValueError):
+            self.table.insert([self.table.c], 'foo')
 
     def test_insert_default(self):
         query = self.table.insert()
@@ -64,6 +76,10 @@ class TestInsert(unittest.TestCase):
             'WHERE (("a"."c1" = "b"."c") AND ("a"."c2" = %s)))')
         self.assertEqual(tuple(query.params), ('foo', 'bar'))
 
+    def test_insert_invalid_returning(self):
+        with self.assertRaises(ValueError):
+            self.table.insert(returning='foo')
+
     def test_with(self):
         t1 = Table('t1')
         w = With(query=t1.select())
@@ -103,6 +119,14 @@ class TestInsert(unittest.TestCase):
         self.assertEqual(str(query),
             'INSERT INTO "default"."t1" ("c1") VALUES (%s)')
         self.assertEqual(tuple(query.params), ('foo',))
+
+    def test_upsert_invalid_on_conflict(self):
+        with self.assertRaises(ValueError):
+            self.table.insert(on_conflict='foo')
+
+    def test_upsert_invalid_table_on_conflict(self):
+        with self.assertRaises(ValueError):
+            self.table.insert(on_conflict=Conflict(Table('t1')))
 
     def test_upsert_nothing(self):
         query = self.table.insert(
@@ -196,3 +220,35 @@ class TestInsert(unittest.TestCase):
             'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
             'ON CONFLICT DO UPDATE SET "c1" = (("EXCLUDED"."c1" + %s))')
         self.assertEqual(tuple(query.params), (1, 2))
+
+    def test_conflict_invalid_table(self):
+        with self.assertRaises(ValueError):
+            Conflict('foo')
+
+    def test_conflict_invalid_indexed_columns(self):
+        with self.assertRaises(ValueError):
+            Conflict(self.table, indexed_columns=['foo'])
+
+    def test_conflict_indexed_columns_invalid_table(self):
+        with self.assertRaises(ValueError):
+            Conflict(self.table, indexed_columns=[Table('t').c])
+
+    def test_conflict_invalid_index_where(self):
+        with self.assertRaises(ValueError):
+            Conflict(self.table, index_where='foo')
+
+    def test_conflict_invalid_columns(self):
+        with self.assertRaises(ValueError):
+            Conflict(self.table, columns=['foo'])
+
+    def test_conflict_columns_invalid_table(self):
+        with self.assertRaises(ValueError):
+            Conflict(self.table, columns=[Table('t').c])
+
+    def test_conflict_invalid_values(self):
+        with self.assertRaises(ValueError):
+            Conflict(self.table, values='foo')
+
+    def test_conflict_invalid_where(self):
+        with self.assertRaises(ValueError):
+            Conflict(self.table, where='foo')

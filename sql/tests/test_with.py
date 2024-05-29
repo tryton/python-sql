@@ -62,3 +62,7 @@ class TestWith(unittest.TestCase):
             'SELECT ("a"."n" + %s) FROM "a" AS "a" WHERE ("a"."n" < %s)'
             ') SELECT * FROM "a" AS "a"')
         self.assertEqual(tuple(q.params), (1, 1, 100))
+
+    def test_invalid_with(self):
+        with self.assertRaises(ValueError):
+            WithQuery(with_=['foo'])

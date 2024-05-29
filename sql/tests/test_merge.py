@@ -4,8 +4,8 @@
 import unittest
 
 from sql import (
-    Matched, MatchedDelete, MatchedUpdate, NotMatched, NotMatchedInsert, Table,
-    With)
+    Literal, Matched, MatchedDelete, MatchedUpdate, Merge, NotMatched,
+    NotMatchedInsert, Table, With)
 
 
 class TestMerge(unittest.TestCase):
@@ -21,6 +21,22 @@ class TestMerge(unittest.TestCase):
             'ON ("a"."c1" = "b"."c2") '
             'WHEN MATCHED THEN DO NOTHING')
         self.assertEqual(query.params, ())
+
+    def test_merge_invalid_target(self):
+        with self.assertRaises(ValueError):
+            Merge('foo', self.source, Literal(True))
+
+    def test_merge_invalid_source(self):
+        with self.assertRaises(ValueError):
+            self.target.merge('foo', Literal(True))
+
+    def test_merge_invalid_condition(self):
+        with self.assertRaises(ValueError):
+            self.target.merge(self.source, 'foo')
+
+    def test_merge_invalid_whens(self):
+        with self.assertRaises(ValueError):
+            self.target.merge(self.source, Literal(True), 'foo')
 
     def test_condition(self):
         query = self.target.merge(
@@ -93,6 +109,14 @@ class TestMerge(unittest.TestCase):
             'WHEN NOT MATCHED THEN '
             'INSERT ("c1", "c2") VALUES ("b"."c3", "b"."c4")')
         self.assertEqual(query.params, ())
+
+    def test_matched_invalid_condition(self):
+        with self.assertRaises(ValueError):
+            Matched('foo')
+
+    def test_matched_values_invalid_columns(self):
+        with self.assertRaises(ValueError):
+            MatchedUpdate('foo', [])
 
     def test_with(self):
         t1 = Table('t1')

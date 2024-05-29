@@ -3,7 +3,7 @@
 import unittest
 
 from sql import (
-    Asc, Column, Desc, Flavor, Literal, NullsFirst, NullsLast, Table)
+    Asc, Column, Desc, Flavor, Literal, NullsFirst, NullsLast, Order, Table)
 
 
 class TestOrder(unittest.TestCase):
@@ -54,3 +54,7 @@ class TestOrder(unittest.TestCase):
             '(SELECT "a"."c" FROM "t" AS "a") ASC')
         self.assertEqual(str(Desc(query)),
             '(SELECT "a"."c" FROM "t" AS "a") DESC')
+
+    def test_invalid_expression(self):
+        with self.assertRaises(ValueError):
+            Order('foo')

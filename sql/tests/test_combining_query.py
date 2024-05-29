@@ -2,13 +2,17 @@
 # this repository contains the full copyright notices and license terms.
 import unittest
 
-from sql import Table, Union, With
+from sql import CombiningQuery, Table, Union, With
 
 
 class TestUnion(unittest.TestCase):
     q1 = Table('t1').select()
     q2 = Table('t2').select()
     q3 = Table('t3').select()
+
+    def test_invalid_queries(self):
+        with self.assertRaises(ValueError):
+            CombiningQuery('foo', 'bar')
 
     def test_union2(self):
         query = Union(self.q1, self.q2)

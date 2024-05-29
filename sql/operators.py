@@ -248,7 +248,8 @@ class Is(BinaryOperator):
     _operator = 'IS'
 
     def __init__(self, left, right):
-        assert right in [None, True, False]
+        if right not in {None, True, False}:
+            raise ValueError("invalid right: %r" % right)
         super(Is, self).__init__(left, right)
 
     @property
@@ -379,7 +380,8 @@ class Like(BinaryOperator):
 
     def __init__(self, left, right, escape=None):
         super().__init__(left, right)
-        assert not escape or len(escape) == 1
+        if escape and len(escape) != 1:
+            raise ValueError("invalid escape: %r" % escape)
         self.escape = escape
 
     @property

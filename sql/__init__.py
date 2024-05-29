@@ -62,17 +62,23 @@ class Flavor(object):
     def __init__(self, limitstyle='limit', max_limit=None, paramstyle='format',
             ilike=False, no_as=False, no_boolean=False, null_ordering=True,
             function_mapping=None, filter_=False, escape_empty=False):
-        assert limitstyle in ['fetch', 'limit', 'rownum']
+        if limitstyle not in {'fetch', 'limit', 'rownum'}:
+            raise ValueError("unsupported limitstyle: %r" % limitstyle)
         self.limitstyle = limitstyle
+        if (max_limit is not None
+                and not isinstance(max_limit, numbers.Integral)):
+            raise ValueError("unsupported max_limit: %r" % max_limit)
         self.max_limit = max_limit
+        if paramstyle not in {'format', 'qmark'}:
+            raise ValueError("unsupported paramstyle: %r" % paramstyle)
         self.paramstyle = paramstyle
-        self.ilike = ilike
-        self.no_as = no_as
-        self.no_boolean = no_boolean
-        self.null_ordering = null_ordering
-        self.function_mapping = function_mapping or {}
-        self.filter_ = filter_
-        self.escape_empty = escape_empty
+        self.ilike = bool(ilike)
+        self.no_as = bool(no_as)
+        self.no_boolean = bool(no_boolean)
+        self.null_ordering = bool(null_ordering)
+        self.function_mapping = dict(function_mapping or {})
+        self.filter_ = bool(filter_)
+        self.escape_empty = bool(escape_empty)
 
     @property
     def param(self):
@@ -213,7 +219,8 @@ class WithQuery(Query):
         if value is not None:
             if isinstance(value, With):
                 value = [value]
-            assert all(isinstance(w, With) for w in value)
+            if any(not isinstance(w, With) for w in value):
+                raise ValueError("invalid with: %r" % value)
         self._with = value
 
     def _with_str(self):
@@ -252,7 +259,8 @@ class FromItem(object):
         return Column(self, name)
 
     def __add__(self, other):
-        assert isinstance(other, FromItem)
+        if not isinstance(other, FromItem):
+            return NotImplemented
         return From((self, other))
 
     def select(self, *args, **kwargs):
@@ -348,7 +356,8 @@ class SelectQuery(WithQuery):
         if value is not None:
             if isinstance(value, Expression):
                 value = [value]
-            assert all(isinstance(col, Expression) for col in value)
+            if any(not isinstance(col, Expression) for col in value):
+                raise ValueError("invalid order by: %r" % value)
         self._order_by = value
 
     @property
@@ -365,7 +374,8 @@ class SelectQuery(WithQuery):
     @limit.setter
     def limit(self, value):
         if value is not None:
-            assert isinstance(value, numbers.Integral)
+            if not isinstance(value, numbers.Integral):
+                raise ValueError("invalid limit: %r" % value)
         self._limit = value
 
     @property
@@ -375,7 +385,8 @@ class SelectQuery(WithQuery):
     @offset.setter
     def offset(self, value):
         if value is not None:
-            assert isinstance(value, numbers.Integral)
+            if not isinstance(value, numbers.Integral):
+                raise ValueError("invalid offset: %r" % value)
         self._offset = value
 
     @property
@@ -464,7 +475,8 @@ class Select(FromItem, SelectQuery):
         if value is not None:
             if isinstance(value, Expression):
                 value = [value]
-            assert all(isinstance(col, Expression) for col in value)
+            if any(not isinstance(col, Expression) for col in value):
+                raise ValueError("invalid distinct on: %r" % value)
         self._distinct_on = value
 
     @property
@@ -473,7 +485,10 @@ class Select(FromItem, SelectQuery):
 
     @columns.setter
     def columns(self, value):
-        assert all(isinstance(col, (Expression, SelectQuery)) for col in value)
+        if any(
+                not isinstance(col, (Expression, SelectQuery))
+                for col in value):
+            raise ValueError("invalid columns: %r" % value)
         self._columns = tuple(value)
 
     @property
@@ -484,7 +499,8 @@ class Select(FromItem, SelectQuery):
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid where: %r" % value)
         self._where = value
 
     @property
@@ -496,7 +512,8 @@ class Select(FromItem, SelectQuery):
         if value is not None:
             if isinstance(value, Expression):
                 value = [value]
-            assert all(isinstance(col, Expression) for col in value)
+            if any(not isinstance(col, Expression) for col in value):
+                raise ValueError("invalid group by: %r" % value)
         self._group_by = value
 
     @property
@@ -507,7 +524,8 @@ class Select(FromItem, SelectQuery):
     def having(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid having: %r" % value)
         self._having = value
 
     @property
@@ -519,7 +537,8 @@ class Select(FromItem, SelectQuery):
         if value is not None:
             if isinstance(value, For):
                 value = [value]
-            assert all(isinstance(f, For) for f in value)
+            if any(not isinstance(f, For) for f in value):
+                raise ValueError("invalid for: %r" % value)
         self._for_ = value
 
     @property
@@ -547,7 +566,8 @@ class Select(FromItem, SelectQuery):
     @windows.setter
     def windows(self, value):
         if value is not None:
-            assert all(isinstance(w, Window) for w in value)
+            if any(not isinstance(w, Window) for w in value):
+                raise ValueError("invalid windows: %r" % value)
         self._windows = value
 
     @staticmethod
@@ -707,7 +727,8 @@ class Insert(WithQuery):
 
     @table.setter
     def table(self, value):
-        assert isinstance(value, Table)
+        if not isinstance(value, Table):
+            raise ValueError("invalid table: %r" % value)
         self._table = value
 
     @property
@@ -717,8 +738,10 @@ class Insert(WithQuery):
     @columns.setter
     def columns(self, value):
         if value is not None:
-            assert all(isinstance(col, Column) for col in value)
-            assert all(col.table == self.table for col in value)
+            if any(
+                    not isinstance(col, Column) or col.table != self.table
+                    for col in value):
+                raise ValueError("invalid columns: %r" % value)
         self._columns = value
 
     @property
@@ -728,7 +751,8 @@ class Insert(WithQuery):
     @values.setter
     def values(self, value):
         if value is not None:
-            assert isinstance(value, (list, Select))
+            if not isinstance(value, (list, Select)):
+                raise ValueError("invalid values: %r" % value)
         if isinstance(value, list):
             value = Values(value)
         self._values = value
@@ -740,8 +764,8 @@ class Insert(WithQuery):
     @on_conflict.setter
     def on_conflict(self, value):
         if value is not None:
-            assert isinstance(value, Conflict)
-            assert value.table == self.table
+            if not isinstance(value, Conflict) or value.table != self.table:
+                raise ValueError("invalid on conflict: %r" % value)
         self._on_conflict = value
 
     @property
@@ -751,7 +775,8 @@ class Insert(WithQuery):
     @returning.setter
     def returning(self, value):
         if value is not None:
-            assert isinstance(value, list)
+            if not isinstance(value, list):
+                raise ValueError("invalid returning: %r" % value)
         self._returning = value
 
     @staticmethod
@@ -834,7 +859,8 @@ class Conflict(object):
 
     @table.setter
     def table(self, value):
-        assert isinstance(value, Table)
+        if not isinstance(value, Table):
+            raise ValueError("invalid table: %r" % value)
         self._table = value
 
     @property
@@ -844,8 +870,10 @@ class Conflict(object):
     @indexed_columns.setter
     def indexed_columns(self, value):
         if value is not None:
-            assert all(isinstance(col, Column) for col in value)
-            assert all(col.table == self.table for col in value)
+            if any(
+                    not isinstance(col, Column) or col.table != self.table
+                    for col in value):
+                raise ValueError("invalid indexed columns: %r" % value)
         self._indexed_columns = value
 
     @property
@@ -856,7 +884,8 @@ class Conflict(object):
     def index_where(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid index where: %r" % value)
         self._index_where = value
 
     @property
@@ -866,8 +895,10 @@ class Conflict(object):
     @columns.setter
     def columns(self, value):
         if value is not None:
-            assert all(isinstance(col, Column) for col in value)
-            assert all(col.table == self.table for col in value)
+            if any(
+                    not isinstance(col, Column) or col.table != self.table
+                    for col in value):
+                raise ValueError("invalid columns: %r" % value)
         self._columns = value
 
     @property
@@ -877,7 +908,8 @@ class Conflict(object):
     @values.setter
     def values(self, value):
         if value is not None:
-            assert isinstance(value, (list, Select))
+            if not isinstance(value, (list, Select)):
+                raise ValueError("invalid values: %r" % value)
         if isinstance(value, list):
             value = Values([value])
         self._values = value
@@ -890,7 +922,8 @@ class Conflict(object):
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid where: %r" % value)
         self._where = value
 
     def __str__(self):
@@ -961,7 +994,8 @@ class Update(Insert):
     def values(self, value):
         if isinstance(value, Select):
             value = [value]
-        assert isinstance(value, list)
+        if not isinstance(value, list):
+            raise ValueError("invalid values: %r" % value)
         self._values = value
 
     @property
@@ -972,7 +1006,8 @@ class Update(Insert):
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid where: %r" % value)
         self._where = value
 
     def __str__(self):
@@ -1037,7 +1072,8 @@ class Delete(WithQuery):
 
     @table.setter
     def table(self, value):
-        assert isinstance(value, Table)
+        if not isinstance(value, Table):
+            raise ValueError("invalid table: %r" % value)
         self._table = value
 
     @property
@@ -1048,7 +1084,8 @@ class Delete(WithQuery):
     def where(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid where: %r" % value)
         self._where = value
 
     @property
@@ -1058,7 +1095,8 @@ class Delete(WithQuery):
     @returning.setter
     def returning(self, value):
         if value is not None:
-            assert isinstance(value, list)
+            if not isinstance(value, list):
+                raise ValueError("invalid returning: %r" % value)
         self._returning = value
 
     @staticmethod
@@ -1118,7 +1156,8 @@ class Merge(WithQuery):
 
     @target.setter
     def target(self, value):
-        assert isinstance(value, Table)
+        if not isinstance(value, Table):
+            raise ValueError("invalid target: %r" % value)
         self._target = value
 
     @property
@@ -1127,7 +1166,8 @@ class Merge(WithQuery):
 
     @source.setter
     def source(self, value):
-        assert isinstance(value, (Table, SelectQuery, Values))
+        if not isinstance(value, (Table, SelectQuery, Values)):
+            raise ValueError("invalid source: %r" % value)
         self._source = value
 
     @property
@@ -1136,7 +1176,8 @@ class Merge(WithQuery):
 
     @condition.setter
     def condition(self, value):
-        assert isinstance(value, Expression)
+        if not isinstance(value, Expression):
+            raise ValueError("invalid condition: %r" % value)
         self._condition = value
 
     @property
@@ -1145,7 +1186,8 @@ class Merge(WithQuery):
 
     @whens.setter
     def whens(self, value):
-        assert all(isinstance(w, Matched) for w in value)
+        if any(not isinstance(w, Matched) for w in value):
+            raise ValueError("invalid whens: %r" % value)
         self._whens = tuple(value)
 
     def __str__(self):
@@ -1191,7 +1233,8 @@ class Matched(object):
     @condition.setter
     def condition(self, value):
         if value is not None:
-            assert isinstance(value, Expression)
+            if not isinstance(value, Expression):
+                raise ValueError("invalid condition: %r" % value)
         self._condition = value
 
     def _then_str(self):
@@ -1228,7 +1271,8 @@ class _MatchedValues(Matched):
 
     @columns.setter
     def columns(self, value):
-        assert all(isinstance(col, Column) for col in value)
+        if any(not isinstance(col, Column) for col in value):
+            raise ValueError("invalid columns: %r" % value)
         self._columns = value
 
 
@@ -1304,7 +1348,8 @@ class CombiningQuery(FromItem, SelectQuery):
     _operator = ''
 
     def __init__(self, *queries, **kwargs):
-        assert all(isinstance(q, Query) for q in queries)
+        if any(not isinstance(q, Query) for q in queries):
+            raise ValueError("invalid queries: %r" % (queries,))
         self.queries = queries
         self.all_ = kwargs.pop('all_', False)
         super(CombiningQuery, self).__init__(**kwargs)
@@ -1424,7 +1469,8 @@ class Join(FromItem):
 
     @left.setter
     def left(self, value):
-        assert isinstance(value, FromItem)
+        if not isinstance(value, FromItem):
+            raise ValueError("invalid left: %r" % value)
         self._left = value
 
     @property
@@ -1433,7 +1479,8 @@ class Join(FromItem):
 
     @right.setter
     def right(self, value):
-        assert isinstance(value, FromItem)
+        if not isinstance(value, FromItem):
+            raise ValueError("invalid right: %r" % value)
         self._right = value
 
     @property
@@ -1444,7 +1491,8 @@ class Join(FromItem):
     def condition(self, value):
         from sql.operators import And, Or
         if value is not None:
-            assert isinstance(value, (Expression, And, Or))
+            if not isinstance(value, (Expression, And, Or)):
+                raise ValueError("invalid condition: %r" % value)
         self._condition = value
 
     @property
@@ -1454,8 +1502,10 @@ class Join(FromItem):
     @type_.setter
     def type_(self, value):
         value = value.upper()
-        assert value in ('INNER', 'LEFT', 'LEFT OUTER',
-            'RIGHT', 'RIGHT OUTER', 'FULL', 'FULL OUTER', 'CROSS')
+        if value not in {
+                'INNER', 'LEFT', 'LEFT OUTER', 'RIGHT', 'RIGHT OUTER', 'FULL',
+                'FULL OUTER', 'CROSS'}:
+            raise ValueError("invalid type: %r" % value)
         self._type_ = value
 
     def __str__(self):
@@ -1534,8 +1584,10 @@ class From(list):
         return tuple(p)
 
     def __add__(self, other):
-        assert isinstance(other, FromItem)
-        assert not isinstance(other, CombiningQuery)
+        if not isinstance(other, FromItem):
+            return NotImplemented
+        elif isinstance(other, CombiningQuery):
+            return NotImplemented
         return From(super(From, self).__add__([other]))
 
 
@@ -1823,21 +1875,35 @@ class Cast(Expression):
 
 
 class Collate(Expression):
-    __slots__ = ('expression', 'collation')
+    __slots__ = ('_expression', '_collation')
 
     def __init__(self, expression, collation):
         super(Collate, self).__init__()
         self.expression = expression
         self.collation = collation
 
+    @property
+    def expression(self):
+        return self._expression
+
+    @expression.setter
+    def expression(self, value):
+        self._expression = value
+
+    @property
+    def collation(self):
+        return self._collation
+
+    @collation.setter
+    def collation(self, value):
+        self._collation = value
+
     def __str__(self):
         if isinstance(self.expression, Expression):
             value = self.expression
         else:
             value = Flavor.get().param
-        if '"' in self.collation:
-            raise ValueError("Wrong collation %s" % self.collation)
-        return '%s COLLATE "%s"' % (value, self.collation)
+        return '%s COLLATE %s' % (value, _escape_identifier(self.collation))
 
     @property
     def params(self):
@@ -1860,8 +1926,11 @@ class Grouping(Expression):
 
     @sets.setter
     def sets(self, value):
-        assert all(
-            isinstance(col, Expression) for cols in value for col in cols)
+        if any(
+                not isinstance(col, Expression)
+                for cols in value
+                for col in cols):
+            raise ValueError("invalid sets: %r" % value)
         self._sets = tuple(tuple(cols) for cols in value)
 
     def __str__(self):
@@ -1888,10 +1957,11 @@ class Rollup(Expression):
 
     @expressions.setter
     def expressions(self, value):
-        assert all(
-            isinstance(col, Expression)
-            or all(isinstance(c, Expression) for c in col)
-            for col in value)
+        if not all(
+                isinstance(col, Expression)
+                or all(isinstance(c, Expression) for c in col)
+                for col in value):
+            raise ValueError("invalid expressions: %r" % value)
         self._expressions = tuple(value)
 
     def __str__(self):
@@ -1945,7 +2015,8 @@ class Window(object):
 
     @partition.setter
     def partition(self, value):
-        assert all(isinstance(e, Expression) for e in value)
+        if any(not isinstance(e, Expression) for e in value):
+            raise ValueError("invalid partition: %r" % value)
         self._partition = value
 
     @property
@@ -1957,7 +2028,8 @@ class Window(object):
         if value is not None:
             if isinstance(value, Expression):
                 value = [value]
-            assert all(isinstance(col, Expression) for col in value)
+            if any(not isinstance(col, Expression) for col in value):
+                raise ValueError("invalid order by: %r" % value)
         self._order_by = value
 
     @property
@@ -1967,7 +2039,8 @@ class Window(object):
     @frame.setter
     def frame(self, value):
         if value:
-            assert value in ['RANGE', 'ROWS', 'GROUPS']
+            if value not in {'RANGE', 'ROWS', 'GROUPS'}:
+                raise ValueError("invalid frame: %r" % value)
         self._frame = value
 
     @property
@@ -1977,7 +2050,8 @@ class Window(object):
     @start.setter
     def start(self, value):
         if value:
-            assert isinstance(value, numbers.Integral)
+            if not isinstance(value, numbers.Integral):
+                raise ValueError("invalid start: %r" % value)
         self._start = value
 
     @property
@@ -1987,7 +2061,8 @@ class Window(object):
     @end.setter
     def end(self, value):
         if value:
-            assert isinstance(value, numbers.Integral)
+            if not isinstance(value, numbers.Integral):
+                raise ValueError("invalid end: %r" % value)
         self._end = value
 
     @property
@@ -1997,7 +2072,8 @@ class Window(object):
     @exclude.setter
     def exclude(self, value):
         if value:
-            assert value in ['CURRENT ROW', 'GROUP', 'TIES']
+            if value not in {'CURRENT ROW', 'GROUP', 'TIES'}:
+                raise ValueError("invalid exclude: %r" % value)
         self._exclude = value
 
     @property
@@ -2070,7 +2146,8 @@ class Order(Expression):
 
     @expression.setter
     def expression(self, value):
-        assert isinstance(value, (Expression, SelectQuery))
+        if not isinstance(value, (Expression, SelectQuery)):
+            raise ValueError("invalid expression: %r" % value)
         self._expression = value
 
     def __str__(self):
@@ -2173,7 +2250,8 @@ class For(object):
     @type_.setter
     def type_(self, value):
         value = value.upper()
-        assert value in ('UPDATE', 'SHARE')
+        if value not in {'UPDATE', 'SHARE'}:
+            raise ValueError("invalid type: %r" % value)
         self._type_ = value
 
     def __str__(self):

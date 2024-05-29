@@ -200,6 +200,10 @@ class TestOperators(unittest.TestCase):
             self.assertEqual(str(is_), '("c1" IS FALSE)')
             self.assertEqual(is_.params, ())
 
+    def test_is_invalid_right(self):
+        with self.assertRaises(ValueError):
+            Is(self.table.c, 'foo')
+
     def test_is_not(self):
         for is_ in [IsNot(self.table.c1, None),
                 ~Is(self.table.c1, None)]:
@@ -314,6 +318,10 @@ class TestOperators(unittest.TestCase):
             self.assertEqual(like.params, ('foo', ''))
         finally:
             Flavor.set(Flavor())
+
+    def test_like_invalid_escape(self):
+        with self.assertRaises(ValueError):
+            Like(self.table.c, 'test', escape='fo')
 
     def test_ilike(self):
         flavor = Flavor(ilike=True)

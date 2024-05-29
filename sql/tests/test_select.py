@@ -49,6 +49,14 @@ class TestSelect(unittest.TestCase):
         self.assertEqual(str(query), 'SELECT (SELECT %s) AS "foo"')
         self.assertEqual(tuple(query.params), (1,))
 
+    def test_select_invalid_column(self):
+        with self.assertRaises(ValueError):
+            Select(['foo'])
+
+    def test_select_invalid_where(self):
+        with self.assertRaises(ValueError):
+            self.table.select(where='foo')
+
     def test_select_distinct(self):
         query = self.table.select(self.table.c, distinct=True)
         self.assertEqual(
@@ -67,6 +75,10 @@ class TestSelect(unittest.TestCase):
             str(query),
             'SELECT DISTINCT ON ("a"."a", "a"."b") "a"."c" FROM "t" AS "a"')
         self.assertEqual(tuple(query.params), ())
+
+    def test_select_invalid_distinct_on(self):
+        with self.assertRaises(ValueError):
+            self.table.select(self.table.c, distinct_on='foo')
 
     def test_select_from_list(self):
         t2 = Table('t2')
@@ -231,6 +243,10 @@ class TestSelect(unittest.TestCase):
             'GROUP BY CUBE ("a"."a", "a"."b")')
         self.assertEqual(tuple(query.params), ('*',))
 
+    def test_select_invalid_group_by(self):
+        with self.assertRaises(ValueError):
+            self.table.select(group_by=['foo'])
+
     def test_select_having(self):
         col1 = self.table.col1
         col2 = self.table.col2
@@ -241,12 +257,20 @@ class TestSelect(unittest.TestCase):
             'HAVING (MIN("a"."col2") > %s)')
         self.assertEqual(tuple(query.params), (3,))
 
+    def test_select_invalid_having(self):
+        with self.assertRaises(ValueError):
+            self.table.select(having='foo')
+
     def test_select_order(self):
         c = self.table.c
         query = self.table.select(c, order_by=Literal(1))
         self.assertEqual(str(query),
             'SELECT "a"."c" FROM "t" AS "a" ORDER BY %s')
         self.assertEqual(tuple(query.params), (1,))
+
+    def test_select_invalid_order(self):
+        with self.assertRaises(ValueError):
+            self.table.select(order_by='foo')
 
     def test_select_limit_offset(self):
         try:
@@ -284,6 +308,14 @@ class TestSelect(unittest.TestCase):
             self.assertEqual(tuple(query.params), (10,))
         finally:
             Flavor.set(Flavor())
+
+    def test_select_invalid_limit(self):
+        with self.assertRaises(ValueError):
+            self.table.select(limit='foo')
+
+    def test_select_invalid_offset(self):
+        with self.assertRaises(ValueError):
+            self.table.select(offset='foo')
 
     def test_select_offset_fetch(self):
         try:
@@ -390,6 +422,10 @@ class TestSelect(unittest.TestCase):
             'SELECT "a"."c" FROM "t" AS "a" FOR UPDATE')
         self.assertEqual(tuple(query.params), ())
 
+    def test_select_invalid_for(self):
+        with self.assertRaises(ValueError):
+            self.table.select(for_=['foo'])
+
     def test_copy(self):
         query = self.table.select()
         copy_query = deepcopy(query)
@@ -471,6 +507,10 @@ class TestSelect(unittest.TestCase):
             'FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY "a"."c2")')
         self.assertEqual(tuple(query.params), (1,))
+
+    def test_select_invalid_window(self):
+        with self.assertRaises(ValueError):
+            self.table.select(windows=['foo'])
 
     def test_order_params(self):
         with_ = With(query=self.table.select(self.table.c,

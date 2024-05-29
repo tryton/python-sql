@@ -14,12 +14,20 @@ class TestWindow(unittest.TestCase):
         self.assertEqual(str(window), 'PARTITION BY "c1", "c2"')
         self.assertEqual(window.params, ())
 
+    def test_window_invalid_partition(self):
+        with self.assertRaises(ValueError):
+            Window(['foo'])
+
     def test_window_order(self):
         t = Table('t')
         window = Window([t.c], order_by=t.c)
 
         self.assertEqual(str(window), 'PARTITION BY "c" ORDER BY "c"')
         self.assertEqual(window.params, ())
+
+    def test_window_invalid_order(self):
+        with self.assertRaises(ValueError):
+            Window([Table('t').c], order_by='foo')
 
     def test_window_range(self):
         t = Table('t')
@@ -50,6 +58,18 @@ class TestWindow(unittest.TestCase):
             'BETWEEN %s FOLLOWING AND UNBOUNDED FOLLOWING')
         self.assertEqual(window.params, (1,))
 
+    def test_window_invalid_frame(self):
+        with self.assertRaises(ValueError):
+            Window([Table('t').c], frame='foo')
+
+    def test_window_invalid_start(self):
+        with self.assertRaises(ValueError):
+            Window([Table('t').c], start='foo')
+
+    def test_window_invalid_end(self):
+        with self.assertRaises(ValueError):
+            Window([Table('t').c], end='foo')
+
     def test_window_exclude(self):
         t = Table('t')
         window = Window([t.c], exclude='TIES')
@@ -57,6 +77,10 @@ class TestWindow(unittest.TestCase):
         self.assertEqual(str(window),
             'PARTITION BY "c" EXCLUDE TIES')
         self.assertEqual(window.params, ())
+
+    def test_window_invalid_exclude(self):
+        with self.assertRaises(ValueError):
+            Window([Table('t').c], exclude='foo')
 
     def test_window_rows(self):
         t = Table('t')
