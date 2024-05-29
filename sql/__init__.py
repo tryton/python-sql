@@ -1010,6 +1010,10 @@ class Update(Insert):
                 raise ValueError("invalid where: %r" % value)
         self._where = value
 
+    @staticmethod
+    def _format_column(value):
+        return Select._format_column(value)
+
     def __str__(self):
         assert all(col.table == self.table for col in self.columns)
         # Get columns without alias
@@ -1027,7 +1031,7 @@ class Update(Insert):
             returning = ''
             if self.returning:
                 returning = ' RETURNING ' + ', '.join(
-                    map(self._format, self.returning))
+                    map(self._format_column, self.returning))
             return (self._with_str()
                 + 'UPDATE %s AS "%s" SET ' % (self.table, self.table.alias)
                 + values + from_ + where + returning)
@@ -1095,20 +1099,15 @@ class Delete(WithQuery):
     @returning.setter
     def returning(self, value):
         if value is not None:
-            if not isinstance(value, list):
+            if any(
+                    not isinstance(col, (Expression, SelectQuery))
+                    for col in value):
                 raise ValueError("invalid returning: %r" % value)
         self._returning = value
 
     @staticmethod
-    def _format(value, param=None):
-        if param is None:
-            param = Flavor.get().param
-        if isinstance(value, Expression):
-            return str(value)
-        elif isinstance(value, Select):
-            return '(%s)' % value
-        else:
-            return param
+    def _format(value):
+        return Select._format_column(value)
 
     def __str__(self):
         with AliasManager(exclude=[self.table]):

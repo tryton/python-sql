@@ -40,6 +40,14 @@ class TestDelete(unittest.TestCase):
         self.assertEqual(str(query), 'DELETE FROM "t" RETURNING "c"')
         self.assertEqual(query.params, ())
 
+    def test_delet_returning_select(self):
+        query = self.table.delete(returning=[self.table.select()])
+
+        self.assertEqual(
+            str(query),
+            'DELETE FROM "t" RETURNING (SELECT * FROM "t")')
+        self.assertEqual(query.params, ())
+
     def test_delete_invalid_returning(self):
         with self.assertRaises(ValueError):
             self.table.delete(returning='foo')
