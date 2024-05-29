@@ -67,14 +67,16 @@ class TestMerge(unittest.TestCase):
     def test_matched_update(self):
         query = self.target.merge(
             self.source, self.target.c1 == self.source.c2,
-            MatchedUpdate([self.target.c1], [self.target.c1 + self.source.c2]))
+            MatchedUpdate(
+                [self.target.c1, self.target.c2],
+                [self.target.c1 + self.source.c2, 42]))
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
             'ON ("a"."c1" = "b"."c2") '
             'WHEN MATCHED THEN '
-            'UPDATE SET "c1" = ("a"."c1" + "b"."c2")')
-        self.assertEqual(query.params, ())
+            'UPDATE SET "c1" = ("a"."c1" + "b"."c2"), "c2" = %s')
+        self.assertEqual(query.params, (42,))
 
     def test_matched_delete(self):
         query = self.target.merge(

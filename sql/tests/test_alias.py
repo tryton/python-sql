@@ -61,3 +61,18 @@ class TestAliasManager(unittest.TestCase):
         self.finish2.wait()
         if not self.succeed1.is_set() or not self.succeed2.is_set():
             self.fail()
+
+    def test_contains(self):
+        with AliasManager():
+            AliasManager.get(self.t1)
+            self.assertTrue(AliasManager.contains(self.t1))
+
+    def test_contains_exclude(self):
+        with AliasManager(exclude=[self.t1]):
+            self.assertEqual(AliasManager.get(self.t1), '')
+            self.assertFalse(AliasManager.contains(self.t1))
+
+    def test_set(self):
+        with AliasManager():
+            AliasManager.set(self.t1, 'foo')
+            self.assertEqual(AliasManager.get(self.t1), 'foo')

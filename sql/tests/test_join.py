@@ -66,3 +66,10 @@ class TestJoin(unittest.TestCase):
                 join = getattr(t1, method)(t2)
                 type_ = method[:-len('_join')].replace('_', ' ').upper()
                 self.assertEqual(join.type_, type_)
+
+    def test_join_alias(self):
+        join = Join(Table('t1'), Table('t2'))
+        with self.assertRaises(AttributeError):
+            join.alias
+        with self.assertRaises(AttributeError):
+            join.has_alias

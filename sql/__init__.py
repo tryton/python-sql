@@ -1195,10 +1195,7 @@ class Merge(WithQuery):
                 source = '(%s)' % self.source
             else:
                 source = self.source
-            if self.condition:
-                condition = 'ON %s' % self.condition
-            else:
-                condition = ''
+            condition = 'ON %s' % self.condition
             return (self._with_str()
                 + 'MERGE INTO %s AS "%s" ' % (self.target, self.target.alias)
                 + 'USING %s AS "%s" ' % (source, self.source.alias)
@@ -1340,7 +1337,8 @@ class NotMatchedInsert(_MatchedValues, NotMatched):
     @property
     def params(self):
         p = list(super().params)
-        p.extend(self.values.params)
+        if self.values:
+            p.extend(self.values.params)
         return tuple(p)
 
 
@@ -1522,14 +1520,9 @@ class Join(FromItem):
     def params(self):
         p = []
         for item in (self.left, self.right):
-            try:
-                p.extend(item.params)
-            except AttributeError:
-                pass
-        try:
+            p.extend(item.params)
+        if self.condition:
             p.extend(self.condition.params)
-        except AttributeError:
-            pass
         return tuple(p)
 
     @property
@@ -1611,7 +1604,7 @@ class Values(list, Query, FromItem):
 
     @property
     def params(self):
-        p = []
+        p = list(super().params)
         for values in self:
             for value in values:
                 if isinstance(value, Expression):

@@ -34,6 +34,12 @@ class TestSelect(unittest.TestCase):
             'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s)')
         self.assertEqual(tuple(query.params), ('foo',))
 
+    def test_select_iter(self):
+        query = self.table.select()
+        self.assertEqual(
+            tuple(query),
+            ('SELECT * FROM "t" AS "a"', ()))
+
     def test_select_without_from(self):
         query = Select([Literal(1)])
         self.assertEqual(str(query), 'SELECT %s')
@@ -507,6 +513,16 @@ class TestSelect(unittest.TestCase):
             'FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY "a"."c2")')
         self.assertEqual(tuple(query.params), (1,))
+
+    def test_window_with_alias(self):
+        query = self.table.select(
+            Min(self.table.c1, window=Window([self.table.c2])).as_('min'))
+
+        self.assertEqual(
+            str(query),
+            'SELECT MIN("a"."c1") OVER "b" AS "min" FROM "t" AS "a" '
+            'WINDOW "b" AS (PARTITION BY "a"."c2")')
+        self.assertEqual(query.params, ())
 
     def test_select_invalid_window(self):
         with self.assertRaises(ValueError):

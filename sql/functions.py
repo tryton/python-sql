@@ -318,10 +318,7 @@ class Trim(Function):
             if isinstance(arg, str):
                 p.append(arg)
             else:
-                try:
-                    p.extend(arg.params)
-                except AttributeError:
-                    pass
+                p.extend(arg.params)
         return tuple(p)
 
 

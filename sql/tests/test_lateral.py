@@ -11,7 +11,7 @@ class TestLateral(unittest.TestCase):
     def test_lateral_select(self):
         t1 = Table('t1')
         t2 = Table('t2')
-        lateral = Lateral(t2.select(where=t2.id == t1.t2))
+        lateral = t2.select(where=t2.id == t1.t2).lateral()
         query = From([t1, lateral]).select()
 
         self.assertEqual(str(query),

@@ -9,11 +9,18 @@ from sql.operators import (
     Abs, And, Between, Div, Equal, Exists, FloorDiv, Greater, GreaterEqual,
     ILike, In, Is, IsDistinct, IsNot, IsNotDistinct, Less, LessEqual, Like,
     LShift, Mod, Mul, Neg, Not, NotBetween, NotEqual, NotILike, NotIn, NotLike,
-    Or, Pos, Pow, RShift, Sub)
+    Operator, Or, Pos, Pow, RShift, Sub)
 
 
 class TestOperators(unittest.TestCase):
     table = Table('t')
+
+    def test_operator_operands(self):
+        self.assertEqual(Operator()._operands, ())
+
+    def test_operator_str(self):
+        with self.assertRaises(NotImplementedError):
+            str(Operator())
 
     def test_and(self):
         for and_ in [And((self.table.c1, self.table.c2)),

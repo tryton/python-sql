@@ -3,27 +3,32 @@
 import unittest
 
 from sql import (
-    Asc, Column, Desc, Flavor, Literal, NullsFirst, NullsLast, Order, Table)
+    Asc, Column, Desc, Flavor, Literal, NullOrder, NullsFirst, NullsLast,
+    Order, Table)
 
 
 class TestOrder(unittest.TestCase):
     column = Column(Table('t'), 'c')
 
     def test_asc(self):
-        self.assertEqual(str(Asc(self.column)), '"c" ASC')
+        self.assertEqual(str(self.column.asc), '"c" ASC')
 
     def test_desc(self):
-        self.assertEqual(str(Desc(self.column)), '"c" DESC')
+        self.assertEqual(str(self.column.desc), '"c" DESC')
 
     def test_nulls_first(self):
-        self.assertEqual(str(NullsFirst(self.column)), '"c" NULLS FIRST')
-        self.assertEqual(str(NullsFirst(Asc(self.column))),
+        self.assertEqual(str(self.column.nulls_first), '"c" NULLS FIRST')
+        self.assertEqual(str(Asc(self.column).nulls_first),
             '"c" ASC NULLS FIRST')
 
     def test_nulls_last(self):
-        self.assertEqual(str(NullsLast(self.column)), '"c" NULLS LAST')
-        self.assertEqual(str(NullsLast(Asc(self.column))),
+        self.assertEqual(str(self.column.nulls_last), '"c" NULLS LAST')
+        self.assertEqual(str(Asc(self.column).nulls_last),
             '"c" ASC NULLS LAST')
+
+    def test_null_order_case_values(self):
+        with self.assertRaises(NotImplementedError):
+            NullOrder(self.column)._case_values()
 
     def test_no_null_ordering(self):
         try:
