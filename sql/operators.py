@@ -121,7 +121,8 @@ class NaryOperator(list, Operator):
         return self
 
     def __str__(self):
-        return '(' + (' %s ' % self._operator).join(map(str, self)) + ')'
+        return '(' + (' %s ' % self._operator).join(
+            map(self._format, self)) + ')'
 
 
 class And(NaryOperator):

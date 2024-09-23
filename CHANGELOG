@@ -1,3 +1,4 @@
+* Use parameter for unary operator
 * Support default values when inserting not matched merge
 * Replace assert by ValueError
 

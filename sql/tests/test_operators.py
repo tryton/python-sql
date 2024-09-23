@@ -32,6 +32,10 @@ class TestOperators(unittest.TestCase):
         self.assertEqual(str(and_), '(%s AND "c2")')
         self.assertEqual(and_.params, (True,))
 
+        and_ = And((Literal(True), 'foo'))
+        self.assertEqual(str(and_), '(%s AND %s)')
+        self.assertEqual(and_.params, (True, 'foo'))
+
     def test_operator_operators(self):
         and_ = And((Literal(True), self.table.c1))
         and2 = and_ & And((Literal(True), self.table.c2))
