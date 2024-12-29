@@ -1,3 +1,5 @@
+* Add support for Python 3.13
+
 Version 1.5.2 - 2024-09-30
 * Use parameter for unary operator
 * Support default values when inserting not matched merge
