@@ -6,7 +6,7 @@ import os
 import sql
 
 here = os.path.dirname(__file__)
-readme = os.path.normpath(os.path.join(here, '..', '..', 'README'))
+readme = os.path.normpath(os.path.join(here, '..', '..', 'README.rst'))
 
 
 def load_tests(loader, tests, pattern):

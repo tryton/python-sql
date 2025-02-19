@@ -106,23 +106,23 @@ Select on other schema::
 Insert query with default values::
 
     >>> tuple(user.insert())
-    ('INSERT INTO "user" AS "a" DEFAULT VALUES', ())
+    ('INSERT INTO "user" DEFAULT VALUES', ())
 
 Insert query with values::
 
     >>> tuple(user.insert(columns=[user.name, user.login],
     ...         values=[['Foo', 'foo']]))
-    ('INSERT INTO "user" AS "a" ("name", "login") VALUES (%s, %s)', ('Foo', 'foo'))
+    ('INSERT INTO "user" ("name", "login") VALUES (%s, %s)', ('Foo', 'foo'))
     >>> tuple(user.insert(columns=[user.name, user.login],
     ...         values=[['Foo', 'foo'], ['Bar', 'bar']]))
-    ('INSERT INTO "user" AS "a" ("name", "login") VALUES (%s, %s), (%s, %s)', ('Foo', 'foo', 'Bar', 'bar'))
+    ('INSERT INTO "user" ("name", "login") VALUES (%s, %s), (%s, %s)', ('Foo', 'foo', 'Bar', 'bar'))
 
 Insert query with query::
 
     >>> passwd = Table('passwd')
     >>> select = passwd.select(passwd.login, passwd.passwd)
     >>> tuple(user.insert(values=select))
-    ('INSERT INTO "user" AS "b" SELECT "a"."login", "a"."passwd" FROM "passwd" AS "a"', ())
+    ('INSERT INTO "user" SELECT "a"."login", "a"."passwd" FROM "passwd" AS "a"', ())
 
 Update query with values::
 
@@ -166,23 +166,23 @@ Flavors::
     >>> select.offset = 10
     >>> Flavor.set(Flavor())
     >>> tuple(select)
-    ('SELECT * FROM "user" AS "a" OFFSET 10', ())
+    ('SELECT * FROM "user" AS "a" OFFSET %s', (10,))
     >>> Flavor.set(Flavor(max_limit=18446744073709551615))
     >>> tuple(select)
-    ('SELECT * FROM "user" AS "a" LIMIT 18446744073709551615 OFFSET 10', ())
+    ('SELECT * FROM "user" AS "a" LIMIT 18446744073709551615 OFFSET %s', (10,))
     >>> Flavor.set(Flavor(max_limit=-1))
     >>> tuple(select)
-    ('SELECT * FROM "user" AS "a" LIMIT -1 OFFSET 10', ())
+    ('SELECT * FROM "user" AS "a" LIMIT -1 OFFSET %s', (10,))
 
 Limit style::
 
     >>> select = user.select(limit=10, offset=20)
     >>> Flavor.set(Flavor(limitstyle='limit'))
     >>> tuple(select)
-    ('SELECT * FROM "user" AS "a" LIMIT 10 OFFSET 20', ())
+    ('SELECT * FROM "user" AS "a" LIMIT %s OFFSET %s', (10, 20))
     >>> Flavor.set(Flavor(limitstyle='fetch'))
     >>> tuple(select)
-    ('SELECT * FROM "user" AS "a" OFFSET (20) ROWS FETCH FIRST (10) ROWS ONLY', ())
+    ('SELECT * FROM "user" AS "a" OFFSET (%s) ROWS FETCH FIRST (%s) ROWS ONLY', (20, 10))
     >>> Flavor.set(Flavor(limitstyle='rownum'))
     >>> tuple(select)
     ('SELECT "a".* FROM (SELECT "b".*, ROWNUM AS "rnum" FROM (SELECT * FROM "user" AS "c") AS "b" WHERE (ROWNUM <= %s)) AS "a" WHERE ("rnum" > %s)', (30, 20))
