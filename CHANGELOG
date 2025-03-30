@@ -1,3 +1,4 @@
+* Add support for weak reference on SQL objects
 * Add support for Python 3.13
 
 Version 1.5.2 - 2024-09-30

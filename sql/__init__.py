@@ -182,7 +182,7 @@ def format2numeric(query, params):
 
 
 class Query(object):
-    __slots__ = ()
+    __slots__ = ('__weakref__',)
 
     @property
     def params(self):
@@ -243,7 +243,7 @@ class WithQuery(Query):
 
 
 class FromItem(object):
-    __slots__ = ()
+    __slots__ = ('__weakref__',)
 
     @property
     def alias(self):
@@ -1615,7 +1615,7 @@ class Values(list, Query, FromItem):
 
 
 class Expression(object):
-    __slots__ = ()
+    __slots__ = ('__weakref__',)
 
     def __str__(self):
         raise NotImplementedError
@@ -1986,7 +1986,8 @@ class Cube(Rollup):
 
 class Window(object):
     __slots__ = (
-        '_partition', '_order_by', '_frame', '_start', '_end', '_exclude')
+        '_partition', '_order_by', '_frame', '_start', '_end', '_exclude',
+        '__weakref__')
 
     def __init__(self, partition, order_by=None,
             frame=None, start=None, end=0, exclude=None):
