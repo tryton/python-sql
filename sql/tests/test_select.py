@@ -531,14 +531,24 @@ class TestSelect(unittest.TestCase):
     def test_order_params(self):
         with_ = With(query=self.table.select(self.table.c,
                 where=(self.table.c > 1)))
-        w = Window([Literal(8)])
+        w = Window([Literal(7)])
         query = Select([Literal(2), Min(self.table.c, window=w)],
             from_=self.table.select(where=self.table.c > 3),
             with_=with_,
             where=self.table.c > 4,
             group_by=[Literal(5)],
-            order_by=[Literal(6)],
-            having=Literal(7))
+            having=Literal(6),
+            order_by=[Literal(8)])
+        self.assertEqual(
+            str(query),
+            'WITH "c" AS (SELECT "a"."c" FROM "t" AS "a" WHERE ("a"."c" > %s))'
+            ' SELECT %s, MIN("a"."c") OVER "b" '
+            'FROM SELECT * FROM "t" AS "a" WHERE ("a"."c" > %s) '
+            'WHERE ("a"."c" > %s) '
+            'GROUP BY %s '
+            'HAVING %s '
+            'WINDOW "b" AS (PARTITION BY %s) '
+            'ORDER BY %s')
         self.assertEqual(tuple(query.params), (1, 2, 3, 4, 5, 6, 7, 8))
 
     def test_no_as(self):

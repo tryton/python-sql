@@ -692,13 +692,13 @@ class Select(FromItem, SelectQuery):
             if self.group_by:
                 for expression in self.group_by:
                     p.extend(expression.params)
-            if self.order_by:
-                for expression in self.order_by:
-                    p.extend(expression.params)
             if self.having:
                 p.extend(self.having.params)
             for window in self.windows:
                 p.extend(window.params)
+            if self.order_by:
+                for expression in self.order_by:
+                    p.extend(expression.params)
             p.extend(self._limit_offset_params)
         return tuple(p)
 
