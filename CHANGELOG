@@ -1,3 +1,5 @@
+* Do not use parameters for COUNT(*)
+
 Version 1.6.0 - 2025-05-02
 * Fix position of order_by parameters in Select query
 * Add support for weak reference on SQL objects

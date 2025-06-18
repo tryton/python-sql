@@ -4,7 +4,6 @@ from sql import Expression, Flavor, Literal, Window
 
 __all__ = ['Avg', 'BitAnd', 'BitOr', 'BoolAnd', 'BoolOr', 'Count', 'Every',
     'Max', 'Min', 'Stddev', 'Sum', 'Variance']
-_sentinel = object()
 
 
 class Aggregate(Expression):
@@ -169,20 +168,31 @@ class BoolOr(Aggregate):
     _sql = 'BOOL_OR'
 
 
+class _Star(Expression):
+    __slots__ = ()
+
+    def __str__(self):
+        return '*'
+
+    @property
+    def params(self):
+        return ()
+
+
 class Count(Aggregate):
     __slots__ = ()
     _sql = 'COUNT'
 
-    def __init__(self, expression=_sentinel, **kwargs):
-        if expression is _sentinel:
-            expression = Literal('*')
+    def __init__(self, expression=_Star(), **kwargs):
         super().__init__(expression, **kwargs)
 
     @property
     def _case_expression(self):
         expression = super(Count, self)._case_expression
-        if (isinstance(self.expression, Literal)
-                and expression.value == '*'):
+        if (isinstance(self.expression, _Star)
+                # Keep testing Literal('*') for backward compatibility
+                or (isinstance(self.expression, Literal)
+                and expression.value == '*')):
             expression = Literal(1)
         return expression
 

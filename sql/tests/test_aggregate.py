@@ -42,8 +42,8 @@ class TestAggregate(unittest.TestCase):
 
     def test_count_without_expression(self):
         count = Count()
-        self.assertEqual(str(count), 'COUNT(%s)')
-        self.assertEqual(count.params, ('*',))
+        self.assertEqual(str(count), 'COUNT(*)')
+        self.assertEqual(count.params, ())
 
     def test_order_by_one_column(self):
         avg = Avg(self.table.a, order_by=self.table.b)
