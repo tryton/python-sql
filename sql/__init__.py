@@ -629,6 +629,20 @@ class Select(FromItem, SelectQuery):
                 and (self.limit is not None or self.offset is not None)):
             return self._rownum(str)
 
+        for expression in chain(
+                self.group_by or [],
+                self.order_by or []):
+            if not isinstance(expression, As):
+                continue
+            for column in self.columns:
+                if not isinstance(column, As):
+                    continue
+                if column.output_name != expression.output_name:
+                    continue
+                if (str(column.expression) != str(expression.expression)
+                        or column.params != expression.params):
+                    raise ValueError("%r != %r" % (expression, column))
+
         with AliasManager():
             if self.from_ is not None:
                 from_ = ' FROM %s' % self.from_

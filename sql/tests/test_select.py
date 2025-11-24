@@ -253,6 +253,12 @@ class TestSelect(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.table.select(group_by=['foo'])
 
+    def test_select_invalid_group_by_alias(self):
+        query = self.table.select(
+            self.table.c1.as_('c'), group_by=self.table.c2.as_('c'))
+        with self.assertRaises(ValueError):
+            str(query)
+
     def test_select_having(self):
         col1 = self.table.col1
         col2 = self.table.col2
@@ -268,15 +274,27 @@ class TestSelect(unittest.TestCase):
             self.table.select(having='foo')
 
     def test_select_order(self):
-        c = self.table.c
-        query = self.table.select(c, order_by=Literal(1))
+        column = self.table.c
+        query = self.table.select(column, order_by=column)
         self.assertEqual(str(query),
-            'SELECT "a"."c" FROM "t" AS "a" ORDER BY %s')
-        self.assertEqual(tuple(query.params), (1,))
+            'SELECT "a"."c" FROM "t" AS "a" ORDER BY "a"."c"')
+        self.assertEqual(tuple(query.params), ())
+
+        output = column.as_('c1')
+        query = self.table.select(output, order_by=output)
+        self.assertEqual(str(query),
+            'SELECT "a"."c" AS "c1" FROM "t" AS "a" ORDER BY "c1"')
+        self.assertEqual(tuple(query.params), ())
 
     def test_select_invalid_order(self):
         with self.assertRaises(ValueError):
             self.table.select(order_by='foo')
+
+    def test_select_invalid_order_alias(self):
+        query = self.table.select(
+            self.table.c1.as_('c'), order_by=self.table.c2.as_('c'))
+        with self.assertRaises(ValueError):
+            str(query)
 
     def test_select_limit_offset(self):
         try:
