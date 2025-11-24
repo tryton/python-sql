@@ -1,3 +1,4 @@
+* Add support for Python 3.14
 * Do not use parameters for COUNT(*)
 
 Version 1.6.0 - 2025-05-02
