@@ -1,5 +1,7 @@
 # This file is part of python-sql.  The COPYRIGHT file at the top level of
 # this repository contains the full copyright notices and license terms.
+
+from enum import Enum, auto
 from itertools import chain
 
 from sql import CombiningQuery, Expression, Flavor, FromItem, Select, Window
@@ -85,7 +87,7 @@ class FunctionKeyword(Function):
         return (self._function + '('
             + ' '.join(chain(*zip(
                         self._keywords,
-                        map(self._format, self.args))))[1:]
+                        map(self._format, self.args)))).strip()
             + ')')
 
 
@@ -383,9 +385,67 @@ class DateTrunc(Function):
 
 
 class Extract(FunctionKeyword):
-    __slots__ = ()
+    __slots__ = ('_field',)
     _function = 'EXTRACT'
-    _keywords = ('', 'FROM')
+
+    class Fields(str, Enum):
+        def _generate_next_value_(name, start, count, last_values):
+            return name.upper()
+
+        CENTURY = auto()
+        DAY = auto()
+        DECADE = auto()
+        DOW = auto()
+        DOY = auto()
+        EPOCH = auto()
+        HOUR = auto()
+        ISODOW = auto()
+        ISOYEAR = auto()
+        JULIAN = auto()
+        MICROSECONDS = auto()
+        MILLENNIUM = auto()
+        MILLISECONDS = auto()
+        MINUTE = auto()
+        MONTH = auto()
+        QUARTER = auto()
+        SECOND = auto()
+        TIMEZONE = auto()
+        TIMEZONE_HOUR = auto()
+        TIMEZONE_MINUTE = auto()
+        WEEK = auto()
+        YEAR = auto()
+
+    def __init__(self, field, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.field = field
+
+    @property
+    def field(self):
+        return self._field
+
+    @field.setter
+    def field(self, value):
+        value = value.upper()
+        if not hasattr(self.Fields, value):
+            raise ValueError("invalid field: %r" % value)
+        self._field = value
+
+    @property
+    def _keywords(self):
+        return ('%s FROM' % self.field,)
+
+    def __str__(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return str(Mapping(self.field, *self.args))
+        return super().__str__()
+
+    @property
+    def params(self):
+        Mapping = Flavor.get().function_mapping.get(self.__class__)
+        if Mapping:
+            return Mapping(self.field, *self.args).params
+        return super().params
 
 
 class Isfinite(Function):

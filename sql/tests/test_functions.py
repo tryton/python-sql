@@ -4,7 +4,7 @@ import unittest
 
 from sql import AliasManager, Flavor, Table, Window
 from sql.functions import (
-    Abs, AtTimeZone, CurrentTime, Div, Function, FunctionKeyword,
+    Abs, AtTimeZone, CurrentTime, Div, Extract, Function, FunctionKeyword,
     FunctionNotCallable, Overlay, Rank, Trim, WindowFunction)
 
 
@@ -138,6 +138,38 @@ class TestFunctions(unittest.TestCase):
         current_time = CurrentTime()
         self.assertEqual(str(current_time), 'CURRENT_TIME')
         self.assertEqual(current_time.params, ())
+
+    def test_extract(self):
+        extract = Extract(Extract.Fields.DAY, self.table.c)
+        self.assertEqual(str(extract), 'EXTRACT(DAY FROM "c")')
+        self.assertEqual(extract.params, ())
+
+        extract = Extract('day', self.table.c)
+        self.assertEqual(str(extract), 'EXTRACT(DAY FROM "c")')
+        self.assertEqual(extract.params, ())
+
+        extract = Extract(Extract.Fields.DAY, '2000-01-01')
+        self.assertEqual(str(extract), 'EXTRACT(DAY FROM %s)')
+        self.assertEqual(extract.params, ('2000-01-01',))
+
+    def test_extract_mapping(self):
+        class MyExtract(Function):
+            _function = 'MY_EXTRACT'
+
+        extract = Extract(Extract.Fields.DAY, '2000-01-01')
+        flavor = Flavor(function_mapping={
+                Extract: MyExtract,
+                })
+        Flavor.set(flavor)
+        try:
+            self.assertEqual(str(extract), 'MY_EXTRACT(%s, %s)')
+            self.assertEqual(extract.params, ('DAY', '2000-01-01'))
+        finally:
+            Flavor.set(Flavor())
+
+    def test_extract_invalid_field(self):
+        with self.assertRaises(ValueError):
+            Extract('foo', self.table.c)
 
 
 class TestWindowFunction(unittest.TestCase):
