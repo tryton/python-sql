@@ -197,7 +197,7 @@ class TestSelect(unittest.TestCase):
         output = column.as_('c1')
         query = self.table.select(output, group_by=output)
         self.assertEqual(str(query),
-            'SELECT "a"."c" AS "c1" FROM "t" AS "a" GROUP BY "c1"')
+            'SELECT "a"."c" AS "c1" FROM "t" AS "a" GROUP BY 1')
         self.assertEqual(tuple(query.params), ())
 
         query = self.table.select(Literal('foo'), group_by=Literal('foo'))

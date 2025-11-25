@@ -1,3 +1,4 @@
+* Use the ordinal number as aliases for GROUP BY
 * Check the coherence of the aliases of GROUP BY and ORDER BY expressions
 * Do not use parameter for EXTRACT field
 * Remove support for Python older than 3.6

@@ -629,12 +629,13 @@ class Select(FromItem, SelectQuery):
                 and (self.limit is not None or self.offset is not None)):
             return self._rownum(str)
 
+        ordinals = {}
         for expression in chain(
                 self.group_by or [],
                 self.order_by or []):
             if not isinstance(expression, As):
                 continue
-            for column in self.columns:
+            for i, column in enumerate(self.columns, start=1):
                 if not isinstance(column, As):
                     continue
                 if column.output_name != expression.output_name:
@@ -642,6 +643,12 @@ class Select(FromItem, SelectQuery):
                 if (str(column.expression) != str(expression.expression)
                         or column.params != expression.params):
                     raise ValueError("%r != %r" % (expression, column))
+                ordinals[column.output_name] = i
+
+        def str_or_ordinal(expression):
+            if isinstance(expression, As):
+                expression = ordinals.get(expression.output_name, expression)
+            return str(expression)
 
         with AliasManager():
             if self.from_ is not None:
@@ -671,7 +678,8 @@ class Select(FromItem, SelectQuery):
                 where = ' WHERE ' + str(self.where)
             group_by = ''
             if self.group_by:
-                group_by = ' GROUP BY ' + ', '.join(map(str, self.group_by))
+                group_by = ' GROUP BY ' + ', '.join(
+                    map(str_or_ordinal, self.group_by))
             having = ''
             if self.having:
                 having = ' HAVING ' + str(self.having)
