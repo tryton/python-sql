@@ -73,7 +73,7 @@ class TestInsert(unittest.TestCase):
         self.assertEqual(str(query),
             'INSERT INTO "t1" AS "b" ("c") VALUES (%s) '
             'RETURNING (SELECT "a"."c" FROM "t2" AS "a" '
-            'WHERE (("a"."c1" = "b"."c") AND ("a"."c2" = %s)))')
+            'WHERE ("a"."c1" = "b"."c") AND ("a"."c2" = %s))')
         self.assertEqual(tuple(query.params), ('foo', 'bar'))
 
     def test_insert_invalid_returning(self):
@@ -160,7 +160,7 @@ class TestInsert(unittest.TestCase):
 
         self.assertEqual(str(query),
             'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
-            'ON CONFLICT ("c1") WHERE ("a"."c2" = %s) DO NOTHING')
+            'ON CONFLICT ("c1") WHERE "a"."c2" = %s DO NOTHING')
         self.assertEqual(tuple(query.params), ('foo', 'bar'))
 
     def test_upsert_update(self):
@@ -188,7 +188,7 @@ class TestInsert(unittest.TestCase):
         self.assertEqual(str(query),
             'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
             'ON CONFLICT DO UPDATE SET "c1" = (%s) '
-            'WHERE ("a"."c2" = %s)')
+            'WHERE "a"."c2" = %s')
         self.assertEqual(tuple(query.params), ('baz', 'foo', 'bar'))
 
     def test_upsert_update_subquery(self):
@@ -218,7 +218,7 @@ class TestInsert(unittest.TestCase):
 
         self.assertEqual(str(query),
             'INSERT INTO "t" AS "a" ("c1") VALUES (%s) '
-            'ON CONFLICT DO UPDATE SET "c1" = (("EXCLUDED"."c1" + %s))')
+            'ON CONFLICT DO UPDATE SET "c1" = ("EXCLUDED"."c1" + %s)')
         self.assertEqual(tuple(query.params), (1, 2))
 
     def test_conflict_invalid_table(self):

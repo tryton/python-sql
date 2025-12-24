@@ -31,7 +31,7 @@ class TestSelect(unittest.TestCase):
     def test_select3(self):
         query = self.table.select(where=(self.table.c == 'foo'))
         self.assertEqual(str(query),
-            'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s)')
+            'SELECT * FROM "t" AS "a" WHERE "a"."c" = %s')
         self.assertEqual(tuple(query.params), ('foo',))
 
     def test_select_iter(self):
@@ -110,7 +110,7 @@ class TestSelect(unittest.TestCase):
             'SELECT * FROM "t2" AS "c") AS "a"')
         query1.where = self.table.c == 'foo'
         self.assertEqual(str(union),
-            'SELECT * FROM "t" AS "a" WHERE ("a"."c" = %s) UNION ALL '
+            'SELECT * FROM "t" AS "a" WHERE "a"."c" = %s UNION ALL '
             'SELECT * FROM "t2" AS "b"')
         self.assertEqual(tuple(union.params), ('foo',))
 
@@ -279,7 +279,7 @@ class TestSelect(unittest.TestCase):
             having=(Min(col2) > 3))
         self.assertEqual(str(query),
             'SELECT "a"."col1", MIN("a"."col2") FROM "t" AS "a" '
-            'HAVING (MIN("a"."col2") > %s)')
+            'HAVING MIN("a"."col2") > %s')
         self.assertEqual(tuple(query.params), (3,))
 
     def test_select_invalid_having(self):
@@ -383,8 +383,8 @@ class TestSelect(unittest.TestCase):
                 'SELECT "a".* FROM ('
                     'SELECT "b".*, ROWNUM AS "rnum" FROM ('
                         'SELECT * FROM "t" AS "c") AS "b" '
-                    'WHERE (ROWNUM <= %s)) AS "a" '
-                'WHERE ("rnum" > %s)')
+                    'WHERE ROWNUM <= %s) AS "a" '
+                'WHERE "rnum" > %s')
             self.assertEqual(tuple(query.params), (60, 10))
 
             query = self.table.select(
@@ -395,8 +395,8 @@ class TestSelect(unittest.TestCase):
                     'SELECT "b"."col1", "b"."col2", ROWNUM AS "rnum" FROM ('
                         'SELECT "c"."c1" AS "col1", "c"."c2" AS "col2" '
                         'FROM "t" AS "c") AS "b" '
-                    'WHERE (ROWNUM <= %s)) AS "a" '
-                'WHERE ("rnum" > %s)')
+                    'WHERE ROWNUM <= %s) AS "a" '
+                'WHERE "rnum" > %s')
             self.assertEqual(tuple(query.params), (60, 10))
 
             subquery = query.select(query.col1, query.col2)
@@ -407,8 +407,8 @@ class TestSelect(unittest.TestCase):
                         'FROM ('
                             'SELECT "c"."c1" AS "col1", "c"."c2" AS "col2" '
                             'FROM "t" AS "c") AS "a" '
-                        'WHERE (ROWNUM <= %s)) AS "b" '
-                    'WHERE ("rnum" > %s)) AS "a"')
+                        'WHERE ROWNUM <= %s) AS "b" '
+                    'WHERE "rnum" > %s) AS "a"')
             # XXX alias of query is reused but not a problem
             # as it is hidden in subquery
             self.assertEqual(tuple(query.params), (60, 10))
@@ -419,15 +419,15 @@ class TestSelect(unittest.TestCase):
                 'SELECT "a".* FROM ('
                     'SELECT "b".*, ROWNUM AS "rnum" FROM ('
                         'SELECT * FROM "t" AS "c" ORDER BY "c"."c") AS "b" '
-                    'WHERE (ROWNUM <= %s)) AS "a" '
-                'WHERE ("rnum" > %s)')
+                    'WHERE ROWNUM <= %s) AS "a" '
+                'WHERE "rnum" > %s')
             self.assertEqual(tuple(query.params), (60, 10))
 
             query = self.table.select(limit=50)
             self.assertEqual(str(query),
                 'SELECT "a".* FROM ('
                     'SELECT * FROM "t" AS "b") AS "a" '
-                'WHERE (ROWNUM <= %s)')
+                'WHERE ROWNUM <= %s')
             self.assertEqual(tuple(query.params), (50,))
 
             query = self.table.select(offset=10)
@@ -435,7 +435,7 @@ class TestSelect(unittest.TestCase):
                 'SELECT "a".* FROM ('
                     'SELECT "b".*, ROWNUM AS "rnum" FROM ('
                         'SELECT * FROM "t" AS "c") AS "b") AS "a" '
-                'WHERE ("rnum" > %s)')
+                'WHERE "rnum" > %s')
             self.assertEqual(tuple(query.params), (10,))
 
             query = self.table.select(self.table.c.as_('col'),
@@ -445,9 +445,9 @@ class TestSelect(unittest.TestCase):
                 'SELECT "a"."col" FROM ('
                     'SELECT "b"."col", ROWNUM AS "rnum" FROM ('
                         'SELECT "c"."c" AS "col" FROM "t" AS "c" '
-                        'WHERE ("c"."c" >= %s)) AS "b" '
-                    'WHERE (ROWNUM <= %s)) AS "a" '
-                'WHERE ("rnum" > %s)')
+                        'WHERE "c"."c" >= %s) AS "b" '
+                    'WHERE ROWNUM <= %s) AS "a" '
+                'WHERE "rnum" > %s')
             self.assertEqual(tuple(query.params), (20, 60, 10))
         finally:
             Flavor.set(Flavor())
@@ -499,7 +499,7 @@ class TestSelect(unittest.TestCase):
             Rank(filter_=self.table.c1 > 0, window=window),
             Min(self.table.c1, window=window))
         self.assertEqual(str(query),
-            'SELECT RANK() FILTER (WHERE ("a"."c1" > %s)) OVER "b", '
+            'SELECT RANK() FILTER (WHERE "a"."c1" > %s) OVER "b", '
             'MIN("a"."c1") OVER "b" FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY "a"."c1")')
         self.assertEqual(tuple(query.params), (0,))
@@ -517,8 +517,8 @@ class TestSelect(unittest.TestCase):
             Max(self.table.c1, window=window)
             / Min(self.table.c1, window=window))
         self.assertEqual(str(query),
-            'SELECT (MAX("a"."c1") OVER (PARTITION BY "a"."c2") '
-            '/ MIN("a"."c1") OVER (PARTITION BY "a"."c2")) '
+            'SELECT MAX("a"."c1") OVER (PARTITION BY "a"."c2") '
+            '/ MIN("a"."c1") OVER (PARTITION BY "a"."c2") '
             'FROM "t" AS "a"')
         self.assertEqual(tuple(query.params), ())
 
@@ -527,8 +527,8 @@ class TestSelect(unittest.TestCase):
             Max(self.table.c1, window=window)
             / Min(self.table.c1, window=window))
         self.assertEqual(str(query),
-            'SELECT (MAX("a"."c1") OVER (PARTITION BY %s) '
-            '/ MIN("a"."c1") OVER (PARTITION BY %s)) '
+            'SELECT MAX("a"."c1") OVER (PARTITION BY %s) '
+            '/ MIN("a"."c1") OVER (PARTITION BY %s) '
             'FROM "t" AS "a"')
         self.assertEqual(tuple(query.params), (1, 1))
 
@@ -539,8 +539,8 @@ class TestSelect(unittest.TestCase):
             / Min(self.table.c1, window=window2),
             windows=[window1])
         self.assertEqual(str(query),
-            'SELECT (MAX("a"."c1") OVER "b" '
-            '/ MIN("a"."c1") OVER (PARTITION BY %s)) '
+            'SELECT MAX("a"."c1") OVER "b" '
+            '/ MIN("a"."c1") OVER (PARTITION BY %s) '
             'FROM "t" AS "a" '
             'WINDOW "b" AS (PARTITION BY "a"."c2")')
         self.assertEqual(tuple(query.params), (1,))
@@ -572,10 +572,10 @@ class TestSelect(unittest.TestCase):
             order_by=[Literal(8)])
         self.assertEqual(
             str(query),
-            'WITH "c" AS (SELECT "a"."c" FROM "t" AS "a" WHERE ("a"."c" > %s))'
+            'WITH "c" AS (SELECT "a"."c" FROM "t" AS "a" WHERE "a"."c" > %s)'
             ' SELECT %s, MIN("a"."c") OVER "b" '
-            'FROM SELECT * FROM "t" AS "a" WHERE ("a"."c" > %s) '
-            'WHERE ("a"."c" > %s) '
+            'FROM SELECT * FROM "t" AS "a" WHERE "a"."c" > %s '
+            'WHERE "a"."c" > %s '
             'GROUP BY %s '
             'HAVING %s '
             'WINDOW "b" AS (PARTITION BY %s) '

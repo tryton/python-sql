@@ -39,14 +39,14 @@ Select with where condition::
 
     >>> select.where = user.name == 'foo'
     >>> tuple(select)
-    ('SELECT "a"."id", "a"."name" FROM "user" AS "a" WHERE ("a"."name" = %s)', ('foo',))
+    ('SELECT "a"."id", "a"."name" FROM "user" AS "a" WHERE "a"."name" = %s', ('foo',))
 
     >>> select.where = (user.name == 'foo') & (user.active == True)
     >>> tuple(select)
-    ('SELECT "a"."id", "a"."name" FROM "user" AS "a" WHERE (("a"."name" = %s) AND ("a"."active" = %s))', ('foo', True))
+    ('SELECT "a"."id", "a"."name" FROM "user" AS "a" WHERE ("a"."name" = %s) AND ("a"."active" = %s)', ('foo', True))
     >>> select.where = user.name == user.login
     >>> tuple(select)
-    ('SELECT "a"."id", "a"."name" FROM "user" AS "a" WHERE ("a"."name" = "a"."login")', ())
+    ('SELECT "a"."id", "a"."name" FROM "user" AS "a" WHERE "a"."name" = "a"."login"', ())
 
 Select with join::
 
@@ -54,7 +54,7 @@ Select with join::
     >>> join.condition = join.right.user == user.id
     >>> select = join.select(user.name, join.right.group)
     >>> tuple(select)
-    ('SELECT "a"."name", "b"."group" FROM "user" AS "a" INNER JOIN "user_group" AS "b" ON ("b"."user" = "a"."id")', ())
+    ('SELECT "a"."name", "b"."group" FROM "user" AS "a" INNER JOIN "user_group" AS "b" ON "b"."user" = "a"."id"', ())
 
 Select with multiple joins::
 
@@ -93,9 +93,9 @@ Select with sub-select::
     ...     where=user_group.active == True)
     >>> user = Table('user')
     >>> tuple(user.select(user.id, where=user.id.in_(subselect)))
-    ('SELECT "a"."id" FROM "user" AS "a" WHERE ("a"."id" IN (SELECT "b"."user" FROM "user_group" AS "b" WHERE ("b"."active" = %s)))', (True,))
+    ('SELECT "a"."id" FROM "user" AS "a" WHERE "a"."id" IN (SELECT "b"."user" FROM "user_group" AS "b" WHERE "b"."active" = %s)', (True,))
     >>> tuple(subselect.select(subselect.user))
-    ('SELECT "a"."user" FROM (SELECT "b"."user" FROM "user_group" AS "b" WHERE ("b"."active" = %s)) AS "a"', (True,))
+    ('SELECT "a"."user" FROM (SELECT "b"."user" FROM "user_group" AS "b" WHERE "b"."active" = %s) AS "a"', (True,))
 
 Select on other schema::
 
@@ -129,20 +129,20 @@ Update query with values::
     >>> tuple(user.update(columns=[user.active], values=[True]))
     ('UPDATE "user" AS "a" SET "active" = %s', (True,))
     >>> tuple(invoice.update(columns=[invoice.total], values=[invoice.amount + invoice.tax]))
-    ('UPDATE "invoice" AS "a" SET "total" = ("a"."amount" + "a"."tax")', ())
+    ('UPDATE "invoice" AS "a" SET "total" = "a"."amount" + "a"."tax"', ())
 
 Update query with where condition::
 
     >>> tuple(user.update(columns=[user.active], values=[True],
     ...          where=user.active == False))
-    ('UPDATE "user" AS "a" SET "active" = %s WHERE ("a"."active" = %s)', (True, False))
+    ('UPDATE "user" AS "a" SET "active" = %s WHERE "a"."active" = %s', (True, False))
 
 Update query with from list::
 
     >>> group = Table('user_group')
     >>> tuple(user.update(columns=[user.active], values=[group.active],
     ...         from_=[group], where=user.id == group.user))
-    ('UPDATE "user" AS "b" SET "active" = "a"."active" FROM "user_group" AS "a" WHERE ("b"."id" = "a"."user")', ())
+    ('UPDATE "user" AS "b" SET "active" = "a"."active" FROM "user_group" AS "a" WHERE "b"."id" = "a"."user"', ())
 
 Delete query::
 
@@ -152,13 +152,13 @@ Delete query::
 Delete query with where condition::
 
     >>> tuple(user.delete(where=user.name == 'foo'))
-    ('DELETE FROM "user" WHERE ("name" = %s)', ('foo',))
+    ('DELETE FROM "user" WHERE "name" = %s', ('foo',))
 
 Delete query with sub-query::
 
     >>> tuple(user.delete(
     ...             where=user.id.in_(user_group.select(user_group.user))))
-    ('DELETE FROM "user" WHERE ("id" IN (SELECT "a"."user" FROM "user_group" AS "a"))', ())
+    ('DELETE FROM "user" WHERE "id" IN (SELECT "a"."user" FROM "user_group" AS "a")', ())
 
 Flavors::
 
@@ -185,7 +185,7 @@ Limit style::
     ('SELECT * FROM "user" AS "a" OFFSET (%s) ROWS FETCH FIRST (%s) ROWS ONLY', (20, 10))
     >>> Flavor.set(Flavor(limitstyle='rownum'))
     >>> tuple(select)
-    ('SELECT "a".* FROM (SELECT "b".*, ROWNUM AS "rnum" FROM (SELECT * FROM "user" AS "c") AS "b" WHERE (ROWNUM <= %s)) AS "a" WHERE ("rnum" > %s)', (30, 20))
+    ('SELECT "a".* FROM (SELECT "b".*, ROWNUM AS "rnum" FROM (SELECT * FROM "user" AS "c") AS "b" WHERE ROWNUM <= %s) AS "a" WHERE "rnum" > %s', (30, 20))
 
 qmark style::
 
@@ -193,7 +193,7 @@ qmark style::
     >>> select = user.select()
     >>> select.where = user.name == 'foo'
     >>> tuple(select)
-    ('SELECT * FROM "user" AS "a" WHERE ("a"."name" = ?)', ('foo',))
+    ('SELECT * FROM "user" AS "a" WHERE "a"."name" = ?', ('foo',))
 
 numeric style::
 
@@ -201,4 +201,4 @@ numeric style::
     >>> select = user.select()
     >>> select.where = user.name == 'foo'
     >>> format2numeric(*select)
-    ('SELECT * FROM "user" AS "a" WHERE ("a"."name" = :0)', ('foo',))
+    ('SELECT * FROM "user" AS "a" WHERE "a"."name" = :0', ('foo',))

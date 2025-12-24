@@ -36,17 +36,17 @@ class TestOrder(unittest.TestCase):
 
             exp = NullsFirst(self.column)
             self.assertEqual(str(exp),
-                'CASE WHEN ("c" IS NULL) THEN %s ELSE %s END ASC, "c"')
+                'CASE WHEN "c" IS NULL THEN %s ELSE %s END ASC, "c"')
             self.assertEqual(exp.params, (0, 1))
 
             exp = NullsFirst(Desc(self.column))
             self.assertEqual(str(exp),
-                'CASE WHEN ("c" IS NULL) THEN %s ELSE %s END ASC, "c" DESC')
+                'CASE WHEN "c" IS NULL THEN %s ELSE %s END ASC, "c" DESC')
             self.assertEqual(exp.params, (0, 1))
 
             exp = NullsLast(Literal(2))
             self.assertEqual(str(exp),
-                'CASE WHEN (%s IS NULL) THEN %s ELSE %s END ASC, %s')
+                'CASE WHEN %s IS NULL THEN %s ELSE %s END ASC, %s')
             self.assertEqual(exp.params, (2, 1, 0, 2))
         finally:
             Flavor.set(Flavor())

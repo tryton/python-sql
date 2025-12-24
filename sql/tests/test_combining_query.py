@@ -33,7 +33,7 @@ class TestUnion(unittest.TestCase):
 
         self.assertEqual(str(query),
             'WITH "a" AS ('
-            'SELECT "b"."id" FROM "t" AS "b" WHERE ("b"."id" = %s)) '
+            'SELECT "b"."id" FROM "t" AS "b" WHERE "b"."id" = %s) '
             'SELECT * FROM "t1" AS "c" UNION SELECT * FROM "t2" AS "d"')
         self.assertEqual(tuple(query.params), (1,))
 

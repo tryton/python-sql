@@ -15,7 +15,7 @@ class TestDelete(unittest.TestCase):
 
     def test_delete2(self):
         query = self.table.delete(where=(self.table.c == 'foo'))
-        self.assertEqual(str(query), 'DELETE FROM "t" WHERE ("c" = %s)')
+        self.assertEqual(str(query), 'DELETE FROM "t" WHERE "c" = %s')
         self.assertEqual(query.params, ('foo',))
 
     def test_delete3(self):
@@ -23,8 +23,8 @@ class TestDelete(unittest.TestCase):
         t2 = Table('t2')
         query = t1.delete(where=(t1.c.in_(t2.select(t2.c))))
         self.assertEqual(str(query),
-            'DELETE FROM "t1" WHERE ("c" IN ('
-            'SELECT "a"."c" FROM "t2" AS "a"))')
+            'DELETE FROM "t1" WHERE "c" IN ('
+            'SELECT "a"."c" FROM "t2" AS "a")')
         self.assertEqual(query.params, ())
 
     def test_delete_invalid_table(self):
@@ -61,5 +61,5 @@ class TestDelete(unittest.TestCase):
         self.assertEqual(str(query),
             'WITH "a" AS (SELECT "b"."c1" FROM "t1" AS "b") '
             'DELETE FROM "t" WHERE '
-            '("c2" IN (SELECT "a"."c3" FROM "a" AS "a"))')
+            '"c2" IN (SELECT "a"."c3" FROM "a" AS "a")')
         self.assertEqual(query.params, ())

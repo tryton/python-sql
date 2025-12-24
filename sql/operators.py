@@ -48,9 +48,10 @@ class Operator(Expression):
     def _format(self, operand, param=None):
         if param is None:
             param = Flavor.get().param
-        if isinstance(operand, Expression):
+        if (isinstance(operand, Expression)
+                and not isinstance(operand, Operator)):
             return str(operand)
-        elif isinstance(operand, (Select, CombiningQuery)):
+        elif isinstance(operand, (Expression, Select, CombiningQuery)):
             return '(%s)' % operand
         elif isinstance(operand, (list, tuple)):
             return '(' + ', '.join(self._format(o, param)
@@ -88,7 +89,7 @@ class UnaryOperator(Operator):
         return (self.operand,)
 
     def __str__(self):
-        return '(%s %s)' % (self._operator, self._format(self.operand))
+        return '%s %s' % (self._operator, self._format(self.operand))
 
 
 class BinaryOperator(Operator):
@@ -105,7 +106,7 @@ class BinaryOperator(Operator):
 
     def __str__(self):
         left, right = self._operands
-        return '(%s %s %s)' % (self._format(left), self._operator,
+        return '%s %s %s' % (self._format(left), self._operator,
             self._format(right))
 
     def __invert__(self):
@@ -121,8 +122,7 @@ class NaryOperator(list, Operator):
         return self
 
     def __str__(self):
-        return '(' + (' %s ' % self._operator).join(
-            map(self._format, self)) + ')'
+        return (' %s ' % self._operator).join(map(self._format, self))
 
 
 class And(NaryOperator):
@@ -184,9 +184,9 @@ class Equal(BinaryOperator):
 
     def __str__(self):
         if self.left is Null:
-            return '(%s IS NULL)' % self.right
+            return '%s IS NULL' % self.right
         elif self.right is Null:
-            return '(%s IS NULL)' % self.left
+            return '%s IS NULL' % self.left
         return super(Equal, self).__str__()
 
 
@@ -196,9 +196,9 @@ class NotEqual(Equal):
 
     def __str__(self):
         if self.left is Null:
-            return '(%s IS NOT NULL)' % self.right
+            return '%s IS NOT NULL' % self.right
         elif self.right is Null:
-            return '(%s IS NOT NULL)' % self.left
+            return '%s IS NOT NULL' % self.left
         return super(Equal, self).__str__()
 
 
@@ -220,7 +220,7 @@ class Between(Operator):
         operator = self._operator
         if self.symmetric:
             operator += ' SYMMETRIC'
-        return '(%s %s %s AND %s)' % (
+        return '%s %s %s AND %s' % (
             self._format(self.operand), operator,
             self._format(self.left), self._format(self.right))
 
@@ -259,12 +259,12 @@ class Is(BinaryOperator):
 
     def __str__(self):
         if self.right is None:
-            return '(%s %s UNKNOWN)' % (
+            return '%s %s UNKNOWN' % (
                 self._format(self.left), self._operator)
         elif self.right is True:
-            return '(%s %s TRUE)' % (self._format(self.left), self._operator)
+            return '%s %s TRUE' % (self._format(self.left), self._operator)
         elif self.right is False:
-            return '(%s %s FALSE)' % (self._format(self.left), self._operator)
+            return '%s %s FALSE' % (self._format(self.left), self._operator)
 
 
 class IsNot(Is):
@@ -395,11 +395,11 @@ class Like(BinaryOperator):
     def __str__(self):
         left, right = self._operands
         if self.escape or Flavor().get().escape_empty:
-            return '(%s %s %s ESCAPE %s)' % (
+            return '%s %s %s ESCAPE %s' % (
                 self._format(left), self._operator, self._format(right),
                 self._format(self.escape or ''))
         else:
-            return '(%s %s %s)' % (
+            return '%s %s %s' % (
                 self._format(left), self._operator, self._format(right))
 
     def __invert__(self):

@@ -18,7 +18,7 @@ class TestJoin(unittest.TestCase):
         join.condition = t1.c == t2.c
         with AliasManager():
             self.assertEqual(str(join),
-                '"t1" AS "a" INNER JOIN "t2" AS "b" ON ("a"."c" = "b"."c")')
+                '"t1" AS "a" INNER JOIN "t2" AS "b" ON "a"."c" = "b"."c"')
 
     def test_join_invalid_left(self):
         with self.assertRaises(ValueError):
@@ -45,7 +45,7 @@ class TestJoin(unittest.TestCase):
         with AliasManager():
             self.assertEqual(str(join),
                 '"t1" AS "a" INNER JOIN (SELECT * FROM "t2" AS "c") AS "b" '
-                'ON ("a"."c" = "b"."c")')
+                'ON "a"."c" = "b"."c"')
             self.assertEqual(tuple(join.params), ())
 
     def test_join_function(self):

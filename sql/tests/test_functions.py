@@ -70,7 +70,7 @@ class TestFunctions(unittest.TestCase):
         abs_ = Abs(self.table.select(self.table.c1,
                 where=self.table.c2 == 'foo'))
         self.assertEqual(str(abs_),
-            'ABS((SELECT "a"."c1" FROM "t" AS "a" WHERE ("a"."c2" = %s)))')
+            'ABS((SELECT "a"."c1" FROM "t" AS "a" WHERE "a"."c2" = %s))')
         self.assertEqual(abs_.params, ('foo',))
 
     def test_overlay(self):
@@ -110,7 +110,7 @@ class TestFunctions(unittest.TestCase):
             self.table.select(self.table.tz, where=self.table.c1 == 'foo'))
         self.assertEqual(str(time_zone),
             '"c1" AT TIME ZONE '
-            '(SELECT "a"."tz" FROM "t" AS "a" WHERE ("a"."c1" = %s))')
+            '(SELECT "a"."tz" FROM "t" AS "a" WHERE "a"."c1" = %s)')
         self.assertEqual(time_zone.params, ('foo',))
 
     def test_at_time_zone_mapping(self):
@@ -192,7 +192,7 @@ class TestWindowFunction(unittest.TestCase):
 
         with AliasManager():
             self.assertEqual(str(function),
-                'RANK("a"."c") FILTER (WHERE ("a"."c" > %s)) OVER ()')
+                'RANK("a"."c") FILTER (WHERE "a"."c" > %s) OVER ()')
         self.assertEqual(function.params, (0,))
 
     def test_invalid_filter(self):

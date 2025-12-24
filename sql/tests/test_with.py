@@ -15,7 +15,7 @@ class TestWith(unittest.TestCase):
 
             self.assertEqual(simple.statement(),
                 '"a" AS ('
-                'SELECT "b"."id" FROM "t" AS "b" WHERE ("b"."id" = %s)'
+                'SELECT "b"."id" FROM "t" AS "b" WHERE "b"."id" = %s'
                 ')')
             self.assertEqual(simple.statement_params(), (1,))
 
@@ -40,7 +40,7 @@ class TestWith(unittest.TestCase):
             wq = WithQuery(with_=[simple, second])
             self.assertEqual(wq._with_str(),
                 'WITH "a" AS ('
-                'SELECT "b"."id" FROM "t" AS "b" WHERE ("b"."id" = %s)'
+                'SELECT "b"."id" FROM "t" AS "b" WHERE "b"."id" = %s'
                 '), "c" AS ('
                 'SELECT * FROM "a" AS "a"'
                 ') ')
@@ -59,7 +59,7 @@ class TestWith(unittest.TestCase):
             'WITH RECURSIVE "a" ("n") AS ('
             'VALUES (%s) '
             'UNION ALL '
-            'SELECT ("a"."n" + %s) FROM "a" AS "a" WHERE ("a"."n" < %s)'
+            'SELECT "a"."n" + %s FROM "a" AS "a" WHERE "a"."n" < %s'
             ') SELECT * FROM "a" AS "a"')
         self.assertEqual(tuple(q.params), (1, 1, 100))
 

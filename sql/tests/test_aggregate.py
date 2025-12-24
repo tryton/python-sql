@@ -38,7 +38,7 @@ class TestAggregate(unittest.TestCase):
         self.assertEqual(str(avg), 'AVG("c")')
 
         avg = Avg(self.table.a + self.table.b)
-        self.assertEqual(str(avg), 'AVG(("a" + "b"))')
+        self.assertEqual(str(avg), 'AVG("a" + "b")')
 
     def test_count_without_expression(self):
         count = Count()
@@ -67,7 +67,7 @@ class TestAggregate(unittest.TestCase):
         try:
             avg = Avg(self.table.a + 1, filter_=self.table.a > 0)
             self.assertEqual(
-                str(avg), 'AVG(("a" + %s)) FILTER (WHERE ("a" > %s))')
+                str(avg), 'AVG("a" + %s) FILTER (WHERE "a" > %s)')
             self.assertEqual(avg.params, (1, 0))
         finally:
             Flavor.set(Flavor())
@@ -75,13 +75,13 @@ class TestAggregate(unittest.TestCase):
     def test_filter_case(self):
         avg = Avg(self.table.a + 1, filter_=self.table.a > 0)
         self.assertEqual(
-            str(avg), 'AVG(CASE WHEN ("a" > %s) THEN ("a" + %s) END)')
+            str(avg), 'AVG(CASE WHEN "a" > %s THEN "a" + %s END)')
         self.assertEqual(avg.params, (0, 1))
 
     def test_filter_case_count_star(self):
         count = Count(Literal('*'), filter_=self.table.a > 0)
         self.assertEqual(
-            str(count), 'COUNT(CASE WHEN ("a" > %s) THEN %s END)')
+            str(count), 'COUNT(CASE WHEN "a" > %s THEN %s END)')
         self.assertEqual(count.params, (0, 1))
 
     def test_window(self):

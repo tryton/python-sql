@@ -36,9 +36,9 @@ class TestConditionals(unittest.TestCase):
                 where=self.table.c2 == 'foo'))
         self.assertEqual(str(case),
             'CASE WHEN '
-            '(SELECT "a"."bool" FROM "t" AS "a" WHERE ("a"."c2" = %s)) '
+            '(SELECT "a"."bool" FROM "t" AS "a" WHERE "a"."c2" = %s) '
             'THEN "c1" '
-            'ELSE (SELECT "a"."c1" FROM "t" AS "a" WHERE ("a"."c2" = %s)) END')
+            'ELSE (SELECT "a"."c1" FROM "t" AS "a" WHERE "a"."c2" = %s) END')
         self.assertEqual(case.params, ('bar', 'foo'))
 
     def test_coalesce(self):
@@ -52,7 +52,7 @@ class TestConditionals(unittest.TestCase):
             self.table.c2)
         self.assertEqual(str(coalesce),
             'COALESCE('
-            '(SELECT "a"."c1" FROM "t" AS "a" WHERE ("a"."c2" = %s)), "c2")')
+            '(SELECT "a"."c1" FROM "t" AS "a" WHERE "a"."c2" = %s), "c2")')
         self.assertEqual(coalesce.params, ('bar',))
 
     def test_nullif(self):

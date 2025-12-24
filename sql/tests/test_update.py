@@ -15,7 +15,7 @@ class TestUpdate(unittest.TestCase):
 
         query.where = (self.table.b == Literal(True))
         self.assertEqual(str(query),
-            'UPDATE "t" AS "a" SET "c" = %s WHERE ("a"."b" = %s)')
+            'UPDATE "t" AS "a" SET "c" = %s WHERE "a"."b" = %s')
         self.assertEqual(query.params, ('foo', True))
 
     def test_update2(self):
@@ -24,7 +24,7 @@ class TestUpdate(unittest.TestCase):
         query = t1.update([t1.c], ['foo'], from_=[t2], where=(t1.c == t2.c))
         self.assertEqual(str(query),
             'UPDATE "t1" AS "b" SET "c" = %s FROM "t2" AS "a" '
-            'WHERE ("b"."c" = "a"."c")')
+            'WHERE "b"."c" = "a"."c"')
         self.assertEqual(query.params, ('foo',))
 
     def test_update_invalid_values(self):
@@ -43,7 +43,7 @@ class TestUpdate(unittest.TestCase):
         for query in [query_list, query_nolist]:
             self.assertEqual(str(query),
                 'UPDATE "t1" AS "b" SET "c" = ('
-                'SELECT "a"."c" FROM "t2" AS "a" WHERE ("a"."i" = "b"."i"))')
+                'SELECT "a"."c" FROM "t2" AS "a" WHERE "a"."i" = "b"."i")')
             self.assertEqual(query.params, ())
 
     def test_update_returning(self):
@@ -62,7 +62,7 @@ class TestUpdate(unittest.TestCase):
         self.assertEqual(str(query),
             'UPDATE "t1" AS "b" SET "c" = %s '
             'RETURNING (SELECT "a"."c" FROM "t2" AS "a" '
-            'WHERE (("a"."c1" = "b"."c") AND ("a"."c2" = %s)))')
+            'WHERE ("a"."c1" = "b"."c") AND ("a"."c2" = %s))')
         self.assertEqual(query.params, ('foo', 'bar'))
 
     def test_with(self):
@@ -76,7 +76,7 @@ class TestUpdate(unittest.TestCase):
         self.assertEqual(str(query),
             'WITH "a" AS (SELECT "b"."c1" FROM "t1" AS "b") '
             'UPDATE "t" AS "c" SET "c2" = (SELECT "a"."c3" FROM "a" AS "a" '
-            'WHERE ("a"."c4" = %s))')
+            'WHERE "a"."c4" = %s)')
         self.assertEqual(query.params, (2,))
 
     def test_schema(self):
@@ -95,5 +95,5 @@ class TestUpdate(unittest.TestCase):
         self.assertEqual(str(query),
             'UPDATE "default"."t1" AS "b" SET "c1" = ('
             'SELECT "a"."c" FROM "default"."t2" AS "a" '
-            'WHERE ("a"."i" = "b"."i"))')
+            'WHERE "a"."i" = "b"."i")')
         self.assertEqual(query.params, ())

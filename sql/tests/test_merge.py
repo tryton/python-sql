@@ -18,7 +18,7 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
-            'ON ("a"."c1" = "b"."c2") '
+            'ON "a"."c1" = "b"."c2" '
             'WHEN MATCHED THEN DO NOTHING')
         self.assertEqual(query.params, ())
 
@@ -46,7 +46,7 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
-            'ON (("a"."c1" = "b"."c2") AND ("a"."c3" = %s)) '
+            'ON ("a"."c1" = "b"."c2") AND ("a"."c3" = %s) '
             'WHEN MATCHED THEN DO NOTHING')
         self.assertEqual(query.params, (42,))
 
@@ -58,9 +58,9 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
-            'ON ("a"."c1" = "b"."c2") '
+            'ON "a"."c1" = "b"."c2" '
             'WHEN MATCHED '
-            'AND (("b"."c3" = %s) AND ("a"."c4" = "b"."c5")) '
+            'AND ("b"."c3" = %s) AND ("a"."c4" = "b"."c5") '
             'THEN DO NOTHING')
         self.assertEqual(query.params, (42,))
 
@@ -73,9 +73,9 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
-            'ON ("a"."c1" = "b"."c2") '
+            'ON "a"."c1" = "b"."c2" '
             'WHEN MATCHED THEN '
-            'UPDATE SET "c1" = ("a"."c1" + "b"."c2"), "c2" = %s')
+            'UPDATE SET "c1" = "a"."c1" + "b"."c2", "c2" = %s')
         self.assertEqual(query.params, (42,))
 
     def test_matched_delete(self):
@@ -84,7 +84,7 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
-            'ON ("a"."c1" = "b"."c2") '
+            'ON "a"."c1" = "b"."c2" '
             'WHEN MATCHED THEN DELETE')
         self.assertEqual(query.params, ())
 
@@ -94,7 +94,7 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
-            'ON ("a"."c1" = "b"."c2") '
+            'ON "a"."c1" = "b"."c2" '
             'WHEN NOT MATCHED THEN DO NOTHING')
         self.assertEqual(query.params, ())
 
@@ -107,7 +107,7 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
-            'ON ("a"."c1" = "b"."c2") '
+            'ON "a"."c1" = "b"."c2" '
             'WHEN NOT MATCHED THEN '
             'INSERT ("c1", "c2") VALUES ("b"."c3", "b"."c4")')
         self.assertEqual(query.params, ())
@@ -119,7 +119,7 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(
             str(query),
             'MERGE INTO "t" AS "a" USING "s" AS "b" '
-            'ON ("a"."c1" = "b"."c2") '
+            'ON "a"."c1" = "b"."c2" '
             'WHEN NOT MATCHED THEN '
             'INSERT ("c1", "c2") DEFAULT VALUES')
         self.assertEqual(query.params, ())
@@ -141,9 +141,9 @@ class TestMerge(unittest.TestCase):
             source, self.target.c1 == source.c2, Matched(), with_=[w])
         self.assertEqual(
             str(query),
-            'WITH "a" AS (SELECT * FROM "t1" AS "d" WHERE ("d"."c2" = %s)) '
+            'WITH "a" AS (SELECT * FROM "t1" AS "d" WHERE "d"."c2" = %s) '
             'MERGE INTO "t" AS "b" '
             'USING (SELECT * FROM "a" AS "a") AS "c" '
-            'ON ("b"."c1" = "c"."c2") '
+            'ON "b"."c1" = "c"."c2" '
             'WHEN MATCHED THEN DO NOTHING')
         self.assertEqual(query.params, (42,))
