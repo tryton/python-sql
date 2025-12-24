@@ -205,6 +205,14 @@ class TestSelect(unittest.TestCase):
             'SELECT %s FROM "t" AS "a" GROUP BY %s')
         self.assertEqual(tuple(query.params), ('foo', 'foo'))
 
+        output1 = column.as_('c1')
+        output2 = column.as_('c2')
+        query = self.table.select(output1, output2, group_by=output2)
+        self.assertEqual(str(query),
+            'SELECT "a"."c" AS "c1", "a"."c" AS "c2" FROM "t" AS "a" '
+            'GROUP BY 2')
+        self.assertEqual(tuple(query.params), ())
+
     def test_select_group_by_grouping_sets(self):
         query = self.table.select(
             Literal('*'),
