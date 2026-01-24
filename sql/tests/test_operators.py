@@ -6,10 +6,10 @@ from array import array
 
 from sql import Flavor, Literal, Null, Table
 from sql.operators import (
-    Abs, And, Between, Div, Equal, Exists, FloorDiv, Greater, GreaterEqual,
-    ILike, In, Is, IsDistinct, IsNot, IsNotDistinct, Less, LessEqual, Like,
-    LShift, Mod, Mul, Neg, Not, NotBetween, NotEqual, NotILike, NotIn, NotLike,
-    Operator, Or, Pos, Pow, RShift, Sub)
+    Abs, And, Any, Between, Div, Equal, Exists, FloorDiv, Greater,
+    GreaterEqual, ILike, In, Is, IsDistinct, IsNot, IsNotDistinct, Less,
+    LessEqual, Like, LShift, Mod, Mul, Neg, Not, NotBetween, NotEqual,
+    NotILike, NotIn, NotLike, Operator, Or, Pos, Pow, RShift, Sub)
 
 
 class TestOperators(unittest.TestCase):
@@ -418,3 +418,21 @@ class TestOperators(unittest.TestCase):
                 self.assertIn(
                     'FloorDiv operator is deprecated, use Div function',
                     str(w[-1].message))
+
+    def test_any(self):
+        any_ = Any(self.table.select(self.table.c1, where=self.table.c2 == 1))
+        self.assertEqual(str(any_),
+            'ANY (SELECT "a"."c1" FROM "t" AS "a" WHERE "a"."c2" = %s)')
+        self.assertEqual(any_.params, (1,))
+
+        for value in [[1, 2, 3], (1, 2, 3), array('l', [1, 2, 3])]:
+            with self.subTest(value=value):
+                any_ = Any(value)
+                self.assertEqual(str(any_), 'ANY (%s)')
+                self.assertEqual(any_.params, ([1, 2, 3],))
+
+    def test_binary_unary(self):
+        operator = Equal(self.table.c1, Any([1, 2, 3]))
+
+        self.assertEqual(str(operator), '"c1" = ANY (%s)')
+        self.assertEqual(operator.params, ([1, 2, 3],))

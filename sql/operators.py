@@ -49,7 +49,8 @@ class Operator(Expression):
         if param is None:
             param = Flavor.get().param
         if (isinstance(operand, Expression)
-                and not isinstance(operand, Operator)):
+                and (not isinstance(operand, Operator)
+                    or isinstance(operand, UnaryOperator))):
             return str(operand)
         elif isinstance(operand, (Expression, Select, CombiningQuery)):
             return '(%s)' % operand
@@ -458,7 +459,24 @@ class Exists(UnaryOperator):
     _operator = 'EXISTS'
 
 
-class Any(UnaryOperator):
+class _ArrayOperator(UnaryOperator):
+    __slots__ = ()
+
+    @property
+    def params(self):
+        if isinstance(self.operand, (list, tuple, array)):
+            return (list(self.operand),)
+        return super().params
+
+    def _format(self, operand, param=None):
+        if param is None:
+            param = Flavor.get().param
+        if isinstance(operand, (list, tuple, array)):
+            return '(%s)' % param
+        return super()._format(operand, param=param)
+
+
+class Any(_ArrayOperator):
     __slots__ = ()
     _operator = 'ANY'
 
@@ -466,7 +484,7 @@ class Any(UnaryOperator):
 Some = Any
 
 
-class All(UnaryOperator):
+class All(_ArrayOperator):
     __slots__ = ()
     _operator = 'ALL'
 
