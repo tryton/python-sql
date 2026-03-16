@@ -1,3 +1,4 @@
+* Upgrade to pyproject
 * Add support for array operators
 * Remove the parentheses around the unary and binary operators
 * Use the ordinal number as aliases for GROUP BY

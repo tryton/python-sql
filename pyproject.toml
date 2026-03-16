@@ -1,0 +1,38 @@
+[build-system]
+requires = ['hatchling >= 1', 'hatch-tryton']
+build-backend = 'hatchling.build'
+
+[project]
+name = 'python-sql'
+dynamic = ['version', 'authors']
+requires-python = '>=3.6'
+maintainers = [
+    {name = "Tryton", email = "foundation@tryton.org"},
+    ]
+description = "Library to write SQL queries"
+readme = 'README.rst'
+license = 'BSD-3-Clause'
+license-files = ['COPYRIGHT']
+keywords = ["SQL", "database", "query"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    ]
+
+[project.urls]
+homepage = "https://www.tryton.org/"
+changelog = "https://code.tryton.org/python-sql/-/blob/branch/default/CHANGELOG"
+forum = "https://discuss.tryton.org/tags/python-sql"
+issues = "https://bugs.tryton.org/python-sql"
+repository = "https://code.tryton.org/python-sql"
+
+[tool.hatch.version]
+path = 'sql/__init__.py'
+
+[tool.hatch.build]
+packages = ['sql']
+
+[tool.hatch.metadata.hooks.tryton]
+copyright = 'COPYRIGHT'
