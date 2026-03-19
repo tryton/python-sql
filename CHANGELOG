@@ -4,7 +4,7 @@
 * Use the ordinal number as aliases for GROUP BY
 * Check the coherence of the aliases of GROUP BY and ORDER BY expressions
 * Do not use parameter for EXTRACT field
-* Remove support for Python older than 3.6
+* Remove support for Python older than 3.9
 
 Version 1.7.0 - 2025-11-24
 * Add support for Python 3.14
