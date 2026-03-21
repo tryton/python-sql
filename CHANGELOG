@@ -1,3 +1,7 @@
+
+Version 1.8.0 - 2026-03-21
+--------------------------
+* Bug fixes (see mercurial logs for details)
 * Upgrade to pyproject
 * Add support for array operators
 * Remove the parentheses around the unary and binary operators
